@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TWISTED SPEED — Night Circuit</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #05040a; color: #f2e9e4;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      touch-action: none;
+    }
+    #game { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+    #c3d, #hud {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      display: block;
+    }
+    #c3d { z-index: 1; }
+    #hud { z-index: 2; pointer-events: none; }
+    #boot {
+      position: fixed; inset: 0; z-index: 20;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% 35%, #1a1020 0%, #05040a 65%);
+      transition: opacity 0.7s ease;
+      pointer-events: none;
+    }
+    #boot h1 {
+      font-size: clamp(26px, 4.5vw, 48px);
+      letter-spacing: 0.32em; font-weight: 700;
+      text-shadow: 0 0 48px rgba(255,45,85,0.5), 0 0 90px rgba(0,229,255,0.25);
+    }
+    #boot p {
+      margin-top: 12px; color: #8a7a88; font-size: 12px; letter-spacing: 0.18em;
+    }
+    #boot .bar {
+      margin-top: 26px; width: min(300px, 70vw); height: 2px;
+      background: #1a1520; border-radius: 2px; overflow: hidden;
+    }
+    #boot .fill {
+      height: 100%; width: 8%;
+      background: linear-gradient(90deg, #ff2d55, #00e5ff);
+      animation: load 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes load { from { width: 12%; } to { width: 92%; } }
+    #boot.hidden, #boot.hide { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <canvas id="c3d"></canvas>
+    <canvas id="hud"></canvas>
+  </div>
+  <div id="boot">
+    <h1>TWISTED SPEED</h1>
+    <p>NIGHT CIRCUIT · COMBAT RACING</p>
+    <div class="bar"><div class="fill"></div></div>
+  </div>
+
+  <!-- vendor only (no CDN packages) -->
+  <script src="vendor/three.min.js"></script>
+  <!-- modular Night Circuit -->
+  <script src="js/config.js?v=253"></script>
+  <script src="js/utils.js?v=253"></script>
+  <script src="js/input.js?v=253"></script>
+  <script src="js/sfx.js?v=253"></script>
+  <script src="js/glb.js?v=253"></script>
+  <script src="js/materials.js?v=253"></script>
+  <script src="js/postfx.js?v=253"></script>
+  <script src="js/particles.js?v=253"></script>
+  <script src="js/vehicle_bodies.js?v=253"></script>
+  <script src="js/vehicles.js?v=253"></script>
+  <script src="js/world.js?v=253"></script>
+  <script src="js/hud.js?v=253"></script>
+  <script src="js/game.js?v=253"></script>
+  <script>
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var b = document.getElementById('boot');
+        if (b) {
+          b.classList.add('hidden');
+          setTimeout(function () { if (b.parentNode) b.style.display = 'none'; }, 700);
+        }
+      }, 700);
+    });
+  </script>
+</body>
+</html>
+
