@@ -1,0 +1,44 @@
+# AI-PROMPTS — Twisted Speed
+# FutureIndustries export — paste into bulk-grok or Grok Imagine
+
+--- 01 ---
+FILENAME: brawler_vehicle.png
+FOLDER: assets/sprites/characters/
+SIZE: 32x32
+FULL PROMPT: rusty cyberpunk muscle car with spiked fenders, glowing red headlights, mounted machine guns, dystopian Mad Max style, crisp pixels, isolated centered, transparent background, no text
+
+--- 02 ---
+FILENAME: rival_scrapper.png
+FOLDER: assets/sprites/characters/
+SIZE: 32x32
+FULL PROMPT: lightweight spiked dune buggy with neon green accents and harpoon launcher, cyberpunk wasteland style, crisp pixels, isolated centered, transparent background, no text
+
+--- 03 ---
+FILENAME: electrified_dune_hazard.png
+FOLDER: assets/sprites/environment/
+SIZE: 32x32
+FULL PROMPT: shifting sand dune with crackling blue electricity arcs and buried rebar, dystopian cyberpunk, crisp pixels, isolated centered, transparent background, no text
+
+--- 04 ---
+FILENAME: spike_wall_trap.png
+FOLDER: assets/sprites/
+SIZE: 32x32
+FULL PROMPT: retractable rusted metal spike barrier rising from cracked asphalt, Mad Max cyberpunk tone, crisp pixels, isolated centered, transparent background, no text
+
+--- 05 ---
+FILENAME: scrap_pickup.png
+FOLDER: assets/sprites/
+SIZE: 32x32
+FULL PROMPT: glowing orange twisted metal chunk with faint circuit lines, cyberpunk salvage style, crisp pixels, isolated centered, transparent background, no text
+
+--- 06 ---
+FILENAME: rocket_vfx.png
+FOLDER: assets/sprites/vfx/
+SIZE: 32x32
+FULL PROMPT: orange-yellow rocket trail with smoke and impact flash, retro pixel style, crisp pixels, isolated centered, transparent background, no text
+
+--- 07 ---
+FILENAME: track_tile_set.png
+FOLDER: assets/sprites/
+SIZE: 32x32
+FULL PROMPT: cracked asphalt highway with oil stains and glowing hazard lines, dystopian cyberpunk palette, crisp pixels, isolated centered, transparent background, no text

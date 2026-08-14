@@ -1,0 +1,43 @@
+# FutureIndustries build pack — llms.txt
+# Machine onboarding for any coding agent (Grok, Claude, Cursor, Codex, …).
+# Human creators: open START-HERE.txt or LOOK-AT-ME.html first.
+
+## What this folder is
+A FutureIndustries **build pack**: design contract + craft playbook + runnable starter.
+Your job: build a **real playable game**, not a reskin of the starter shell.
+
+## Product rules (non-negotiable)
+1. **Arcade = browser.** Ship a folder with a real `index.html` + game scripts. See SHIP-TO-ARCADE.md.
+2. **Never invent a blank index.html** to pass checks.
+3. **Never zip the whole design pack** as the "game" for Arcade upload (zip `web/` contents only).
+4. **No API secrets in this pack.** Optional advanced keys stay on the human's machine (see tools/env.example).
+5. **Placeholder graphics first** — every entity draws a visible shape; missing art never means blank screen.
+
+## Read order (first session)
+1. BUILD-CONTEXT.md — THIS game (hook, loop, scope, style)
+2. FI-PLAYBOOK.md — craft + build protocol (Part 5 = scripted pass)
+3. CURSOR-RULES.md / CLAUDE.md / AGENTS.md — working rules
+4. FI-GRAPHICS.md before any art pass; FI-AUDIO.md before any audio pass
+5. SHIP-TO-ARCADE.md before any upload
+
+Optional anytime: LOOK-AT-ME.html · RUN-DESIGN-LAB.txt · MCP-RECOMMENDED.md
+
+## Build protocol (summary)
+Plan → get approval → V1 vertical slice on starter → BUILD-CHECK.md (launch + observe) →
+SELF-REVIEW.md → fix once → REVIEW-DASHBOARD.html. Game is NOT done until it renders and the dashboard exists.
+
+## Tracks
+- **Browser (default for Arcade):** extend `web/` (genre shell already runs).
+- **Godot:** extend `godot/` (needs Godot 4 installed). Web-export for Arcade.
+
+## Free tools (no keys required)
+- `py tools/make-sfx.py` — starter SFX + ambient (zero pip deps for basic path)
+- Procedural / canvas art per FI-GRAPHICS.md
+- Optional: Playwright MCP for agent eyes on the running game (see MCP-RECOMMENDED.md)
+
+## Paid / advanced tools (human opt-in only)
+Meshy, Blender MCP, Scenario, Figma, image APIs, Godot MCP — documented on FutureIndustries Academy
+"AI tool springboard" page. Do **not** block the free path waiting for them.
+
+## Skills (if the client supports them)
+.claude/skills/fi-game-build · fi-graphics · fi-audio · fi-design-lab · fi-playtest

@@ -1,0 +1,47 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Secrets
+.env
+.env.*
+!.env.example
+tools/.env
+
+# Unity (if full project is added later)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+*.csproj
+*.sln
+*.slnx
+*.unitypackage
+MemoryCaptures/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local large assets (docs repo stays light)
+*.glb
+*.fbx
+*.blend
+*.blend1
+*.hdr
+*.wav
+*.mp3
+*.png
+*.jpg
+*.jpeg
+!docs/**/*.png

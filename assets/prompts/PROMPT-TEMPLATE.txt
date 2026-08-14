@@ -1,0 +1,18 @@
+# FI art prompt template — one entry per asset
+# Copy blocks into assets/prompts/AI-PROMPTS.txt
+# Rules: one palette, one density, game keyword in every prompt, no baked UI text in sprites.
+
+--- 01 ---
+FILENAME: example_hero.png
+FOLDER: assets/sprites/
+SIZE: 64x64
+FULL PROMPT: Game character sprite, [subject], [style from STYLE-CONTRACT], full body,
+orthogonal/game camera as required, transparent background, pixel/hand-painted as locked,
+[game title keyword], no text, no watermark, no UI chrome
+
+--- 02 ---
+FILENAME: example_tile.png
+FOLDER: assets/sprites/
+SIZE: 32x32
+FULL PROMPT: Seamless game tile, [material], same style and palette as hero, top-down OR
+side-view matching the game, [game title keyword], no text

@@ -1,0 +1,33 @@
+# Optional MCP snippets for Grok Build (~/.grok/config.toml)
+# Copy sections you want. Do NOT commit real API keys.
+# Pack works with zero MCP servers.
+
+# --- Free: browser eyes (recommended for BUILD-CHECK) ---
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+enabled = true
+
+# --- Free-ish: up-to-date docs ---
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+enabled = true
+# headers = { "CONTEXT7_API_KEY" = "YOUR_KEY_IF_NEEDED" }
+
+# --- Advanced (Dev Studio) — uncomment when keys/apps exist ---
+# [mcp_servers.meshy]
+# command = "npx"
+# args = ["-y", "@meshy-ai/meshy-mcp-server"]
+# env = { MESHY_API_KEY = "msy_..." }
+# enabled = true
+#
+# [mcp_servers.blender]
+# command = "uvx"
+# args = ["blender-mcp"]
+# enabled = true
+#
+# [mcp_servers.godot]
+# command = "npx"
+# args = ["-y", "@coding-solo/godot-mcp"]
+# # env = { GODOT_PATH = "C:/path/to/Godot.exe" }
+# enabled = true

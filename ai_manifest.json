@@ -1,0 +1,65 @@
+{
+  "futureindustries_version": 1,
+  "game_title": "Twisted Speed",
+  "developer": "",
+  "deployment": "browser",
+  "engine": "threejs-webgl",
+  "overall_ai_percent": 93,
+  "breakdown": {
+    "code_percent": 96,
+    "art_percent": 40,
+    "audio_percent": 80,
+    "design_percent": 75
+  },
+  "tools": [
+    "grok",
+    "chrome-devtools",
+    "three.js"
+  ],
+  "assets": {
+    "ai_generated_count": 0,
+    "cc0_licensed_count": 0,
+    "human_made_count": 0,
+    "prompt_batch_files": [
+      "assets/prompts/AI-PROMPTS.txt"
+    ],
+    "procedural_placeholder": true,
+    "sfx_synth": [
+      "web/js/sfx.js",
+      "tools/make-sfx.py → web/assets/sfx/"
+    ]
+  },
+  "code": {
+    "ai_assisted_lines_estimate": 900,
+    "human_written_lines_estimate": 50,
+    "agent_sessions_estimate": 1
+  },
+  "attestations": {
+    "unique_hook_one_sentence": "A living wasteland track that hunts you while you race combat rigs through Night Runs to buy freedom from dystopian overlords.",
+    "playtested_minutes": 14,
+    "has_complete_loop": true,
+    "not_a_template_clone": true
+  },
+  "uniqueness_answers": {
+    "differentiator": "The track is a living predator — hazards move and target the player and change behavior mid-race (HOSTILE phase), not static obstacles like classic Twisted Metal or Mario Kart items.",
+    "rejected_ai_suggestion": "Pure weapon-arena deathmatch on a painted oval with static props (generic Twisted Metal clone).",
+    "why_play_twice": "13 Night Run levels toward freedom from the dystopian overlords — scrap upgrades persist, lose and retry with a meaner build, later nights get harder, complete the ladder to escape."
+  },
+  "review_answers_applied": {
+    "nights": 13,
+    "track": "city-to-mountain start-finish",
+    "weapons": "front rockets + rear mines + MG",
+    "spikes": "yellow warn then red deploy",
+    "combat": "hunter and hunted",
+    "camera": "first-person hood",
+    "hud": "speed weapons armor minimap"
+  },
+  "reference_games_studied": [
+    "Twisted Metal Black",
+    "Mario Kart",
+    "Need for Speed"
+  ],
+  "academy_tracks_completed": [
+    "browser-v1-vertical-slice"
+  ]
+}

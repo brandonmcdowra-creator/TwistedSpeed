@@ -1,0 +1,30 @@
+You are my game-build agent for this FutureIndustries build pack. Follow these steps in order — do not skip any.
+
+0) Find the build pack — the unzipped folder containing FI-PLAYBOOK.md, BUILD-CONTEXT.md, CURSOR-RULES.md, START-HERE.txt, LOOK-AT-ME.html, RUN-DESIGN-LAB.txt, llms.txt and assets/. If you can already read those files, continue. If you can't see them or don't know where they are, STOP and ask me for the full path to the unzipped build-pack folder (or ask me to attach FI-PLAYBOOK.md + BUILD-CONTEXT.md + CURSOR-RULES.md) — do nothing else until you have them.
+
+1) Read these files in full, in order:
+   - llms.txt         — machine onboarding (Arcade rules, free path, no secrets)
+   - FI-PLAYBOOK.md   — how to build with craft (the studio playbook; Part 5 is the build protocol)
+   - BUILD-CONTEXT.md — THIS game: unique hook, core loop, mechanics, style, art list, V1 scope
+   - CURSOR-RULES.md   — guardrails
+   Also in the pack: FI-GRAPHICS.md — the graphics doctrine. You may defer it during the placeholder-art build, but read it IN FULL before any art/graphics pass (code-drawn procedural for scenes/tiles/UI; image gen only for singular assets like portraits).
+   Also: FI-AUDIO.md — the audio doctrine. Read it IN FULL before any audio pass. Never ship silent: "py tools/make-sfx.py" synthesizes 9 starter SFX + an ambient loop with zero dependencies.
+   - STYLE-CONTRACT.md — locked palette/style (reject mismatched art)
+   - Optional anytime loop: LOOK-AT-ME.html (picture) + RUN-DESIGN-LAB.txt (paste to refresh Design Lab after builds)
+   - Optional tools: MCP-RECOMMENDED.md (free Playwright eyes — not required)
+
+2) Run the build protocol as a SINGLE scripted pass:
+   a) PLAN FIRST — show me a short plan (the track, the one core verb, the V1 vertical slice you'll build, and your steps) and WAIT for my approval. Do not build until I say go.
+   b) Build the V1 vertical slice only — menu -> core loop -> win/lose, playable with no dev tools. No extra features. A genre-fit RUNNABLE starter is already in the pack — web/ for browser (open web/index.html — it works) or godot/ for Godot (needs the engine: if Godot isn't installed, download Godot 4 stable from the official releases per FI-PLAYBOOK Part 3). BUILD ON IT, don't start from a blank file — but REPLACE the placeholder mechanic (js/game.js or scripts/main.gd) with MY core verb; do not just reskin the shell (a recolored shell = FAIL). Keep its placeholder-draw pattern so missing/ungenerated art falls back to a visible box, never a blank screen.
+   c) BUILD CHECK -> BUILD-CHECK.md: actually launch the game and OBSERVE it (compiling is not "working"). Follow .claude/skills/fi-playtest if available (or tools/playwright-smoke.example.md). Every gate must pass or fix it now: boots with zero console/stderr errors; every referenced asset loads (no 404s); the player + at least one entity are VISIBLY on screen (audio + a background but no sprites is a FAIL); input produces a visible change; the loop completes with no crash.
+   d) SELF-REVIEW in writing to SELF-REVIEW.md, answering both honestly: (1) is the loop playable end to end with feedback on every action, and where does it break? (2) where does it look generic, and what single change (per the unique hook) makes it distinctly this game? Then apply those fixes in one pass and re-run the build check.
+   e) DELIVER two things: the playable rev-1 game, and REVIEW-DASHBOARD.html — an interactive page listing what I built & verified (incl. the build-check result), everything that needs my decision (each with your best-guess default), the gaps you hit, and a 60-second playtest checklist, with an Export button.
+
+3) The game is NOT done until it renders, the build check passed, and REVIEW-DASHBOARD.html exists. Start now with step 1, then give me the plan.
+
+4) After rev-1: end the session by updating CHANGELOG.md + PROGRESS.md. When I want structured design again, I open LOOK-AT-ME.html or paste RUN-DESIGN-LAB.txt (Design Lab skill fi-design-lab).
+
+5) When we are ready to ship to the FutureIndustries Arcade, read SHIP-TO-ARCADE.md and follow it exactly.
+   Critical: the Arcade hosts ONLY a browser build (playable index.html with real game scripts).
+   Zip the runnable folder (usually the contents of web/), NEVER invent a blank index.html, and NEVER zip
+   the whole design pack as the "game." The title in <title> and the game UI must match THIS game's name.

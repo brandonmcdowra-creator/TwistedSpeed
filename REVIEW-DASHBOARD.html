@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Twisted Speed — Review Dashboard</title>
+  <style>
+    :root {
+      --bg: #0c0810; --panel: #16101a; --neon: #ff2d55; --cyan: #00e5ff;
+      --scrap: #ff9f1c; --text: #f2e9e4; --mute: #8a7a88; --ok: #3d9e3d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text);
+      line-height: 1.45; padding: 24px; max-width: 860px; margin-inline: auto;
+    }
+    h1 { color: var(--neon); font-family: ui-monospace, monospace; letter-spacing: 0.04em; margin: 0 0 4px; }
+    h2 { color: var(--cyan); font-size: 1.05rem; margin: 28px 0 10px; border-bottom: 1px solid #2a2030; padding-bottom: 6px; }
+    .sub { color: var(--mute); margin: 0 0 20px; }
+    .card {
+      background: var(--panel); border: 1px solid #3a2030; border-radius: 8px;
+      padding: 14px 16px; margin: 10px 0;
+    }
+    .pass { color: var(--ok); font-weight: 700; }
+    label { display: block; font-size: 0.85rem; color: var(--mute); margin-top: 8px; }
+    textarea, input[type="text"] {
+      width: 100%; margin-top: 4px; background: #0c0810; color: var(--text);
+      border: 1px solid #3a2030; border-radius: 6px; padding: 8px; font: inherit;
+    }
+    textarea { min-height: 64px; resize: vertical; }
+    .default { color: var(--scrap); font-size: 0.85rem; margin: 4px 0 0; }
+    button {
+      background: var(--neon); color: #fff; border: 0; border-radius: 6px;
+      padding: 10px 16px; font-weight: 700; cursor: pointer; margin: 8px 8px 0 0;
+    }
+    button.secondary { background: #2a2030; color: var(--cyan); }
+    ul { padding-left: 1.2rem; }
+    code { color: var(--cyan); font-size: 0.9em; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+  <h1>TWISTED SPEED</h1>
+  <p class="sub">Director review dashboard · rev-1 · browser vertical slice</p>
+
+  <h2>1. What I built &amp; verified</h2>
+  <div class="card">
+    <p>
+      <strong>Twisted Speed</strong> is a top-down combat racer: drive the <strong>Balanced Brawler</strong>,
+      fire front MGs and rear rockets, dodge a <strong>living track</strong> (electrified dunes that chase,
+      spike walls that re-home, collapsing bridges), fight 3 rival AI cars, bank scrap, and spend it on
+      Speed / Armor / Firepower. Progress is a <strong>Night Run ladder toward freedom</strong> from the
+      dystopian overlords (3 nights → freedom ending). Placeholder art; synth SFX.
+    </p>
+    <p><strong>60-second playtest</strong></p>
+    <ol>
+      <li>Open <code>web/index.html</code> (or serve <code>web/</code>).</li>
+      <li>ENTER → garage → ENTER to launch Night 1.</li>
+      <li>WASD drive the loop; J guns; K rockets; grab orange scrap; avoid cyan dunes / spikes.</li>
+      <li>Past ~70% of the lap the track goes <em>HOSTILE</em> — finish or wreck.</li>
+      <li>On results: press 1/2/3 to buy up to 2 upgrades, ENTER back to garage.</li>
+    </ol>
+    <p>Build check: <span class="pass">PASSED</span> — see <code>BUILD-CHECK.md</code>.
+      Boots clean (favicon 404 only), scripts load, player+rivals+hazards visible, input works, win/lose loop closes.</p>
+  </div>
+
+  <h2>2. Self-review results</h2>
+  <div class="card">
+    <p><strong>Completeness:</strong> Full loop closed with juice on core actions. Gaps: one rig, one map, simple AI (by design for V1). Fixed: input edge presses; stronger mid-lap track hostility.</p>
+    <p><strong>Uniqueness:</strong> Differentiator is the hunting track + freedom night ladder (not a generic arena deathmatch). Applied HOSTILE reconfiguration + cyan road/HUD tell.</p>
+    <p>Full write-up: <code>SELF-REVIEW.md</code></p>
+  </div>
+
+  <h2>3. Needs your call</h2>
+
+  <div class="card" data-q="q1">
+    <strong>Q1 — How many nights to freedom?</strong>
+    <p>V1 uses <strong>3</strong> short night runs on one track with escalating aggression.</p>
+    <p class="default">Default if blank: keep 3 nights.</p>
+    <label>Your answer</label>
+    <input type="text" id="q1" placeholder="e.g. 3 / 5 / endless with freedom meter" />
+  </div>
+
+  <div class="card" data-q="q2">
+    <strong>Q2 — Race length feel?</strong>
+    <p>One lap of a large oval (~15–30s if driven clean). Good for “one more night,” short vs 15–30 min pitch.</p>
+    <p class="default">Default: keep 1 lap; add length later via multi-lap nights.</p>
+    <label>Your answer</label>
+    <input type="text" id="q2" placeholder="1 lap / 2 laps / longer track" />
+  </div>
+
+  <div class="card" data-q="q3">
+    <strong>Q3 — Second vehicle when?</strong>
+    <p>V1 ships only the Brawler. Speedster / Crusher are in the pitch but cut for vertical slice.</p>
+    <p class="default">Default: add Speedster after core fun is confirmed.</p>
+    <label>Your answer</label>
+    <input type="text" id="q3" placeholder="rev-2 / after art pass / never for arcade" />
+  </div>
+
+  <div class="card" data-q="q4">
+    <strong>Q4 — Rockets: rear-only or also forward?</strong>
+    <p>Spec said rear rocket pods; rockets fire backward with mild homing.</p>
+    <p class="default">Default: keep rear pods (identity vs pure forward shooters).</p>
+    <label>Your answer</label>
+    <input type="text" id="q4" placeholder="rear only / forward / both" />
+  </div>
+
+  <div class="card" data-q="q5">
+    <strong>Q5 — Difficulty of living track</strong>
+    <p>Hostile phase at 72% can feel sudden. Dunes deal DoT while overlapping.</p>
+    <p class="default">Default: keep hostile spike; telegraph earlier if you find it unfair.</p>
+    <label>Your answer</label>
+    <input type="text" id="q5" placeholder="fine / too hard / too soft" />
+  </div>
+
+  <h2>4. Gaps &amp; clarity</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Perspective:</strong> Style said first-person; V1 scope said top-down → shipped top-down (assumption: combat readability).</li>
+      <li><strong>Session length:</strong> Pitch 15–30 min; V1 nights are short → freedom ladder is the multi-session spine.</li>
+      <li><strong>Audio direction</strong> conflicted (fast music vs “no music, stings only”) → synth SFX only, no race BGM.</li>
+      <li><strong>Map variety</strong> deferred; stages change aggression not geometry.</li>
+    </ul>
+  </div>
+
+  <h2>5. Playtest checklist (you)</h2>
+  <div class="card">
+    <label><input type="checkbox" id="p1" /> Is drive-and-destroy fun for 30+ seconds?</label>
+    <label>Notes <textarea id="p1n"></textarea></label>
+    <label><input type="checkbox" id="p2" /> Does the HOSTILE track beat feel like the star mechanic?</label>
+    <label>Notes <textarea id="p2n"></textarea></label>
+    <label><input type="checkbox" id="p3" /> Does “nights toward freedom” make you want another run?</label>
+    <label>Notes <textarea id="p3n"></textarea></label>
+    <label><input type="checkbox" id="p4" /> Anything confusing / unfair / missing?</label>
+    <label>Notes <textarea id="p4n"></textarea></label>
+  </div>
+
+  <div class="row">
+    <button type="button" id="exportBtn">Export answers</button>
+    <button type="button" class="secondary" id="fillDefaults">Fill defaults into blanks</button>
+  </div>
+  <p class="sub" id="exportNote"></p>
+
+  <script>
+    var defaults = {
+      q1: 'Keep 3 nights to freedom',
+      q2: 'Keep 1 lap; multi-lap later',
+      q3: 'Add Speedster after core fun confirmed',
+      q4: 'Keep rear rocket pods only',
+      q5: 'Keep hostile spike; tune if unfair'
+    };
+    document.getElementById('fillDefaults').onclick = function () {
+      Object.keys(defaults).forEach(function (k) {
+        var el = document.getElementById(k);
+        if (el && !el.value.trim()) el.value = defaults[k];
+      });
+    };
+    document.getElementById('exportBtn').onclick = function () {
+      var lines = [
+        '# REVIEW-ANSWERS — Twisted Speed',
+        '',
+        '## Decisions',
+        '- Q1 nights: ' + (document.getElementById('q1').value || defaults.q1),
+        '- Q2 race length: ' + (document.getElementById('q2').value || defaults.q2),
+        '- Q3 second vehicle: ' + (document.getElementById('q3').value || defaults.q3),
+        '- Q4 rockets: ' + (document.getElementById('q4').value || defaults.q4),
+        '- Q5 difficulty: ' + (document.getElementById('q5').value || defaults.q5),
+        '',
+        '## Playtest',
+        '- Fun 30s: ' + document.getElementById('p1').checked + ' — ' + document.getElementById('p1n').value,
+        '- Hostile track star: ' + document.getElementById('p2').checked + ' — ' + document.getElementById('p2n').value,
+        '- Freedom nights: ' + document.getElementById('p3').checked + ' — ' + document.getElementById('p3n').value,
+        '- Missing/confusing: ' + document.getElementById('p4').checked + ' — ' + document.getElementById('p4n').value,
+        ''
+      ];
+      var blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'REVIEW-ANSWERS.md';
+      a.click();
+      document.getElementById('exportNote').textContent = 'Downloaded REVIEW-ANSWERS.md — drop it in the pack root for rev-2.';
+    };
+  </script>
+</body>
+</html>

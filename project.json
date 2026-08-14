@@ -1,0 +1,138 @@
+{
+  "fiVersion": 1,
+  "slug": "twisted-speed",
+  "title": "Twisted Speed",
+  "updated": 1785106512868,
+  "developer": "",
+  "dashboardGenerated": false,
+  "exportedAt": null,
+  "builtLocally": false,
+  "submitted": false,
+  "data": {
+    "title": "Twisted Speed",
+    "tagline": "Race through the carnage and survive the onslaught. A thrilling racing game where both the players and the environment bite.",
+    "genres": [
+      "Other"
+    ],
+    "genre": "Other",
+    "deployment": "",
+    "oneLiner": "A racing game where you choose a vehicle (quick but light on weapons, medium build with moderate weapons, or heavy with tank-like weapons), choose a map (terrain, track, climate- each map will have it's own features that can slow/stop you) and then race to the finish.",
+    "elevatorPitch": "Twisted Speed is a brutal 2D top-down racer where the track is a living predator and every rival is a moving executioner. Choose your rig—fragile speedster, balanced brawler, or armored crusher—then fight through a single cyber-Mex wasteland loop that actively tries to crush, electrify, or swallow you. The fantasy is simple: survive the onslaught, loot the wreckage, and return meaner for the next night run.",
+    "playerFantasy": "Completed the race, upgrade your rig, live to see another day.",
+    "visualStyle": "Other",
+    "tone": "Cyberpunk and dystopian (Mad Max)",
+    "perspective": "First person driver (through windshield or offset behind vehicle)",
+    "artPipeline": "Grok Imagine batches (Unity CLI) + human review",
+    "audioDirection": "Something fast paced (maybe choose a genre- Rap, Metal, Rock)",
+    "coreMechanic": "Drive-and-destroy: hold throttle while aiming weapons and dodging active terrain traps",
+    "progression": "Linear scrap economy spent on three upgrade trees (speed, armor, firepower) that persist across runs",
+    "combatOrChallenge": "The track itself spawns moving hazards (collapsing bridges, electrified dunes, spike walls) that force constant positioning and resource decisions",
+    "multiplayer": "Solo for now",
+    "sessionLength": "15–30 minutes per race",
+    "loopSteps": [
+      "Enter the neon-scorched garage and select your rig",
+      "Drop into the single living track as hazards awaken",
+      "Dodge, ram, and fire while the environment bites back",
+      "Eliminate or outrun rival vehicles before the finish line",
+      "Cross the line alive and collect scattered salvage",
+      "Spend scrap on targeted upgrades in the garage",
+      "Queue the next run with a deadlier build"
+    ],
+    "influenceGames": [
+      "Twisted Metal Black",
+      "Mario Cart",
+      "Need for Speed"
+    ],
+    "influenceNotes": {},
+    "stolenIdeas": [
+      "The vehicle weapons and types from Twisted Metal Black",
+      "How the environment attacks you in Mario Cart",
+      "The racing dynamics in Need for Speed",
+      "The visuals and graphics from Need for Speed (especially newer ones)"
+    ],
+    "uniqueHook": "",
+    "notACloneBecause": "",
+    "whyPlayTwice": "",
+    "v1Scope": [
+      "One playable vehicle: the balanced brawler with front machine guns and rear rocket pods",
+      "Single 32-screen loop track: ruined highway through irradiated desert with three active hazards",
+      "Basic top-down driving with momentum, drift, and simple collision damage",
+      "Two weapon types that can be fired while moving",
+      "Three rival AI cars with basic aggression and targeting",
+      "End-of-run scrap screen and two upgrade choices",
+      "Pixel-perfect collision and 60 fps feel as the only polish target"
+    ],
+    "openQuestions": [
+      "Hook: the track is an active enemy that changes state every lap, turning racing into survival horror",
+      "Not clone: environment hazards move and target the player instead of being static obstacles like classic Twisted Metal",
+      "Deployment: start as single-player offline build for fastest vertical slice",
+      "Genres: pure racing-combat hybrid with no RPG elements beyond three upgrade paths"
+    ],
+    "rawIdeas": "A dystopian world where you have to race to survive. Think about the movie Running Man, but this is a violent racing game where you are trying to win to gain your freedom or money or whatever the reason you are doing this. However, it's not just the players who are after you, the environment has also been designed to take you out. Vehicles can be equipped with guns, rockets, lasers, mines, etc. There is no perfect vehicle though, each have their pros and cons. Think about Mario where you can have a speedy motorbike but bad handling. So, between driving dynamics and weapons, the racer has to decide which vehicle best suits them. As the racer progresses through the maps/levels, they will level up and be able to upgrade their vehicles. If they find they picked the wrong vehicle for them, they can choose a new vehicle, but they will be starting from scratch with the upgrades.\n\nAI risks & cuts:\nCut all rival AI behaviors beyond basic pursuit and ram\nRemove second weapon type if driving physics slip\nDrop end-of-run upgrade screen visuals to bare text list\nLimit track to one hazard type if collision tuning takes too long",
+    "artAssets": [
+      {
+        "name": "Brawler Vehicle",
+        "size": "32x32",
+        "category": "character",
+        "prompt": "rusty cyberpunk muscle car with spiked fenders, glowing red headlights, mounted machine guns, dystopian Mad Max style, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "brawler_vehicle",
+        "folder": "assets/sprites/characters/"
+      },
+      {
+        "name": "Rival Scrapper",
+        "size": "32x32",
+        "category": "enemy",
+        "prompt": "lightweight spiked dune buggy with neon green accents and harpoon launcher, cyberpunk wasteland style, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "rival_scrapper",
+        "folder": "assets/sprites/characters/"
+      },
+      {
+        "name": "Electrified Dune Hazard",
+        "size": "32x32",
+        "category": "environment",
+        "prompt": "shifting sand dune with crackling blue electricity arcs and buried rebar, dystopian cyberpunk, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "electrified_dune_hazard",
+        "folder": "assets/sprites/environment/"
+      },
+      {
+        "name": "Spike Wall Trap",
+        "size": "32x32",
+        "category": "object",
+        "prompt": "retractable rusted metal spike barrier rising from cracked asphalt, Mad Max cyberpunk tone, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "spike_wall_trap",
+        "folder": "assets/sprites/"
+      },
+      {
+        "name": "Scrap Pickup",
+        "size": "32x32",
+        "category": "pickup",
+        "prompt": "glowing orange twisted metal chunk with faint circuit lines, cyberpunk salvage style, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "scrap_pickup",
+        "folder": "assets/sprites/"
+      },
+      {
+        "name": "Rocket VFX",
+        "size": "32x32",
+        "category": "vfx",
+        "prompt": "orange-yellow rocket trail with smoke and impact flash, retro pixel style, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "rocket_vfx",
+        "folder": "assets/sprites/vfx/"
+      },
+      {
+        "name": "Track Tile Set",
+        "size": "32x32",
+        "category": "tile",
+        "prompt": "cracked asphalt highway with oil stains and glowing hazard lines, dystopian cyberpunk palette, crisp pixels, isolated centered, transparent background, no text",
+        "filename": "track_tile_set",
+        "folder": "assets/sprites/"
+      }
+    ],
+    "aiExpansionRaw": "{\n  \"elevatorPitch\": \"Twisted Speed is a brutal 2D top-down racer where the track is a living predator and every rival is a moving executioner. Choose your rig—fragile speedster, balanced brawler, or armored crusher—then fight through a single cyber-Mex wasteland loop that actively tries to crush, electrify, or swallow you. The fantasy is simple: survive the onslaught, loot the wreckage, and return meaner for the next night run.\",\n  \"coreLoop\": [\n    \"Enter the neon-scorched garage and select your rig\",\n    \"Drop into the single living track as hazards awaken\",\n    \"Dodge, ram, and fire while the environment bites back\",\n    \"Eliminate or outrun rival vehicles before the finish line\",\n    \"Cross the line alive and collect scattered salvage\",\n    \"Spend scrap on targeted upgrades in the garage\",\n    \"Queue the next run with a deadlier build\"\n  ],\n  \"mechanics\": {\n    \"core\": \"Drive-and-destroy: hold throttle while aiming weapons and dodging active terrain traps\",\n    \"progression\": \"Linear scrap economy spent on three upgrade trees (speed, armor, firepower) that persist across runs\",\n    \"challenge\": \"The track itself spawns moving hazards (collapsing bridges, electrified dunes, spike walls) that force constant positioning and resource decisions\"\n  },\n  \"v1Scope\": [\n    \"One playable vehicle: the balanced brawler with front machine guns and rear rocket pods\",\n    \"Single 32-screen loop track: ruined highway through irradiated desert with three active hazards\",\n    \"Basic top-down driving with momentum, drift, and simple collision damage\",\n    \"Two weapon types that can be fired while moving\",\n    \"Three rival AI cars with basic aggression and targeting\",\n    \"End-of-run scrap screen and two upgrade choices\",\n    \"Pixel-perfect collision and 60 fps feel as the only polish target\"\n  ],\n  \"artAssets\": [\n    {\n      \"name\": \"Brawler Vehicle\",\n      \"size\": \"32x32\",\n      \"category\": \"character\",\n      \"prompt\": \"rusty cyberpunk muscle car with spiked fenders, glowing red headlights, mounted machine guns, dystopian Mad Max style, crisp pixels, isolated centered, transparent background, no text\"\n    },\n    {\n      \"name\": \"Rival Scrapper\",\n      \"size\": \"32x32\",\n      \"category\": \"enemy\",\n      \"prompt\": \"lightweight spiked dune buggy with neon green accents and harpoon launcher, cyberpunk wasteland style, crisp pixels, isolated centered, transparent background, no text\"\n    },\n    {\n      \"name\": \"Electrified Dune Hazard\",\n      \"size\": \"32x32\",\n      \"category\": \"environment\",\n      \"prompt\": \"shifting sand dune with crackling blue electricity arcs and buried rebar, dystopian cyberpunk, crisp pixels, isolated centered, transparent background, no text\"\n    },\n    {\n      \"name\": \"Spike Wall Trap\",\n      \"size\": \"32x32\",\n      \"category\": \"object\",\n      \"prompt\": \"retractable rusted metal spike barrier rising from cracked asphalt, Mad Max cyberpunk tone, crisp pixels, isolated centered, transparent background, no text\"\n    },\n    {\n      \"name\": \"Scrap Pickup\",\n      \"size\": \"32x32\",\n      \"category\": \"pickup\",\n      \"prompt\": \"glowing orange twisted metal chunk with faint circuit lines, cyberpunk salvage style, crisp pixels, isolated centered, transparent background, no text\"\n    },\n    {\n      \"name\": \"Rocket VFX\",\n      \"size\": \"32x32\",\n      \"category\": \"vfx\",\n      \"prompt\": \"orange-yellow rocket trail with smoke and impact flash, retro pixel style, crisp pixels, isolated centered, transparent background, no text\"\n    },\n    {\n      \"name\": \"Track Tile Set\",\n      \"size\": \"32x32\",\n      \"category\": \"tile\",\n      \"prompt\": \"cracked asphalt highway with oil stains and glowing hazard lines, dystopian cyberpunk palette, crisp pixels, isolated centered, transparent background, no text\"\n    }\n  ],\n  \"openQuestionsResolved\": [\n    \"Hook: the track is an active enemy that changes state every lap, turning racing into survival horror\",\n    \"Not clone: environment hazards move and target the player instead of being static obstacles like classic Twisted Metal\",\n    \"Deployment: start as single-player offline build for fastest vertical slice\",\n    \"Genres: pure racing-combat hybrid with no RPG elements beyond three upgrade paths\"\n  ],\n  \"risksAndCuts\": [\n    \"Cut all rival AI behaviors beyond basic pursuit and ram\",\n    \"Remove second weapon type if driving physics slip\",\n    \"Drop end-of-run upgrade screen visuals to bare text list\",\n    \"Limit track to one hazard type if collision tuning takes too long\"\n  ],\n  \"extraSections\": {\n    \"Audio Direction\": \"Low-fi distorted engine loops, metallic impacts, and sparse synth stabs that swell only when a hazard activates. No music during the race—only a single distorted guitar sting on finish or death.\",\n    \"UI Philosophy\": \"Minimal HUD: speedometer as a cracked analog needle, health as flickering red bar on the vehicle sprite itself, scrap count shown only at run end in blood-red seven-segment font.\"\n  }\n}",
+    "aiExtraSections": {
+      "Audio Direction": "Low-fi distorted engine loops, metallic impacts, and sparse synth stabs that swell only when a hazard activates. No music during the race—only a single distorted guitar sting on finish or death.",
+      "UI Philosophy": "Minimal HUD: speedometer as a cracked analog needle, health as flickering red bar on the vehicle sprite itself, scrap count shown only at run end in blood-red seven-segment font."
+    },
+    "aiExpandedAt": 1785106484356,
+    "conceptPromptAt": 1785106451415
+  }
+}

@@ -1,0 +1,240 @@
+Paste this entire prompt into ANY AI coding tool (Cursor, Claude Code, Codex, etc.), in the **folder that contains your game** (or the Design Lab kit next to it). Any time — day one or year three. You do not need prior chat history.
+
+Works for:
+- **FutureIndustries build packs** (full FI layout), and
+- **Standalone games** that never used FI — drop this kit in (or next to) the project and run.
+
+---
+
+You are my FutureIndustries **Design Lab** agent. Run skill `fi-design-lab` if available; otherwise follow this prompt exactly.
+
+## Goal
+Create or **refresh** `fi-design-lab/DESIGN-LAB.html` so it matches the game **as it exists right now** — not an old pitch doc if the game has evolved. The lab must stay useful even if I ignored it for weeks.
+
+## Do NOT rely on chat history
+Sessions die. I may switch AI products. Only **files in this project** are truth.
+
+---
+
+## Mode detection (do this first)
+
+| Mode | How you know |
+|------|----------------|
+| **FI pack** | `BUILD-CONTEXT.md` and/or `project.json` + FI layout present |
+| **Standalone** | No FI pack (or incomplete). Game lives here as Unity/Godot/HTML/Unreal/etc. |
+
+In **standalone** mode: treat **source code + any design docs you find** as primary truth. FI files are optional helpers, not requirements.
+
+### Minimum kit to drop into a non-FI project
+Copy these into the **game project root** (or a clearly linked subfolder — prefer root):
+
+- `RUN-DESIGN-LAB.txt` (this file)
+- `LOOK-AT-ME.html` (optional but recommended)
+- `fi-design-lab/DESIGN-LAB.html` (shell — create if missing)
+- `fi-design-lab/lab-state.json` (create if missing)
+
+Director says: *“This folder is my game. Run RUN-DESIGN-LAB.txt.”*
+
+---
+
+## Read order
+
+### Always try (skip if missing — list what you skipped)
+
+1. `project.json` / `package.json` / `*.csproj` / `project.godot` / `Cargo.toml` / engine markers — **detect stack + title**
+2. `BUILD-CONTEXT.md`, `ai_manifest.json` (FI only — skip in pure standalone)
+3. `CHANGELOG.md`, `PROGRESS.md`, `README.md`, `DESIGN.md`, `GDD.md`, `docs/**` (any design notes)
+4. `SELF-REVIEW.md`, `BUILD-CHECK.md` (if present)
+5. `fi-design-lab/lab-state.json`, `fi-design-lab/EXPORT/*` (**preserve director answers**)
+6. **Game code — discover, don’t assume FI paths:**
+   - FI common: `web/js/config.js`, `web/js/game.js`, `web/index.html`
+   - Also search: `src/`, `Scripts/`, `scripts/`, `godot/`, `assets/`, `App.tsx`, `main.py`, `*.gd`, `*.cs`, `*.ts`, `*.js` entrypoints
+   - Skim enough to state: core loop, combat/economy if any, how to run
+7. `git log -20 --oneline` if git exists (optional)
+
+### Standalone discovery rules
+- Prefer **runnable entry** (e.g. `index.html`, Godot main scene, Unity scenes under `Assets/`) over marketing README fluff.
+- If multiple packages/monorepo: pick the package that looks like the **player-facing game**; note path in `packSignals.gameRoot`.
+- If you truly cannot find game code: stop and ask where the game lives — do not invent a game.
+
+## Then do exactly this
+
+### A) Ensure durable docs exist
+If `CHANGELOG.md` or `PROGRESS.md` is missing, **create them now** from what you found (templates below). Never leave the project without both after this run. Standalone projects benefit most — this becomes their memory.
+
+### B) Build project signals
+Write `fi-design-lab/lab-state.json` → `packSignals` + `driftNotes` (+ `mode: "fi-pack" | "standalone"`):
+
+- title, slug (derive from folder/name if needed), deployment/engine
+- how to run / boots path (`bootsPath`)
+- original pitch docs vs **current** core verb / fantasy (if different, say so)
+- has complete loop? what works in play?
+- combat / economy / progression facts from **code**
+- last changelog bullets (or “none yet — created today”)
+- recommended next Design Lab phase
+- `gameRoot` if not project root
+
+### C) Create or refresh the lab UI
+This prompt is the **source of truth for the product**. The HTML is the generated artifact.
+
+**On every run:**
+1. Prefer **patching** existing `fi-design-lab/DESIGN-LAB.html` (do not replace with a thinner prototype).
+2. **Always update** `window.FI_LAB_SEED` (and `lab-state.json`):
+   - `slug`, `title` from this project
+   - `packSignals` from step B (include `mode`, `bootsPath`, `gameRoot`)
+   - `fieldCoach` (see C2)
+   - `aiSummary` (see D — after coach)
+   - optional `prefillAnswers` / `fieldAnswered` when the project already answers a field
+3. If HTML is **missing**, recreate the **full** shell using the Shell contract below.
+4. If HTML **exists**, only change: seed/coach/prefill/summary, and **fix** shell gaps. Do not strip features.
+5. Do **not** wipe browser localStorage; do not delete EXPORT without asking.
+6. Do **not** hardcode another game’s lore or a “Load [Demo Game] example” button.
+7. **File links** in the lab: relative from `fi-design-lab/`, `target="_blank"`. Point “Play game” at real `bootsPath` when linkable.
+
+#### Shell contract (must all be true after your run)
+- FI dark futuristic theme (cyan/violet); **custom-styled scrollbars** on page, **left phase nav**, notepad (not on sticky top chrome)
+- **Layout (desktop):** 3 columns — **left phase nav** | main craft column | **right sticky Notepad**. Nav sits **opposite** the notepad.
+- **Left phase nav (vertical):** one control per phase, top→bottom through all sections. Sticky with the viewport; no horizontal phase rail in the top chrome.
+- **Nav progress colors:** each phase icon/control uses a **gradient color by % of that phase’s XP filled** (empty → muted; filling → cool→warm spectrum; near-full → cyan/green). Colors update live as they type.
+- **Mark phase done → gold:** when director clicks **Mark phase done** (and `sealed[phaseId]` is true), that phase’s **nav icon turns gold** (distinct from “in progress” greens). Sealed wins over the progress gradient until unsealed/reset.
+- **Mark phase done** control lives in sticky top chrome — only enabled at **100% XP for that phase**
+- **Sticky top chrome (no internal scrollbar):** header, Lab XP bar, **aiSummary**, mark-done + export actions only. **Do not** put the phase list here. **Do not** set `max-height` + `overflow-y: auto` on the sticky chrome (that caused a second scrollbar). Form body scrolls under chrome.
+- **AI summary block first** in chrome (or immediately under it): `aiSummary.leastConfident` + `aiSummary.missingForIndieSuccess` (step D); placeholder if empty
+- Multi-phase form; **all questions optional** (no red asterisks / required gates)
+- Bottom chrome = **page arrows only** (← →)
+- Per-field **XP**; partial ~50% thin / full solid; top bar = sum as they type
+- Per-field flag: “Not a real answer — just brainstorming” → `field_brainstorm_flags` on export; AI asks before treating as locked
+- **Grok’s thoughts** + stance solid/gap/optional (C2)
+- Sticky **Notepad** (right); form body scrolls under chrome
+- Links: RUN-DESIGN-LAB, LOOK-AT-ME, game entry, CHANGELOG, PROGRESS — relative + new tab
+- Export `lab-answers.json` + `.md`
+- Boot splash + XP bar OK
+- **Mobile:** stack columns; phase nav can become a compact horizontal/wrap row without reintroducing a scrollable sticky chrome trap
+
+If the current HTML is missing any contract item, **add it** while refreshing coach content.
+
+### C2) Writer’s-block coach — **required every run**
+This lab is a **planner and a writer’s-block buster**, not a suggestion spam machine.
+
+For **every field id** in DESIGN-LAB.html, set `FI_LAB_SEED.fieldCoach[fieldId]` (and `lab-state.json` → `fieldCoach`) to either:
+- a string, or preferably
+- `{ "text": "...", "stance": "solid" | "gap" | "optional" }`
+
+UI shows: **“Grok’s thoughts on this topic”** plus stance badge (Looks solid / Worth a look / Optional).
+
+#### Stance rules (critical — do not ignore)
+
+| Stance | When | What to write |
+|--------|------|----------------|
+| **`solid`** | Pack/code/manifest **already answers** this field clearly | Affirm what’s already true in 1–2 sentences. **Do not invent new features or alternate directions.** Example: “You’re covered: kill=EXP, stun→cuff=recruit. No change needed unless you want a different fantasy.” |
+| **`gap`** | Field is empty, vague, contradictory, or risky | One concrete question or angle to unblock. Still no laundry list of features. |
+| **`optional`** | Nice-to-have / later | Short “park this” note — no pressure to iterate now. |
+
+**Anti-patterns (forbidden):**
+- Forcing “what if you also added…” when the design is already clear  
+- Iterating for the sake of sounding smart  
+- Treating every field as broken  
+- Writing the same generic “make it fun” blurb on every field  
+
+**Default bias:** if the game already implements something, prefer **`solid`** over **`gap`**. Only use `gap` when something is missing, unclear, or actively harmful.
+
+#### Prefill answers when the pack already knows
+If code/PROGRESS/manifest already answer a field, **prefill** `answers` (or document in seed) so the director isn’t blank-page’d:
+- Put text into `FI_LAB_SEED.prefillAnswers[fieldId]` and merge into the lab if the user hasn’t typed that field yet (or inject via packSignals step).
+- Optionally set `FI_LAB_SEED.fieldAnswered[fieldId]` to `"full"` or `"partial"` so XP can treat pack-backed answers as solid.
+
+#### XP (UI behavior to preserve / implement)
+- Each field has `xp: N` (importance). Verb / loop / combat / next milestone = highest.
+- **Partial XP (~50%)** for a thin/short answer once they start typing.
+- **Full XP** for a solid answer (or `stance: solid` + any real answer / `fieldAnswered: full`).
+- Empty = 0 XP. Top bar = sum of partial+full credits.
+
+On refresh: rewrite thoughts only if stance/content should change because the pack **drifted**; don’t churn solid fields into new suggestions.
+
+### D) Top-of-lab AI summary — **required at the end of every run**
+After pack signals + coach notes are written, **ask yourself** these two questions (do not ask the director):
+
+1. **“What am I least confident about regarding the current state of this game?”**  
+   Honest uncertainty: fun, scope, onboarding, combat feel, empty systems, stale docs vs code, etc. Be specific to *this* pack.
+
+2. **“What is the user missing in their design based on real-world indie game success stories?”**  
+   Ground in real patterns (e.g. complete loop before content sprawl, readable first session, one clear verb, retention via short sessions, vertical slice, shipping small). **Do not** invent random features; name a *gap vs proven practice* and why it matters. Keep it constructive, 2–5 sentences each.
+
+Write both answers into:
+- `window.FI_LAB_SEED.aiSummary` in `DESIGN-LAB.html`:
+  ```js
+  aiSummary: {
+    leastConfident: "...",
+    missingForIndieSuccess: "...",
+    generatedAt: "YYYY-MM-DD" // or ISO date
+  }
+  ```
+- Same object in `fi-design-lab/lab-state.json` → `aiSummary`
+
+The lab UI must show this block **first** (above phase content) as direct feedback every time the director opens the form. If regenerating HTML, keep that placement.
+
+Also put a short version of both answers in your chat reply to the director.
+
+### E) Tell me in plain language
+1. Path to open: `fi-design-lab/DESIGN-LAB.html`
+2. What changed in the pack since last signals (or “first run”)
+3. Which lab phases look already answered by the game vs still empty
+4. Confirm Grok thoughts + XP + **aiSummary (two questions)** were written
+5. **One** next playtest or decision for me
+
+### F) Append CHANGELOG
+Add today’s entry: “Design Lab refreshed — signals, coach notes, aiSummary (confidence + indie gap).”
+
+## Templates (only if files missing)
+
+### CHANGELOG.md
+```markdown
+# Changelog
+All notable pack/game changes. Newest first. AI agents MUST append after every real session.
+
+## [Unreleased]
+- 
+
+## [Pack export]
+- Initial FutureIndustries build pack
+```
+
+### PROGRESS.md
+```markdown
+# Progress
+## Now
+- 
+## Next
+- 
+## Blocked
+- 
+## Core verb (current)
+- 
+## Loop status
+- [ ] boots  [ ] complete loop  [ ] fun enough to extend
+```
+
+## Success criteria
+- Lab opens offline (double-click HTML)
+- Works for **FI pack or standalone** game folder (mode detected and noted)
+- Signals match the **current** game from **code + docs found**, not a stale pitch alone
+- **aiSummary** at top: least-confident + indie-success gap (both filled this run)
+- **Every field** has XP weight + a Grok’s-thoughts coach blurb for **this** game
+- **All questions optional** — no required asterisks; one topic at a time is fine
+- XP: partial/full from typing; bar updates live
+- **Notepad** side panel; export as `notepad_ideas` — ask before building
+- CHANGELOG.md + PROGRESS.md exist and were touched this run
+- Director answers / exports preserved
+
+## If the director hands you a lab export later
+- Treat form `answers` as planned intent.
+- If `notepad_ideas` is non-empty: **summarize and ASK** discuss / park / ignore — never silently implement notepad brain-dumps.
+- If `field_brainstorm_flags[id]` is true: that answer is exploratory only — ASK before building on it.
+
+## Standalone FAQ (for the agent)
+- **Q: No BUILD-CONTEXT?** A: Fine. Infer from code + README; create PROGRESS/CHANGELOG.
+- **Q: Unity/Unreal/huge repo?** A: Find player game module; set `gameRoot`; don’t scan the whole engine.
+- **Q: Design Lab files in a subfolder?** A: Prefer moving kit to project root, or set relative links carefully from `fi-design-lab/`.
+- **Q: Not an FI user?** A: Still use FI Design Lab branding as the tool; content is 100% their game.
+
+Start now. No plan approval gate — refresh is safe and reversible.
