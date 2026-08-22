@@ -1,5 +1,5 @@
 /**
- * Night city world builder — dense NFS Heat canyon streets, industrial, highway.
+ * Night city world builder — dense neon canyon streets, industrial, highway.
  * Materials shared; geometry instanced where possible. No z-fighting (layer offsets).
  */
 (function (G) {

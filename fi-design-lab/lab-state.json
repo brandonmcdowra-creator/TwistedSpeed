@@ -1,0 +1,33 @@
+{
+  "fiDesignLabVersion": 2,
+  "mode": "fi-pack",
+  "slug": "twisted-speed",
+  "title": "Twisted Speed",
+  "refreshedAt": "2026-07-26",
+  "note": "Pack export seed. Run RUN-DESIGN-LAB.txt after first builds to fill fieldCoach + aiSummary from live code.",
+  "packSignals": {
+    "mode": "fi-pack",
+    "deployment": "",
+    "bootsPath": "web/index.html",
+    "gameRoot": ".",
+    "howToRun": "Open web/index.html — see START-HERE.txt.",
+    "genres": [
+      "Other"
+    ],
+    "uniqueHookFromPack": "A racing game where you choose a vehicle (quick but light on weapons, medium build with moderate weapons, or heavy with tank-like weapons), choose a map (terrain, track, climate- each map will have it's own features that can slow/stop you) and then race to the finish.",
+    "coreVerbEvolved": "Drive-and-destroy: hold throttle while aiming weapons and dodging active terrain traps",
+    "playerFantasyCurrent": "Completed the race, upgrade your rig, live to see another day.",
+    "lastChangelog": [
+      "Pack export — initial FutureIndustries build pack"
+    ],
+    "recommendedPhase": "pitch"
+  },
+  "fieldCoach": {},
+  "prefillAnswers": {},
+  "fieldAnswered": {},
+  "aiSummary": {
+    "leastConfident": "",
+    "missingForIndieSuccess": "",
+    "generatedAt": ""
+  }
+}

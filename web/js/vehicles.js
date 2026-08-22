@@ -5,6 +5,36 @@
 (function () {
   var GAME = (window.GAME = window.GAME || {});
   var glbCache = {};
+  // Demoted-once rival templates (Basic mats) — START must not re-walk 80 Standard meshes (v322)
+  var rivalBasicTpl = {};
+
+  function demoteMeshToBasic(root) {
+    if (!root || !root.traverse) return root;
+    root.traverse(function (c) {
+      if (!c.isMesh || !c.material) return;
+      var src = Array.isArray(c.material) ? c.material : [c.material];
+      var out = src.map(function (mat) {
+        if (!mat) return mat;
+        if (mat.isMeshBasicMaterial) return mat;
+        var col = mat.color ? mat.color.clone() : new THREE.Color(0x888888);
+        if (mat.emissive && mat.emissiveIntensity > 0.05) {
+          col.lerp(mat.emissive, Math.min(0.45, mat.emissiveIntensity * 0.25));
+        }
+        return new THREE.MeshBasicMaterial({
+          color: col,
+          map: mat.map || null,
+          transparent: !!mat.transparent,
+          opacity: mat.opacity != null ? mat.opacity : 1,
+          side: mat.side != null ? mat.side : THREE.FrontSide,
+          fog: false,
+        });
+      });
+      c.material = out.length === 1 ? out[0] : out;
+      c.castShadow = false;
+      c.receiveShadow = false;
+    });
+    return root;
+  }
 
   function carDef(id) {
     var cars = GAME.config.cars;
@@ -191,7 +221,7 @@
     addMesh(g, new THREE.BoxGeometry(0.12, 0.02, 3.2 * sZ), accentMat, -0.4 * sX, 0.78 * sY, 0.05);
     addMesh(g, new THREE.BoxGeometry(0.12, 0.02, 3.2 * sZ), accentMat, 0.4 * sX, 0.78 * sY, 0.05);
 
-    // === LED headlights (bright white â€” NFS Heat language) ===
+    // === LED headlights (bright white night-street language) ===
     var hlMat = new THREE.MeshStandardMaterial({
       color: 0xffffff, emissive: 0xfff0c8, emissiveIntensity: 4.5,
       metalness: 0.15, roughness: 0.12, envMap: M._envMap, envMapIntensity: 1.2,
@@ -816,12 +846,18 @@
           model: GAME.config.models.razorback,
         };
       }
+      // Rival demoted templates — clone is cheap; demote-once keeps START instant (v322)
+      var rid = def.id || carId || 'marrow';
+      if (!isPlayer && rivalBasicTpl[rid]) {
+        return rivalBasicTpl[rid].clone(true);
+      }
       var url = def.model;
       // Hero path: Blender GLB when preloaded (Marrow HQ loft). ?proc=1 forces multiparts.
       var forceProc = typeof location !== 'undefined' && /[?&]proc=1/.test(location.search);
       var template = !forceProc && glbCache[url];
+      var g;
       if (template) {
-        var g = decorateGlb(template.clone(true), def, isPlayer);
+        g = decorateGlb(template.clone(true), def, isPlayer);
         // Authored GLBs (Marrow, Vesper Kenney baseline, etc.) already include kit — no double stack
         g.userData.fromGlb = true;
         g.userData.theme = def.id;
@@ -829,10 +865,17 @@
           g.userData.stabFront = true;
           g.userData.stabRear = true;
         }
+      } else {
+        // Fallback multiparts (or forced with ?proc=1)
+        g = procedural(def, isPlayer);
+      }
+      if (!isPlayer) {
+        demoteMeshToBasic(g);
+        // Keep an off-scene template; return this instance for the pack (v322)
+        if (!rivalBasicTpl[rid]) rivalBasicTpl[rid] = g.clone(true);
         return g;
       }
-      // Fallback multiparts (or forced with ?proc=1)
-      return procedural(def, isPlayer);
+      return g;
     },
 
     createAsync: function (carId, isPlayer) {

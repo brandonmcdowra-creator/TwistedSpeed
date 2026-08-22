@@ -43,57 +43,121 @@
   /**
    * Single clean point-to-point highway.
    * Wide sweeps, no self-overlap, ~2.2 km arcade length.
-   * Flat Y — elevation comes later once lateral clearance is sacred.
+   * v328: first corner FLAT (y≈0 through ~0.14), then soft climb ≤26m — no 50m kink.
    */
   function buildPath() {
     var pts = [];
     function add(x, y, z) { pts.push(new THREE.Vector3(x, y, z)); }
 
-    // Start straight
+    // Opening: long straight then VERY wide right sweep, flat through exit (v329)
+    // v382: extra climb/descent Y steps — less faceted grade (was 2→12→22→26)
     add(0, 0, 0);
-    add(0, 0, -120);
-    add(0, 0, -240);
-    // Soft right into a long curve
-    add(40, 0, -360);
-    add(140, 0, -460);
-    add(280, 0, -520);
-    add(420, 0, -500);
-    add(540, 0, -420);
-    // Straight run
-    add(620, 0, -300);
-    add(660, 0, -160);
-    add(660, 0, -20);
-    // S-bend (gentle)
-    add(620, 0, 100);
-    add(520, 0, 200);
-    add(400, 0, 260);
-    add(280, 0, 300);
-    add(180, 0, 380);
-    add(140, 0, 500);
-    // Climbing arc (visual interest, still flat for now)
-    add(160, 0, 640);
-    add(260, 0, 760);
-    add(400, 0, 840);
-    add(560, 0, 880);
-    add(700, 0, 860);
-    add(820, 0, 780);
-    // Final sweep to finish
-    add(900, 0, 640);
-    add(940, 0, 480);
-    add(960, 0, 320);
-    add(980, 0, 160);
-    add(1000, 0, 0);
+    add(0, 0, -180);
+    add(0, 0, -360);
+    add(10, 0, -500);   // barely starting to bend
+    add(50, 0, -620);   // long arc
+    add(130, 0, -720);
+    add(250, 0, -780);  // curve exit still flat
+    // v393: even gentler mid-climb (was maxSecond ~0.87 faceted feel)
+    add(340, 0.3, -795);
+    add(400, 1.0, -800);
+    add(460, 2.4, -795);
+    add(510, 4.2, -785);
+    add(560, 6.5, -765);
+    add(610, 9.5, -720);
+    add(660, 13, -660);
+    add(700, 16, -600);
+    add(730, 18.5, -540);
+    add(755, 20.5, -480);
+    add(775, 22, -420);
+    add(790, 22.5, -340);
+    add(800, 21, -260);
+    add(800, 19, -180);
+    add(795, 16.5, -100);
+    add(790, 13.5, -20);
+    add(680, 10, 140);
+    add(560, 8, 260);
+    add(480, 9, 290);
+    add(400, 11, 320);
+    add(330, 14, 360);
+    add(260, 17, 400);
+    add(210, 20, 470);
+    add(170, 22, 540);
+    add(160, 24, 610);
+    add(175, 25, 680);
+    add(240, 22, 740);
+    add(300, 18, 800);
+    add(380, 15, 840);
+    add(460, 12, 880);
+    add(540, 10, 900);
+    add(620, 8, 900);
+    add(700, 6, 870);
+    add(780, 5, 840);
+    add(900, 4, 720);
+    add(960, 3, 560);
+    add(990, 2, 380);
+    add(1005, 1.5, 180);
+    add(1010, 1, 0);
 
-    var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.22);
+    // v382 smooth Y; v386: cap samples so nearestOnPath stays cheap (was 521)
+    var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.08);
     var pathLen = curve.getLength();
-    // Smooth enough ribbon without exploding mesh count (~240 max)
-    var nSamples = Math.max(140, Math.min(240, Math.floor(pathLen / 12)));
+    var nSamples = Math.max(320, Math.min(440, Math.floor(pathLen / 5.5)));
     var dense = curve.getSpacedPoints(nSamples);
     return {
       curve: curve,
       points: dense,
       raw: pts,
       theme: 'city',
+      closed: false,
+      length: pathLen,
+    };
+  }
+
+  /**
+   * THE REACH — coastal dusk. Longer straights, gentler Y, wide horizon.
+   * Not a neon canyon clone.
+   */
+  function buildPathCoast() {
+    var pts = [];
+    function add(x, y, z) { pts.push(new THREE.Vector3(x, y, z)); }
+
+    add(0, 0, 0);
+    add(0, 0, -200);
+    add(0, 0, -420);
+    add(40, 0, -620);   // soft right, flat
+    add(160, 1, -780);
+    add(340, 2, -880);
+    add(560, 4, -900);
+    add(760, 6, -820);
+    add(900, 8, -640);
+    add(960, 6, -420);
+    add(940, 4, -200);
+    add(820, 3, -20);
+    add(640, 5, 120);
+    add(440, 8, 200);
+    add(260, 10, 320);
+    add(160, 8, 480);
+    add(180, 6, 660);
+    add(320, 4, 820);
+    add(520, 3, 920);
+    add(720, 2, 960);
+    add(900, 1, 900);
+    add(1020, 1, 740);
+    add(1080, 0, 520);
+    add(1100, 0, 280);
+    add(1110, 0, 40);
+
+    var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.2);
+    var pathLen = curve.getLength();
+    // v353: denser coast samples for first-curve + climb smoothness
+    var nSamples = Math.max(240, Math.min(320, Math.floor(pathLen / 8)));
+    var dense = curve.getSpacedPoints(nSamples);
+    return {
+      curve: curve,
+      points: dense,
+      raw: pts,
+      theme: 'coast',
       closed: false,
       length: pathLen,
     };
@@ -119,25 +183,45 @@
     if (hintProgress != null && isFinite(hintProgress)) {
       var hiHint = U.clamp(hintProgress, 0, 1);
       var center = Math.floor(hiHint * last);
-      var win = Math.max(12, Math.floor(last * 0.08));
-      lo = Math.max(0, center - win);
-      hi = Math.min(last, center + win);
+      // Tight back / long forward so high speed doesn't leave the search window (v284)
+      var winBack = Math.max(3, Math.floor(last * 0.015));
+      var winFwd = Math.max(48, Math.floor(last * 0.28));
+      lo = Math.max(0, center - winBack);
+      hi = Math.min(last, center + winFwd);
       for (var i = lo; i <= hi; i++) {
         var d = pos.distanceToSquared(pts[i]);
         if (d < best) { best = d; bi = i; }
       }
-      if (best > 80 * 80) {
+      if (best > 55 * 55) {
+        // Expand forward; never open full path behind hint (fold steal)
         best = 1e12;
-        lo = 0; hi = last;
+        lo = Math.max(0, center - Math.max(2, Math.floor(last * 0.01)));
+        hi = Math.min(last, center + Math.max(48, Math.floor(last * 0.22)));
+        for (var i2 = lo; i2 <= hi; i2++) {
+          var dW = pos.distanceToSquared(pts[i2]);
+          if (dW < best) { best = dW; bi = i2; }
+        }
+        if (best > 100 * 100) {
+          // Last resort: search only from hint-back 3% → finish (not whole path)
+          best = 1e12;
+          lo = Math.max(0, Math.floor((hiHint - 0.03) * last));
+          hi = last;
+          for (var i3 = lo; i3 <= hi; i3 += 1) {
+            var d3 = pos.distanceToSquared(pts[i3]);
+            if (d3 < best) { best = d3; bi = i3; }
+          }
+        }
+        lo = Math.max(0, bi - 3);
+        hi = Math.min(last, bi + 6);
       } else {
-        lo = Math.max(0, bi - 4);
-        hi = Math.min(last, bi + 4);
+        lo = Math.max(0, bi - 3);
+        hi = Math.min(last, bi + 6);
       }
     } else {
       lo = 0; hi = last;
     }
 
-    if (lo === 0 && hi === last) {
+    if (lo === 0 && hi === last && (hintProgress == null || !isFinite(hintProgress))) {
       for (var k = 0; k <= last; k += 2) {
         var d0 = pos.distanceToSquared(pts[k]);
         if (d0 < best) { best = d0; bi = k; }
@@ -164,21 +248,51 @@
     var candidates = [];
     if (bi > 0) candidates.push(projSeg(bi - 1, bi));
     if (bi < last) candidates.push(projSeg(bi, bi + 1));
+    if (bi > 1) candidates.push(projSeg(bi - 2, bi - 1));
+    if (bi < last - 1) candidates.push(projSeg(bi + 1, bi + 2));
     if (!candidates.length) candidates.push(projSeg(0, 1));
 
+    // Fold-aware pick: drop clear backward snaps when a continuous segment exists
+    var hint = (hintProgress != null && isFinite(hintProgress)) ? hintProgress : null;
+    function cProgress(cand) {
+      return last > 0 ? (cand.i0 + cand.t) / last : 0;
+    }
+    if (hint != null) {
+      var goodCont = null;
+      for (var gc = 0; gc < candidates.length; gc++) {
+        var gProg = cProgress(candidates[gc]);
+        if (gProg >= hint - 0.025 && candidates[gc].distSq < 28 * 28) {
+          if (!goodCont || candidates[gc].distSq < goodCont.distSq) goodCont = candidates[gc];
+        }
+      }
+      if (goodCont) {
+        candidates = candidates.filter(function (cand) {
+          return cProgress(cand) >= hint - 0.03;
+        });
+        if (!candidates.length) candidates = [goodCont];
+      }
+    }
     var bestP = candidates[0];
-    for (var c = 1; c < candidates.length; c++) {
-      if (candidates[c].distSq < bestP.distSq) bestP = candidates[c];
+    var bestScore = 1e30;
+    for (var c = 0; c < candidates.length; c++) {
+      var cand = candidates[c];
+      var cProg = cProgress(cand);
+      var score = cand.distSq;
+      if (hint != null) {
+        if (cProg < hint - 0.018) score += 12000 + (hint - cProg) * 40000;
+        var dHint = cProg - hint;
+        score += dHint * dHint * 220;
+      }
+      if (score < bestScore) {
+        bestScore = score;
+        bestP = cand;
+      }
     }
 
     var tangent = bestP.ab.clone().normalize();
     var progress = last > 0 ? (bestP.i0 + bestP.t) / last : 0;
     if (!closed) progress = U.clamp(progress, 0, 1);
-    if (hintProgress != null && isFinite(hintProgress) && !closed) {
-      if (progress < hintProgress - 0.04 && bestP.distSq < 25 * 25) {
-        progress = Math.max(progress, hintProgress - 0.002);
-      }
-    }
+    // No progress inflation. Fold continuity is via scored candidates (v280).
     var sideN = new THREE.Vector3(-tangent.z, 0, tangent.x);
     var latVec = new THREE.Vector3().subVectors(pos, bestP.closest);
     var lateral = latVec.dot(sideN);
@@ -222,6 +336,8 @@
     this._cloudCards = null;
     this._swTex = null; // rebuild paver maps next build
     this._roadTex = null;
+    this._horizonCards = null;
+    this._qualityExtras = null;
     this.startPos = null;
     this.finishPos = null;
   };
@@ -240,7 +356,9 @@
     this.mapDef = mapDef;
     this.theme = mapDef.theme || 'city';
     this.roadHalf = GAME.config.drive.roadHalf;
-    this.path = buildPath();
+    this._qualityExtras = [];
+    this._horizonCards = [];
+    this.path = (this.theme === 'coast') ? buildPathCoast() : buildPath();
 
     // Lighting / fog from map def (game also sets some of these)
     if (scene) {
@@ -254,19 +372,27 @@
     this._buildSky();
     this._buildGround(mapDef);
     this._buildRoad();
-    // Roadside dress — all placement uses EDGE setbacks + path frame
     this._sidewalkCount = 0;
-    this._buildSidewalks();
-    this._buildEdgeAmbient(); // glow + soft lights so curb/sidewalk read at night
-    this._buildFrontage();
-    this._buildNearTowers();
-    // First ~10s of drive: dense canyon + landmark (do after base dress)
-    this._buildOpeningCorridor();
-    this._buildStreetLife(); // shoulder clutter (setback-safe, unlit)
-    this._buildBillboards();
-    this._buildFarSkyline();
-    this._buildLamps();
-    this._buildGates();
+    // Coast: no sidewalk slabs (raised band caused chase hop / lip tax on open flats)
+    if (this.theme !== 'coast') this._buildSidewalks();
+    this._buildEdgeAmbient();
+    if (this.theme === 'coast') {
+      // THE REACH — water + stacks, no neon canyon
+      this._buildCoastDress();
+      this._buildLamps();
+      this._buildGates();
+    } else {
+      this._buildFrontage();
+      this._buildNearTowers();
+      this._buildOpeningCorridor();
+      this._buildStreetLife();
+      this._buildBillboards();
+      this._buildFarSkyline();
+      this._buildDepthRings();
+      this._buildHorizonSkyline();
+      this._buildLamps();
+      this._buildGates();
+    }
     // Final safety net: hide anything that still occupies open asphalt
     this._assertDrivelineClear();
 
@@ -277,7 +403,7 @@
 
     scene.add(this.group);
     if (typeof console !== 'undefined' && console.info) {
-      console.info('[World v253 canyon+road+arches]', {
+      console.info('[World v332 theme=' + this.theme + ']', {
         pathLen: Math.round(this.path.length),
         roadHalf: this.roadHalf,
         sidewalks: this._sidewalkCount,
@@ -295,10 +421,17 @@
     var curve = this.path.curve;
     t = U.clamp(t, 0, 1);
     var p = curve.getPointAt(t);
-    var tan = curve.getTangentAt(t).normalize();
-    var side = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+    var tan = curve.getTangentAt(t);
+    if (!tan || tan.lengthSq() < 1e-10) tan = new THREE.Vector3(0, 0, 1);
+    else tan.normalize();
+    // Horizontal side only — never tilts into the asphalt on hills
+    var side = new THREE.Vector3(-tan.z, 0, tan.x);
+    if (side.lengthSq() < 1e-8) side.set(1, 0, 0);
+    else side.normalize();
     var yaw = Math.atan2(tan.x, tan.z);
-    return { p: p, tan: tan, side: side, yaw: yaw, t: t };
+    var pitch = Math.asin(U.clamp(tan.y, -1, 1));
+    if (!isFinite(pitch)) pitch = 0;
+    return { p: p, tan: tan, side: side, yaw: yaw, pitch: pitch, t: t };
   };
 
   /**
@@ -351,8 +484,8 @@
         '  col = mix(col, uTop, smoothstep(0.2, 0.85, elev));',
         '  float band = exp(-pow((elev - 0.02) * 5.5, 2.0));',
         '  float az = atan(d.x, d.z);',
-        '  col += uGlowA * band * (0.55 + 0.45 * sin(az * 1.5 + 0.4)) * 0.55;',
-        '  col += uGlowB * band * (0.55 + 0.45 * cos(az * 1.3 - 0.8)) * 0.4;',
+        '  col += uGlowA * band * (0.75 + 0.45 * sin(az * 1.5 + 0.4)) * 0.88;',
+        '  col += uGlowB * band * (0.75 + 0.45 * cos(az * 1.3 - 0.8)) * 0.72;',
         '  if (elev > 0.15) {',
         '    vec2 sp = d.xz / max(elev + 0.2, 0.08);',
         '    float s1 = hash(floor(sp * 12.0));',
@@ -450,49 +583,78 @@
   // ─── Ground ──────────────────────────────────────────────────────────
 
   World.prototype._buildGround = function (mapDef) {
-    var col = mapDef.groundColor != null ? mapDef.groundColor : 0x0c0e14;
+    // Slightly lifted void floor so slight off-line looks aren’t pure black
+    // Center on path mid (coast ribbon is not at world origin)
+    var col = mapDef.groundColor != null ? mapDef.groundColor : 0x12161f;
+    var gMid = (this.path && this.path.curve)
+      ? this.path.curve.getPointAt(0.5)
+      : new THREE.Vector3();
     var ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(2400, 2400),
+      new THREE.PlaneGeometry(4200, 4200),
       new THREE.MeshBasicMaterial({ color: col })
     );
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.15;
+    ground.position.set(gMid.x, -0.15, gMid.z);
     ground.userData.ignoreIntrusion = true;
     ground.userData.lod = 'far';
     this.group.add(ground);
     this.buildings.push(ground);
+    // Cheap horizon haze cards (MeshBasic quads) — fill FOV when looking off ribbon
+    // Not colliders; not lights. Skip if low quality later via traverse.
+    var isCoast = mapDef && mapDef.theme === 'coast';
+    var hazeMat = new THREE.MeshBasicMaterial({
+      color: isCoast ? 0x3a2838 : 0x1a2438,
+      transparent: true,
+      opacity: isCoast ? 0.62 : 0.55,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      fog: true,
+    });
+    var hazeMid = gMid;
+    for (var hi = 0; hi < 8; hi++) {
+      var ang = (hi / 8) * Math.PI * 2;
+      var hx = hazeMid.x + Math.sin(ang) * 170;
+      var hz = hazeMid.z + Math.cos(ang) * 170;
+      var haze = new THREE.Mesh(new THREE.PlaneGeometry(200, 64), hazeMat);
+      haze.position.set(hx, 16, hz);
+      haze.lookAt(hazeMid.x, 10, hazeMid.z);
+      haze.userData.ignoreIntrusion = true;
+      haze.userData.lod = 'far';
+      this.group.add(haze);
+      this.buildings.push(haze);
+    }
   };
 
   // ─── Road (ONLY solid on the driveline) ───────────────────────────────
 
-  /** Shared night asphalt map — blue-grey grit so road ≠ black void */
+  /** Shared night asphalt map — lighter blue-grey so hood FOV ≠ black slab (Wave ∞) */
   World.prototype._roadTextures = function () {
     if (this._roadTex) return this._roadTex;
     var S = 256;
     var c = document.createElement('canvas');
     c.width = c.height = S;
     var ctx = c.getContext('2d');
-    // Base: cool charcoal-blue (reads against pure black sky/ground)
-    ctx.fillStyle = '#2a3448';
+    // Base: lifted cool blue-grey (was too dark under hood FOV)
+    ctx.fillStyle = '#3a4a62';
     ctx.fillRect(0, 0, S, S);
-    // Slight violet mid wash (Heat wet-night)
+    // Wet-night wash — more cyan mid so MeshBasic reads
     var g = ctx.createLinearGradient(0, 0, S, S);
-    g.addColorStop(0, 'rgba(40, 80, 120, 0.22)');
-    g.addColorStop(0.5, 'rgba(60, 40, 90, 0.12)');
-    g.addColorStop(1, 'rgba(30, 70, 100, 0.18)');
+    g.addColorStop(0, 'rgba(70, 120, 170, 0.28)');
+    g.addColorStop(0.5, 'rgba(90, 70, 130, 0.16)');
+    g.addColorStop(1, 'rgba(55, 100, 140, 0.22)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, S, S);
-    // Grit / aggregate
-    for (var i = 0; i < 4200; i++) {
-      var v = 30 + ((i * 17) % 55);
-      var cool = (i % 3 === 0) ? 18 : 0;
-      ctx.fillStyle = 'rgba(' + (v - 5) + ',' + (v + 4) + ',' + (v + 12 + cool) + ',0.55)';
+    // Speckled highlight grit (fake wet aggregate)
+    for (var i = 0; i < 4800; i++) {
+      var v = 48 + ((i * 17) % 70);
+      var cool = (i % 3 === 0) ? 22 : 0;
+      ctx.fillStyle = 'rgba(' + (v + 8) + ',' + (v + 14) + ',' + (v + 22 + cool) + ',0.5)';
       ctx.fillRect((i * 47) % S, (i * 91) % S, 1 + (i % 2), 1 + (i % 3));
     }
-    // Faint lane-scale wear streaks
-    ctx.strokeStyle = 'rgba(180, 200, 230, 0.06)';
+    // Wear streaks — brighter so longitudinal motion reads
+    ctx.strokeStyle = 'rgba(210, 225, 255, 0.1)';
     ctx.lineWidth = 2;
-    for (var s = 0; s < 8; s++) {
+    for (var s = 0; s < 10; s++) {
       ctx.beginPath();
       ctx.moveTo((s * 31) % S, 0);
       ctx.lineTo((s * 31 + 40) % S, S);
@@ -506,6 +668,63 @@
     return this._roadTex;
   };
 
+  /**
+   * Path-following strip (left/right rails). One continuous asphalt surface —
+   * no box seams / pitch cracks on hills (Wave 1B).
+   */
+  World.prototype._ribbonGeo = function (halfW, yOff, uvAlongScale) {
+    var pts = this.path.points;
+    var n = pts.length;
+    if (n < 2) return null;
+    var pos = new Float32Array(n * 2 * 3);
+    var uv = new Float32Array(n * 2 * 2);
+    var idx = new Uint32Array((n - 1) * 6);
+    var along = 0;
+    var prev = pts[0];
+    for (var i = 0; i < n; i++) {
+      var a = pts[i];
+      var b = pts[Math.min(i + 1, n - 1)];
+      var dir = new THREE.Vector3().subVectors(b, a);
+      if (i === n - 1) dir.subVectors(a, pts[i - 1]);
+      if (dir.lengthSq() < 1e-10) dir.set(0, 0, 1);
+      else dir.normalize();
+      var side = new THREE.Vector3(-dir.z, 0, dir.x);
+      if (side.lengthSq() < 1e-8) side.set(1, 0, 0);
+      else side.normalize();
+      if (i > 0) along += a.distanceTo(prev);
+      prev = a;
+      var y = a.y + yOff;
+      var li = i * 2;
+      var ri = li + 1;
+      pos[li * 3] = a.x - side.x * halfW;
+      pos[li * 3 + 1] = y;
+      pos[li * 3 + 2] = a.z - side.z * halfW;
+      pos[ri * 3] = a.x + side.x * halfW;
+      pos[ri * 3 + 1] = y;
+      pos[ri * 3 + 2] = a.z + side.z * halfW;
+      var v = along * (uvAlongScale != null ? uvAlongScale : 0.08);
+      uv[li * 2] = 0;
+      uv[li * 2 + 1] = v;
+      uv[ri * 2] = 1;
+      uv[ri * 2 + 1] = v;
+      if (i < n - 1) {
+        var base = i * 6;
+        idx[base] = li;
+        idx[base + 1] = ri;
+        idx[base + 2] = li + 2;
+        idx[base + 3] = ri;
+        idx[base + 4] = ri + 2;
+        idx[base + 5] = li + 2;
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    geo.computeVertexNormals();
+    return geo;
+  };
+
   World.prototype._buildRoad = function () {
     var pts = this.path.points;
     var rh = this.roadHalf;
@@ -513,122 +732,192 @@
     var segCount = closed ? pts.length : Math.max(0, pts.length - 1);
     var tex = this._roadTextures();
 
-    // Textured asphalt — still MeshBasic (no light tax), but not pure black
+    // Continuous asphalt ribbon (preferred over pitched boxes)
     var roadMat = new THREE.MeshBasicMaterial({
       map: tex.albedo,
-      color: 0xc8d4e8, // lift midtones so map reads at night
+      color: 0xdce6f5,
+      side: THREE.DoubleSide,
     });
-    // Brighter paint + cyan edge so asphalt | paint | curb separate
-    var lineY = new THREE.MeshBasicMaterial({ color: 0xffe066 });
-    var lineW = new THREE.MeshBasicMaterial({ color: 0xf0f4ff });
-    var edgeCyan = new THREE.MeshBasicMaterial({
-      color: 0x40e0ff,
-      transparent: true,
-      opacity: 0.85,
-    });
+    var roadGeo = this._ribbonGeo(rh, 0.02, 0.07);
+    if (roadGeo) {
+      var roadMesh = new THREE.Mesh(roadGeo, roadMat);
+      roadMesh.userData.isRoadSurface = true;
+      roadMesh.frustumCulled = false;
+      this.group.add(roadMesh);
+    }
+
     var wetSheen = new THREE.MeshBasicMaterial({
-      color: 0x6088b0,
+      color: 0x88b8e0,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.2,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
     });
-    var curbMat = new THREE.MeshBasicMaterial({ color: 0xa8b0c0 });
+    var sheenGeo = this._ribbonGeo(rh * 0.85, 0.05, 0.07);
+    if (sheenGeo) {
+      var sheenMesh = new THREE.Mesh(sheenGeo, wetSheen);
+      sheenMesh.userData.isRoadSurface = true;
+      sheenMesh.frustumCulled = false;
+      this.group.add(sheenMesh);
+    }
 
-    var roadGeo = new THREE.BoxGeometry(rh * 2, 0.14, 1);
+    var lineY = new THREE.MeshBasicMaterial({ color: 0xffe066, side: THREE.DoubleSide });
+    var edgeCyan = new THREE.MeshBasicMaterial({
+      color: 0x50f0ff,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+    });
+    var curbMat = new THREE.MeshBasicMaterial({ color: 0xb8c0d0 });
     var curbGeo = new THREE.BoxGeometry(0.58, 0.4, 1);
     var ylineGeo = new THREE.BoxGeometry(0.11, 0.022, 1);
     var dashGeo = new THREE.BoxGeometry(0.1, 0.018, 1);
     var edgeGeo = new THREE.BoxGeometry(0.16, 0.022, 1);
-    var sheenGeo = new THREE.BoxGeometry(rh * 1.7, 0.01, 1);
     var chevGeo = new THREE.BoxGeometry(1.8, 0.028, 0.36);
+    var lineW = new THREE.MeshBasicMaterial({ color: 0xf0f4ff });
 
+    // Cyan edge rails as continuous ribbons
+    var edgeHalf = 0.09;
+    var edgeOff = rh - 0.45;
+    // Build edge strips manually (offset rails)
+    function edgeRail(self, latSign) {
+      var n = pts.length;
+      if (n < 2) return;
+      var pos = new Float32Array(n * 2 * 3);
+      var idx = new Uint32Array((n - 1) * 6);
+      for (var i = 0; i < n; i++) {
+        var a = pts[i];
+        var b = pts[Math.min(i + 1, n - 1)];
+        var dir = new THREE.Vector3().subVectors(b, a);
+        if (i === n - 1) dir.subVectors(a, pts[i - 1]);
+        if (dir.lengthSq() < 1e-10) dir.set(0, 0, 1);
+        else dir.normalize();
+        var side = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+        var cx = a.x + side.x * latSign * edgeOff;
+        var cz = a.z + side.z * latSign * edgeOff;
+        var y = a.y + 0.07;
+        var li = i * 2;
+        pos[li * 3] = cx - side.x * edgeHalf;
+        pos[li * 3 + 1] = y;
+        pos[li * 3 + 2] = cz - side.z * edgeHalf;
+        pos[li * 3 + 3] = cx + side.x * edgeHalf;
+        pos[li * 3 + 4] = y;
+        pos[li * 3 + 5] = cz + side.z * edgeHalf;
+        if (i < n - 1) {
+          var base = i * 6;
+          idx[base] = li;
+          idx[base + 1] = li + 1;
+          idx[base + 2] = li + 2;
+          idx[base + 3] = li + 1;
+          idx[base + 4] = li + 3;
+          idx[base + 5] = li + 2;
+        }
+      }
+      var geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setIndex(new THREE.BufferAttribute(idx, 1));
+      var mesh = new THREE.Mesh(geo, edgeCyan);
+      mesh.userData.isRoadSurface = true;
+      mesh.frustumCulled = false;
+      self.group.add(mesh);
+    }
+    edgeRail(this, 1);
+    edgeRail(this, -1);
+
+    // Paint + curb: overlapped boxes (same transform as ribbon samples)
     for (var i = 0; i < segCount; i++) {
       var a = pts[i];
       var b = pts[closed ? ((i + 1) % pts.length) : (i + 1)];
       var mid = a.clone().add(b).multiplyScalar(0.5);
       var dir = new THREE.Vector3().subVectors(b, a);
       var len = dir.length();
-      if (len < 0.05) continue;
+      if (!isFinite(len) || len < 0.05) continue;
       dir.normalize();
       var yaw = Math.atan2(dir.x, dir.z);
       var pitch = Math.asin(U.clamp(dir.y, -1, 1));
+      if (!isFinite(pitch)) pitch = 0;
       var sideN = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+      var rot = { order: 'YXZ', y: yaw, x: -pitch };
 
-      var seg = new THREE.Mesh(roadGeo, roadMat);
-      seg.position.copy(mid);
-      seg.position.y = mid.y + 0.02;
-      seg.rotation.order = 'YXZ';
-      seg.rotation.y = yaw;
-      seg.rotation.x = -pitch;
-      seg.scale.z = len + 0.35;
-      seg.userData.isRoadSurface = true;
-      this.group.add(seg);
-
-      // Soft wet sheen strip (separates road from black void)
-      if (i % 2 === 0) {
-        var sheen = new THREE.Mesh(sheenGeo, wetSheen);
-        sheen.position.copy(mid);
-        sheen.position.y = mid.y + 0.095;
-        sheen.rotation.copy(seg.rotation);
-        sheen.scale.z = len * 0.9;
-        sheen.userData.isRoadSurface = true;
-        this.group.add(sheen);
-      }
-
-      // Center double-yellow every seg (stronger lane read)
+      // Center double-yellow
       if (i % 2 === 0) {
         for (var yl = -1; yl <= 1; yl += 2) {
           var yline = new THREE.Mesh(ylineGeo, lineY);
           yline.position.copy(mid).addScaledVector(sideN, yl * 0.14);
-          yline.position.y = mid.y + 0.1;
-          yline.rotation.copy(seg.rotation);
-          yline.scale.z = Math.min(len * 0.6, 3.0);
+          yline.position.y = mid.y + 0.08;
+          yline.rotation.order = 'YXZ';
+          yline.rotation.y = yaw;
+          yline.rotation.x = -pitch;
+          yline.scale.z = Math.min(len * 0.7, 4.0);
           yline.userData.isRoadSurface = true;
           this.group.add(yline);
         }
         for (var lane = -1; lane <= 1; lane += 2) {
           var dash = new THREE.Mesh(dashGeo, lineW);
           dash.position.copy(mid).addScaledVector(sideN, lane * (rh * 0.38));
-          dash.position.y = mid.y + 0.1;
-          dash.rotation.copy(seg.rotation);
+          dash.position.y = mid.y + 0.08;
+          dash.rotation.order = 'YXZ';
+          dash.rotation.y = yaw;
+          dash.rotation.x = -pitch;
           dash.scale.z = Math.min(len * 0.42, 2.2);
           dash.userData.isRoadSurface = true;
           this.group.add(dash);
         }
       }
 
-      // Continuous cyan edge lines (asphalt boundary)
-      for (var s = -1; s <= 1; s += 2) {
-        var eline = new THREE.Mesh(edgeGeo, edgeCyan);
-        eline.position.copy(mid).addScaledVector(sideN, s * (rh - 0.45));
-        eline.position.y = mid.y + 0.105;
-        eline.rotation.copy(seg.rotation);
-        eline.scale.z = len + 0.2;
-        eline.userData.isRoadSurface = true;
-        this.group.add(eline);
-      }
-
-      // Curbs every segment — light concrete band
-      for (var s2 = -1; s2 <= 1; s2 += 2) {
-        var curb = new THREE.Mesh(curbGeo, curbMat);
-        curb.position.copy(mid).addScaledVector(sideN, s2 * (rh + 0.42));
-        curb.position.y = mid.y + 0.18;
-        curb.rotation.copy(seg.rotation);
-        curb.scale.z = len + 0.4;
-        curb.userData.lod = 'detail';
-        this.group.add(curb);
-      }
-
-      if (i % 8 === 0) {
+      // Center chevrons only here — curbs are continuous ribbons (v347, no hill stairs)
+      if (i % 10 === 0) {
         var chev = new THREE.Mesh(chevGeo, lineY);
         chev.position.copy(mid);
-        chev.position.y = mid.y + 0.1;
-        chev.rotation.copy(seg.rotation);
+        chev.position.y = mid.y + 0.08;
+        chev.rotation.order = 'YXZ';
+        chev.rotation.y = yaw;
+        chev.rotation.x = -pitch;
         chev.userData.isRoadSurface = true;
         this.group.add(chev);
       }
     }
+
+    // Continuous curb ribbons (both sides) — box curbs stair-stepped on climb
+    function curbRail(self, sideSign) {
+      var half = 0.32;
+      var geo = self._ribbonGeo(half, 0.16, 0.09);
+      if (!geo) return;
+      // Offset whole ribbon laterally by rebuilding positions
+      var posAttr = geo.getAttribute('position');
+      var nV = posAttr.count;
+      var ptsR = self.path.points;
+      var alongR = 0;
+      var prevR = ptsR[0];
+      for (var vi = 0; vi < ptsR.length; vi++) {
+        var aR = ptsR[vi];
+        var bR = ptsR[Math.min(vi + 1, ptsR.length - 1)];
+        var dirR = new THREE.Vector3().subVectors(bR, aR);
+        if (vi === ptsR.length - 1) dirR.subVectors(aR, ptsR[vi - 1]);
+        if (dirR.lengthSq() < 1e-10) dirR.set(0, 0, 1);
+        else dirR.normalize();
+        var sideR = new THREE.Vector3(-dirR.z, 0, dirR.x);
+        if (sideR.lengthSq() < 1e-8) sideR.set(1, 0, 0);
+        else sideR.normalize();
+        var latR = rh + 0.42;
+        var cx = aR.x + sideR.x * sideSign * latR;
+        var cz = aR.z + sideR.z * sideSign * latR;
+        var cy = aR.y + 0.16;
+        var li = vi * 2;
+        var ri = li + 1;
+        posAttr.setXYZ(li, cx - sideR.x * half, cy, cz - sideR.z * half);
+        posAttr.setXYZ(ri, cx + sideR.x * half, cy, cz + sideR.z * half);
+      }
+      posAttr.needsUpdate = true;
+      geo.computeVertexNormals();
+      var mesh = new THREE.Mesh(geo, curbMat);
+      mesh.userData.lod = 'detail';
+      mesh.frustumCulled = false;
+      self.group.add(mesh);
+    }
+    curbRail(this, 1);
+    curbRail(this, -1);
   };
 
   /**
@@ -860,8 +1149,8 @@
     var edgeGeo = new THREE.BoxGeometry(0.22, 0.03, 1);
     var glowGeo = new THREE.BoxGeometry(2.0, 0.02, 1);
 
-    // Dense-ish emissive strips — still NO PointLights (reads as wet neon curb)
-    var nStrips = Math.max(36, Math.min(90, Math.floor(pathLen / 12)));
+    // Emissive curb strips — still NO PointLights (v362 fewer strips for FPS)
+    var nStrips = Math.max(28, Math.min(56, Math.floor(pathLen / 18)));
     for (var i = 0; i < nStrips; i++) {
       var t = (i + 0.5) / nStrips;
       var f = this._frame(t);
@@ -898,7 +1187,8 @@
    * Cheap MeshBasic only (perf contract).
    */
   World.prototype._buildOpeningCorridor = function () {
-    var wallMat = new THREE.MeshBasicMaterial({ color: 0x16141f });
+    // v339: was 0x16141f — read as pure void in chase; lift so wall face is structure
+    var wallMat = new THREE.MeshBasicMaterial({ color: 0x222030 });
     var glassMats = [
       new THREE.MeshBasicMaterial({ color: 0xffd090 }),
       new THREE.MeshBasicMaterial({ color: 0x90d8ff }),
@@ -915,9 +1205,11 @@
         depthWrite: false, blending: THREE.AdditiveBlending,
       });
     });
-    var towerMat = new THREE.MeshBasicMaterial({ color: 0x12101c });
+    var towerMat = new THREE.MeshBasicMaterial({ color: 0x1a1624 });
     var winMat = new THREE.MeshBasicMaterial({ color: 0xffc878 });
     var awningMat = new THREE.MeshBasicMaterial({ color: 0x100c14 });
+    var crownMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, fog: false });
+    var crownMag = new THREE.MeshBasicMaterial({ color: 0xff2d55, fog: false });
 
     /**
      * Canyon span helper — continuous walls along path progress [tA, tB].
@@ -927,7 +1219,6 @@
     var self = this;
     function buildCanyonSpan(tA, tB, nSeg, dense) {
       var wallDepth = dense ? 4.5 : 3.8;
-      var wallH = dense ? 11 : 8.5;
       var halfD = wallDepth * 0.5;
       var openEdge = dense ? 2.2 : 2.6;
       var span = Math.max(0.02, tB - tA);
@@ -939,10 +1230,15 @@
           var f0 = self._frame(t0);
           var f1 = self._frame(t1);
           var mid = f0.p.clone().add(f1.p).multiplyScalar(0.5);
-          var along = f0.p.distanceTo(f1.p) + 0.45;
+          // v347: more overlap + average pitch — climb canyon less stair-stepped
+          var along = f0.p.distanceTo(f1.p) + 1.35;
           var yaw = f0.yaw;
+          var pitch0 = f0.pitch != null ? f0.pitch : 0;
+          var pitch1 = f1.pitch != null ? f1.pitch : pitch0;
+          var pitch = (pitch0 + pitch1) * 0.5;
           var lat = self._lat(openEdge, halfD);
           var ni = (i + side * 2 + Math.floor(tA * 20)) % neonMats.length;
+          var wallH = dense ? 11 : (8.0 + 3.6 * Math.abs(Math.sin(t0 * Math.PI * 4)));
 
           var mass = new THREE.Mesh(
             new THREE.BoxGeometry(wallDepth, wallH, along),
@@ -950,11 +1246,30 @@
           );
           mass.position.copy(mid).addScaledVector(f0.side, sideSign * lat);
           mass.position.y = mid.y + wallH * 0.48;
+          mass.rotation.order = 'YXZ';
           mass.rotation.y = yaw;
+          mass.rotation.x = -pitch;
           mass.userData.lod = 'building';
           mass.userData.opening = dense;
           self.group.add(mass);
           self.buildings.push(mass);
+
+          // Neon crown on wall top — reads over black sky from chase (v339)
+          if (dense || i % 2 === 0) {
+            var crown = new THREE.Mesh(
+              new THREE.BoxGeometry(wallDepth + 0.3, 0.45, along * 0.95),
+              (i + side) % 2 ? crownMat : crownMag
+            );
+            crown.position.copy(mass.position);
+            crown.position.y = mid.y + wallH + 0.15;
+            crown.rotation.order = 'YXZ';
+            crown.rotation.y = yaw;
+            crown.rotation.x = -pitch;
+            crown.userData.lod = 'detail';
+            crown.userData.ignoreIntrusion = true;
+            self.group.add(crown);
+            self.buildings.push(crown);
+          }
 
           var faceLat = self._lat(openEdge, 0.06);
           var glass = new THREE.Mesh(
@@ -963,7 +1278,9 @@
           );
           glass.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
           glass.position.y = mid.y + 1.5;
+          glass.rotation.order = 'YXZ';
           glass.rotation.y = yaw;
+          glass.rotation.x = -pitch;
           glass.userData.lod = 'building';
           self.group.add(glass);
           self.buildings.push(glass);
@@ -974,7 +1291,9 @@
           );
           neon.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
           neon.position.y = mid.y + 3.3;
+          neon.rotation.order = 'YXZ';
           neon.rotation.y = yaw;
+          neon.rotation.x = -pitch;
           neon.userData.lod = 'detail';
           self.group.add(neon);
           self.buildings.push(neon);
@@ -986,7 +1305,9 @@
             );
             halo.position.copy(neon.position);
             halo.position.addScaledVector(f0.side, -sideSign * 0.08);
+            halo.rotation.order = 'YXZ';
             halo.rotation.y = yaw;
+            halo.rotation.x = -pitch;
             halo.userData.lod = 'detail';
             self.group.add(halo);
           }
@@ -997,19 +1318,24 @@
           );
           win1.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
           win1.position.y = mid.y + (dense ? 5.8 : 5.0);
+          win1.rotation.order = 'YXZ';
           win1.rotation.y = yaw;
+          win1.rotation.x = -pitch;
           win1.userData.lod = 'window';
           self.group.add(win1);
           self.buildings.push(win1);
 
-          if (dense) {
+          // v362: second window + awning every other dense seg (FPS)
+          if (dense && (i % 2 === 0)) {
             var win2 = new THREE.Mesh(
               new THREE.BoxGeometry(0.1, 1.1, along * 0.8),
               glassMats[(i + 1) % glassMats.length]
             );
             win2.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
             win2.position.y = mid.y + 8.2;
+            win2.rotation.order = 'YXZ';
             win2.rotation.y = yaw;
+            win2.rotation.x = -pitch;
             win2.userData.lod = 'window';
             self.group.add(win2);
             self.buildings.push(win2);
@@ -1020,7 +1346,9 @@
             );
             awn.position.copy(mid).addScaledVector(f0.side, sideSign * (faceLat - 0.55));
             awn.position.y = mid.y + 2.85;
+            awn.rotation.order = 'YXZ';
             awn.rotation.y = yaw;
+            awn.rotation.x = -pitch;
             awn.userData.lod = 'detail';
             self.group.add(awn);
           }
@@ -1028,21 +1356,23 @@
       }
     }
 
-    // Dense open + mid canyon + dense finish approach (full course walls)
-    buildCanyonSpan(0.0, 0.16, 40, true);
-    buildCanyonSpan(0.16, 0.88, 52, false);
-    buildCanyonSpan(0.88, 1.0, 18, true);
+    // v376: canyon budget for both-flank mass elsewhere
+    buildCanyonSpan(0.0, 0.16, 16, true);
+    buildCanyonSpan(0.16, 0.88, 20, false);
+    buildCanyonSpan(0.88, 1.0, 8, true);
 
-    // Landmark towers — open + mid accents + finish approach
-    var landmarkTs = [0.035, 0.055, 0.08, 0.11, 0.35, 0.55, 0.75, 0.92, 0.96];
+    // Landmark towers — open + finish (mid cut for FPS)
+    // v339/v373 early both sides; v376 drop mid landmarks
+    var landmarkTs = [0.03, 0.07, 0.12, 0.20, 0.92];
     for (var li = 0; li < landmarkTs.length; li++) {
       var lt = landmarkTs[li];
       var lf = this._frame(lt);
       for (var ls = -1; ls <= 1; ls += 2) {
-        var th = 16 + (li % 4) * 4 + U.seeded(li * 3 + ls + 2) * 10;
+        var earlyLeft = lt < 0.16 && ls < 0;
+        var th = (earlyLeft ? 28 : 16) + (li % 4) * 5 + U.seeded(li * 3 + ls + 2) * 12;
         var td = 5.5 + (li % 3) * 0.5;
         var ta = 6.5 + (li % 3);
-        var tLat = this._lat(EDGE.tower * 0.75, td * 0.5);
+        var tLat = this._lat(EDGE.tower * (earlyLeft ? 0.55 : 0.75), td * 0.5);
         var base = lf.p.clone().addScaledVector(lf.side, ls * tLat);
 
         var shaft = new THREE.Mesh(
@@ -1174,7 +1504,9 @@
 
         var wall = new THREE.Mesh(wallGeo, wallMat);
         wall.scale.x = unitW;
-        wall.position.set(0, 1.8, 0);
+        var hMul = 0.88 + U.seeded(ui * 5.1 + side * 9) * 0.7;
+        wall.scale.y = hMul;
+        wall.position.set(0, 1.8 * hMul, 0);
         g.add(wall);
 
         var glass = new THREE.Mesh(glassGeo, glassMats[gi]);
@@ -1236,7 +1568,8 @@
 
   World.prototype._buildNearTowers = function () {
     var pathLen = this.path.length || 2000;
-    var n = Math.max(16, Math.min(32, Math.floor(pathLen / 100)));
+    // v376: fewer mid towers (FPS after both-flank mass)
+    var n = Math.max(12, Math.min(22, Math.floor(pathLen / 140)));
     // Unlit facades — night city reads from emissive-tint colors, not PBR lights
     var facadePool = [
       new THREE.MeshBasicMaterial({ color: 0x1c1830 }),
@@ -1324,13 +1657,14 @@
 
   World.prototype._buildBillboards = function () {
     // Never in opening FOV — giant blue/ad slabs ruined cold start
-    var n = 8;
+    var n = 5; // v376 FPS
+    // Original parole-board copy — short so it reads at speed (v297)
     var ads = [
-      { bg: '#0a1020', a: '#ff2d55', b: '#00e5ff', t: 'NIGHT RUN' },
-      { bg: '#120810', a: '#ff9f1c', b: '#ff2d88', t: 'HEAT' },
-      { bg: '#081218', a: '#a78bfa', b: '#39ff14', t: 'FREEDOM' },
+      { bg: '#0a1020', a: '#ff2d55', b: '#00e5ff', t: 'PAROLE' },
+      { bg: '#120810', a: '#ff9f1c', b: '#ff2d88', t: 'LAPS' },
+      { bg: '#081218', a: '#a78bfa', b: '#39ff14', t: 'SCRAP' },
       { bg: '#100a08', a: '#ff6b35', b: '#00e5ff', t: 'WARDEN' },
-      { bg: '#0c0814', a: '#f472b6', b: '#ffc857', t: 'TWISTED' },
+      { bg: '#0c0814', a: '#f472b6', b: '#ffc857', t: 'FINISH' },
     ];
 
     function makeAdTex(ad) {
@@ -1468,6 +1802,39 @@
       placed++;
     }
 
+    // Extra cheap silhouettes as one InstancedMesh (depth without draw-call spam)
+    var extraN = 18;
+    var extraGeo = new THREE.BoxGeometry(1, 1, 1);
+    var extraMat = new THREE.MeshBasicMaterial({ color: 0x0c1018 });
+    var extra = new THREE.InstancedMesh(extraGeo, extraMat, extraN);
+    extra.userData.lod = 'far';
+    extra.userData.noLod = true;
+    extra.userData.ignoreIntrusion = true;
+    var dummyX = new THREE.Object3D();
+    var got = 0;
+    for (var xi = 0; xi < extraN * 3 && got < extraN; xi++) {
+      var xang = (xi / (extraN * 3)) * Math.PI * 2;
+      var xr = 280 + U.seeded(xi * 8.2) * 160;
+      var xpx = mid.x + Math.sin(xang) * xr;
+      var xpz = mid.z + Math.cos(xang) * xr;
+      var xc = new THREE.Vector3(xpx, 0, xpz);
+      var xn = nearestOnPath(xc, path);
+      if (!xn || xn.dist < minLat + 20) continue;
+      if (xc.distanceTo(start) < 240) continue;
+      var xh = 28 + U.seeded(xi * 2.4) * 70;
+      dummyX.position.set(xpx, xh * 0.42, xpz);
+      dummyX.rotation.set(0, xang, 0);
+      dummyX.scale.set(7 + (xi % 5), xh, 8 + (xi % 4));
+      dummyX.updateMatrix();
+      extra.setMatrixAt(got, dummyX.matrix);
+      got++;
+    }
+    extra.count = got;
+    extra.instanceMatrix.needsUpdate = true;
+    extra.frustumCulled = false;
+    this.group.add(extra);
+    this.buildings.push(extra);
+
     // Soft horizon glow discs (atmosphere only)
     for (var g = 0; g < 4; g++) {
       var gang = (g / 4) * Math.PI * 2;
@@ -1494,12 +1861,664 @@
   };
 
   /**
+   * Painted city skyline — tall cards JUST behind canyon so chase cam clears
+   * the 11m wall. Fog disabled on cards (Wave 2: density ate them).
+   */
+  World.prototype._buildHorizonSkyline = function () {
+    var c = document.createElement('canvas');
+    c.width = 1024;
+    c.height = 256;
+    var ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 1024, 256);
+    var i, x, bw, bh, base;
+    // Jagged building mass — darker silhouette with cyan/magenta belts
+    ctx.fillStyle = '#14101c';
+    x = 0;
+    while (x < 1024) {
+      bw = 18 + ((x * 17) % 40);
+      bh = 90 + ((x * 31) % 150);
+      base = 256 - bh;
+      ctx.fillRect(x, base, bw - 2, bh);
+      x += bw;
+    }
+    ctx.fillStyle = '#1a1424';
+    x = 8;
+    while (x < 1024) {
+      bw = 12 + ((x * 13) % 28);
+      bh = 130 + ((x * 23) % 110);
+      ctx.fillRect(x, 256 - bh, bw - 1, bh);
+      x += bw + 6;
+    }
+    for (i = 0; i < 520; i++) {
+      var wx = (i * 47) % 1024;
+      var wy = 30 + (i * 91) % 210;
+      ctx.fillStyle = (i % 7 === 0) ? '#00e5ff' : (i % 5 === 0) ? '#ff2d55' : '#ffc878';
+      ctx.globalAlpha = 0.4 + (i % 4) * 0.12;
+      ctx.fillRect(wx, wy, 2, 3);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ff2d55';
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(0, 168, 1024, 4);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillRect(0, 196, 1024, 3);
+    ctx.globalAlpha = 1;
+    var tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    tex.minFilter = THREE.LinearFilter;
+    var mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      fog: false, // must clear FogExp2 or cards vanish in chase
+    });
+    this._horizonCards = [];
+    // Chase ~1.75m, wall 11m @ ~16–20m. Cards just behind canyon, both sides.
+    // v388 mid-climb both; v394: drop late alternate cards (FPS) — early+mid only
+    var pairN = 5; // both flanks 0.02→~0.30 (Neon lock)
+    var midBoth = 3; // both flanks through climb 0.30→~0.52
+    var n = pairN + midBoth; // 8 slots · no late far cards
+    for (i = 0; i < n; i++) {
+      var t;
+      if (i < pairN) {
+        t = 0.02 + (i / Math.max(1, pairN - 1)) * 0.28;
+      } else {
+        t = 0.32 + ((i - pairN) / Math.max(1, midBoth - 1)) * 0.20;
+      }
+      var f = this._frame(t);
+      var sides = [-1, 1];
+      for (var si = 0; si < sides.length; si++) {
+        var side = sides[si];
+        var lat = this._lat(EDGE.tower + (i < pairN ? 7 : 9) + (i % 3) * 2, 2);
+        var cardH = (i < pairN ? 118 : 100) + (i % 4) * 6;
+        var cardW = (i < pairN ? 72 : 62) + (i % 3) * 8;
+        var card = new THREE.Mesh(new THREE.PlaneGeometry(cardW, cardH), mat);
+        card.position.copy(f.p).addScaledVector(f.side, side * lat);
+        card.position.y = f.p.y + cardH * 0.48;
+        card.lookAt(f.p.x, card.position.y, f.p.z);
+        card.userData.lod = 'far';
+        card.userData.noLod = i < pairN + 2;
+        card.userData.ignoreIntrusion = true;
+        card.userData.horizonCard = true;
+        card.frustumCulled = i >= pairN + 2;
+        this.group.add(card);
+        this.buildings.push(card);
+        this._horizonCards.push(card);
+      }
+    }
+    // v373 peeks; v376 trim; v388 extend into climb for left FOV
+    var peekMat = new THREE.MeshBasicMaterial({ color: 0x16121c, fog: false });
+    var peekCapC = new THREE.MeshBasicMaterial({ color: 0x00e5ff, fog: false });
+    var peekCapM = new THREE.MeshBasicMaterial({ color: 0xff2d55, fog: false });
+    for (var pi = 0; pi < 7; pi++) {
+      var pt = 0.04 + pi * 0.07; // 0.04–0.46 both flanks through climb entry
+      var pf = this._frame(pt);
+      for (var ps = -1; ps <= 1; ps += 2) {
+        var ph = 54 + (pi % 3) * 10;
+        // Closer peeks so camera yaw into curves still sees mass
+        var plat = this._lat(EDGE.tower + 2.5 + (pi % 2) * 0.8, 2.5);
+        var peek = new THREE.Mesh(new THREE.BoxGeometry(10, ph, 16), peekMat);
+        peek.position.copy(pf.p).addScaledVector(pf.side, ps * plat);
+        peek.position.y = pf.p.y + ph * 0.42;
+        peek.rotation.order = 'YXZ';
+        peek.rotation.y = pf.yaw;
+        peek.userData.lod = 'far';
+        peek.userData.noLod = pi < 4; // v391: mid peeks LOD (early still always-on)
+        peek.userData.ignoreIntrusion = true;
+        peek.userData.qualityExtra = true;
+        peek.userData.horizonCard = true;
+        peek.frustumCulled = pi >= 4;
+        this.group.add(peek);
+        this.buildings.push(peek);
+        if (!this._qualityExtras) this._qualityExtras = [];
+        this._qualityExtras.push(peek);
+        if (pi % 2 === 0) {
+          var pcap = new THREE.Mesh(new THREE.BoxGeometry(11, 0.65, 18), (pi + ps) % 2 ? peekCapC : peekCapM);
+          pcap.position.copy(peek.position);
+          pcap.position.y += ph * 0.48;
+          pcap.rotation.order = 'YXZ';
+          pcap.rotation.y = pf.yaw;
+          pcap.userData.lod = 'far';
+          pcap.userData.noLod = pi < 4;
+          pcap.userData.ignoreIntrusion = true;
+          pcap.userData.qualityExtra = true;
+          pcap.frustumCulled = pi >= 4;
+          this.group.add(pcap);
+          this.buildings.push(pcap);
+          this._qualityExtras.push(pcap);
+        }
+      }
+    }
+    // v398: thin late both-side peeks — mid-late FOV after late cards cut (v394)
+    for (var lateI = 0; lateI < 3; lateI++) {
+      var lateT = 0.58 + lateI * 0.12; // 0.58 / 0.70 / 0.82
+      var lateF = this._frame(lateT);
+      for (var lps = -1; lps <= 1; lps += 2) {
+        var lateH = 48 + lateI * 6;
+        var lateLat = this._lat(EDGE.tower + 6 + lateI, 2.5);
+        var latePeek = new THREE.Mesh(new THREE.BoxGeometry(9, lateH, 14), peekMat);
+        latePeek.position.copy(lateF.p).addScaledVector(lateF.side, lps * lateLat);
+        latePeek.position.y = lateF.p.y + lateH * 0.42;
+        latePeek.rotation.order = 'YXZ';
+        latePeek.rotation.y = lateF.yaw;
+        latePeek.userData.lod = 'far';
+        latePeek.userData.noLod = false;
+        latePeek.userData.ignoreIntrusion = true;
+        latePeek.userData.qualityExtra = true;
+        latePeek.userData.horizonCard = true;
+        latePeek.frustumCulled = true;
+        this.group.add(latePeek);
+        this.buildings.push(latePeek);
+        this._qualityExtras.push(latePeek);
+      }
+    }
+    // v388: first right-curve leaves screen-left black — dense always-on outer peeks
+    for (var li = 0; li < 4; li++) {
+      var lt = 0.09 + li * 0.055; // 0.09–0.255 into first bend
+      var lf = this._frame(lt);
+      // Outer = negative path side on this opening right sweep
+      var lside = -1;
+      var lh = 62 + li * 6;
+      var llat = this._lat(EDGE.tower + 1.8, 2);
+      var lpeek = new THREE.Mesh(new THREE.BoxGeometry(12, lh, 20), peekMat);
+      lpeek.position.copy(lf.p).addScaledVector(lf.side, lside * llat);
+      lpeek.position.y = lf.p.y + lh * 0.42;
+      lpeek.rotation.order = 'YXZ';
+      lpeek.rotation.y = lf.yaw;
+      lpeek.userData.lod = 'far';
+      lpeek.userData.noLod = true;
+      lpeek.userData.ignoreIntrusion = true;
+      lpeek.userData.qualityExtra = true;
+      lpeek.userData.horizonCard = true;
+      lpeek.frustumCulled = false;
+      this.group.add(lpeek);
+      this.buildings.push(lpeek);
+      this._qualityExtras.push(lpeek);
+      var lcap = new THREE.Mesh(new THREE.BoxGeometry(13, 0.7, 22), li % 2 ? peekCapC : peekCapM);
+      lcap.position.copy(lpeek.position);
+      lcap.position.y += lh * 0.48;
+      lcap.rotation.order = 'YXZ';
+      lcap.rotation.y = lf.yaw;
+      lcap.userData.lod = 'far';
+      lcap.userData.noLod = true;
+      lcap.userData.ignoreIntrusion = true;
+      lcap.userData.qualityExtra = true;
+      lcap.frustumCulled = false;
+      this.group.add(lcap);
+      this.buildings.push(lcap);
+      this._qualityExtras.push(lcap);
+    }
+  };
+
+  /**
+   * Mid-distance city mass — one InstancedMesh draw (horizontal depth).
+   * Sits outside tower setback. Not on the driveline.
+   */
+  World.prototype._buildDepthRings = function () {
+    var n = 20; // v362: was 32
+    var geo = new THREE.BoxGeometry(1, 1, 1);
+    var mat = new THREE.MeshBasicMaterial({ color: 0x12161e });
+    var inst = new THREE.InstancedMesh(geo, mat, n);
+    inst.userData.lod = 'far';
+    inst.userData.noLod = false;
+    inst.userData.ignoreIntrusion = true;
+    var dummy = new THREE.Object3D();
+    var placed = 0;
+    for (var i = 0; i < n; i++) {
+      var t = (0.06 + (i + 0.4) / n * 0.88) % 1;
+      var f = this._frame(t);
+      var side = i % 2 === 0 ? 1 : -1;
+      var ring = 1 + (i % 3);
+      var h = 10 + (i % 6) * 4 + ring * 5;
+      var along = 7 + (i % 4) * 2;
+      var depth = 6 + ring * 2;
+      var lat = this._lat(EDGE.tower + 12 + ring * 11, depth * 0.5);
+      dummy.position.copy(f.p).addScaledVector(f.side, side * lat);
+      dummy.position.y = f.p.y + h * 0.45;
+      dummy.rotation.set(0, f.yaw, 0);
+      dummy.scale.set(depth, h, along);
+      dummy.updateMatrix();
+      inst.setMatrixAt(placed, dummy.matrix);
+      placed++;
+    }
+    inst.count = placed;
+    inst.instanceMatrix.needsUpdate = true;
+    inst.frustumCulled = true;
+    this.group.add(inst);
+    this.buildings.push(inst);
+
+    // HUGE ridges + AHEAD skyline spikes so chase vanishing-point shows city mass
+    // v339: denser LEFT early ridges — port chase was black void past the wall
+    var ridgeMat = new THREE.MeshBasicMaterial({ color: 0x1c1828, fog: false });
+    var neonCap = new THREE.MeshBasicMaterial({ color: 0x00e5ff, fog: false });
+    var magCap = new THREE.MeshBasicMaterial({ color: 0xff2d55, fog: false });
+    // v373 denser early ridges; v376 drop one far + caps every other (FPS)
+    var ridgeTs = [0.04, 0.08, 0.13, 0.18, 0.26, 0.42, 0.65];
+    for (var ri = 0; ri < ridgeTs.length; ri++) {
+      var rf = this._frame(ridgeTs[ri]);
+      var rSides = ri < 4 ? [-1, 1] : [ri % 2 === 0 ? 1 : -1];
+      for (var rsi = 0; rsi < rSides.length; rsi++) {
+      var rside = rSides[rsi];
+      var rhgt = 80 + (ri % 4) * 12;
+      var rlat = this._lat(EDGE.tower + 7 + (ri % 2) * 2, 5);
+      var ridge = new THREE.Mesh(new THREE.BoxGeometry(15, rhgt, 28), ridgeMat);
+      ridge.position.copy(rf.p).addScaledVector(rf.side, rside * rlat);
+      ridge.position.y = rf.p.y + rhgt * 0.42;
+      ridge.rotation.order = 'YXZ';
+      ridge.rotation.y = rf.yaw;
+      ridge.rotation.x = -(rf.pitch || 0);
+      ridge.userData.lod = 'far';
+      ridge.userData.noLod = ri < 4; // early both-flank mass always; far LODs
+      ridge.userData.ignoreIntrusion = true;
+      ridge.userData.qualityExtra = true;
+      ridge.frustumCulled = ri >= 4;
+      this.group.add(ridge);
+      this.buildings.push(ridge);
+      if (!this._qualityExtras) this._qualityExtras = [];
+      this._qualityExtras.push(ridge);
+      // Neon crown only early ridges (v376 FPS)
+      if (ri < 4 && rsi === 0) {
+        var capMat = ri % 2 ? neonCap : magCap;
+        var cap = new THREE.Mesh(new THREE.BoxGeometry(16.4, 0.9, 32.4), capMat);
+        cap.position.copy(ridge.position);
+        cap.position.y += rhgt * 0.48;
+        cap.rotation.order = 'YXZ';
+        cap.rotation.y = rf.yaw;
+        cap.rotation.x = -(rf.pitch || 0);
+        cap.userData.lod = 'far';
+        cap.userData.noLod = true;
+        cap.userData.ignoreIntrusion = true;
+        cap.userData.qualityExtra = true;
+        cap.frustumCulled = false;
+        this.group.add(cap);
+        this.buildings.push(cap);
+        this._qualityExtras.push(cap);
+      }
+      } // rsi paired sides
+    } // ri ridgeTs
+    // Far-ahead towers (both sides) — sit past wall top so they read in the vanishing point
+    var spikeMat = new THREE.MeshBasicMaterial({ color: 0x14101c, fog: false });
+    var beltMat = new THREE.MeshBasicMaterial({ color: 0xff2d55, fog: false });
+    // v362: two far spikes (was 3+)
+    var spikeTs = [0.28, 0.55];
+    for (var si = 0; si < spikeTs.length; si++) {
+      var sf = this._frame(spikeTs[si]);
+      for (var ss = -1; ss <= 1; ss += 2) {
+        var sh = 90 + (si % 3) * 16;
+        var slat = this._lat(EDGE.tower + 14, 6);
+        var spike = new THREE.Mesh(new THREE.BoxGeometry(14, sh, 14), spikeMat);
+        spike.position.copy(sf.p).addScaledVector(sf.side, ss * slat);
+        spike.position.y = sf.p.y + sh * 0.5;
+        spike.userData.lod = 'far';
+        spike.userData.noLod = false;
+        spike.userData.ignoreIntrusion = true;
+        spike.frustumCulled = true;
+        this.group.add(spike);
+        this.buildings.push(spike);
+        var belt = new THREE.Mesh(new THREE.BoxGeometry(14.4, 1.2, 14.4), si % 2 ? neonCap : beltMat);
+        belt.position.copy(spike.position);
+        belt.position.y += sh * 0.22;
+        belt.userData.lod = 'far';
+        belt.userData.noLod = false;
+        belt.userData.ignoreIntrusion = true;
+        belt.frustumCulled = true;
+        this.group.add(belt);
+        this.buildings.push(belt);
+      }
+    }
+  };
+
+  /**
+   * THE REACH coastal dress — water, salt flats, sea stacks, lighthouse.
+   * MeshBasic only. Wave 5: denser near-horizon mass so chase isn't a black slab.
+   */
+  World.prototype._buildCoastDress = function () {
+    var mid = this.path.curve.getPointAt(0.45);
+    this._qualityExtras = this._qualityExtras || [];
+    function trackExtra(self, o) {
+      self._qualityExtras.push(o);
+      o.userData.qualityExtra = true;
+    }
+
+    // Ocean — path-following strips so water is always beside the ribbon
+    // v353: brighter teal so chase reads "sea" not black void
+    var waterMat = new THREE.MeshBasicMaterial({
+      color: 0x3a7088,
+      transparent: true,
+      opacity: 0.97,
+      fog: true,
+    });
+    for (var wi = 0; wi < 14; wi++) {
+      var wt = 0.03 + wi * 0.07;
+      if (wt > 0.97) break;
+      var wf = this._frame(wt);
+      var water = new THREE.Mesh(new THREE.PlaneGeometry(260, 180), waterMat);
+      water.rotation.x = -Math.PI / 2;
+      water.position.copy(wf.p).addScaledVector(wf.side, -this._lat(EDGE.tower + 18, 45));
+      water.position.y = -0.25;
+      water.userData.ignoreIntrusion = true;
+      water.userData.lod = 'far';
+      water.userData.noLod = true;
+      this.group.add(water);
+      this.buildings.push(water);
+    }
+
+    // Sand shelf — continuous strip ocean-side
+    var sandMat = new THREE.MeshBasicMaterial({ color: 0x4a3e2a, fog: true });
+    for (var si0 = 0; si0 < 14; si0++) {
+      var st0 = 0.03 + si0 * 0.07;
+      if (st0 > 0.97) break;
+      var sf0 = this._frame(st0);
+      var sand = new THREE.Mesh(new THREE.PlaneGeometry(48, 90), sandMat);
+      sand.rotation.x = -Math.PI / 2;
+      sand.position.copy(sf0.p).addScaledVector(sf0.side, -this._lat(EDGE.tower + 4, 12));
+      sand.position.y = -0.08;
+      sand.userData.ignoreIntrusion = true;
+      sand.userData.lod = 'far';
+      sand.userData.noLod = true;
+      this.group.add(sand);
+      this.buildings.push(sand);
+    }
+
+    // Inland dirt shelf — path-following so land side isn't pure void (v338)
+    var dirtMat = new THREE.MeshBasicMaterial({ color: 0x2c2418, fog: true });
+    for (var di0 = 0; di0 < 16; di0++) {
+      var dt0 = 0.03 + di0 * 0.06;
+      if (dt0 > 0.97) break;
+      var df0 = this._frame(dt0);
+      var dirt = new THREE.Mesh(new THREE.PlaneGeometry(70, 110), dirtMat);
+      dirt.rotation.x = -Math.PI / 2;
+      dirt.position.copy(df0.p).addScaledVector(df0.side, this._lat(EDGE.tower + 6, 18));
+      dirt.position.y = -0.06;
+      dirt.userData.ignoreIntrusion = true;
+      dirt.userData.lod = 'far';
+      dirt.userData.noLod = true;
+      this.group.add(dirt);
+      this.buildings.push(dirt);
+    }
+
+    // Dusk horizon cards — v353: rolling cliffs / mesa, NOT city tower rects
+    var hc = document.createElement('canvas');
+    hc.width = 1024;
+    hc.height = 256;
+    var hctx = hc.getContext('2d');
+    // Sky wash into dusk
+    var skyGrad = hctx.createLinearGradient(0, 0, 0, 256);
+    skyGrad.addColorStop(0, '#1a1020');
+    skyGrad.addColorStop(0.55, '#2a1828');
+    skyGrad.addColorStop(1, '#3a2820');
+    hctx.fillStyle = skyGrad;
+    hctx.fillRect(0, 0, 1024, 256);
+    // Broad ridge silhouette (mountain/mesa slopes, not skyscrapers)
+    function ridgePoly(color, baseY, peaks) {
+      hctx.fillStyle = color;
+      hctx.beginPath();
+      hctx.moveTo(0, 256);
+      hctx.lineTo(0, baseY);
+      for (var pi = 0; pi < peaks.length; pi++) {
+        hctx.lineTo(peaks[pi][0], peaks[pi][1]);
+      }
+      hctx.lineTo(1024, baseY + 20);
+      hctx.lineTo(1024, 256);
+      hctx.closePath();
+      hctx.fill();
+    }
+    ridgePoly('#1e1814', 200, [
+      [80, 170], [160, 130], [240, 155], [340, 100], [420, 140],
+      [520, 90], [620, 145], [720, 110], [820, 150], [920, 120], [1024, 160]
+    ]);
+    ridgePoly('#2a2018', 210, [
+      [0, 190], [120, 150], [220, 175], [300, 125], [400, 160],
+      [500, 115], [600, 165], [700, 130], [800, 170], [900, 140], [1024, 180]
+    ]);
+    // Warm dusk belts (amber only — no cyan city neon)
+    hctx.fillStyle = '#ff8a50';
+    hctx.globalAlpha = 0.55;
+    hctx.fillRect(0, 175, 1024, 5);
+    hctx.fillStyle = '#ffc878';
+    hctx.fillRect(0, 200, 1024, 3);
+    hctx.globalAlpha = 0.25;
+    hctx.fillStyle = '#ff6a30';
+    hctx.fillRect(0, 140, 1024, 8);
+    hctx.globalAlpha = 1;
+    var htex = new THREE.CanvasTexture(hc);
+    htex.needsUpdate = true;
+    var hmat = new THREE.MeshBasicMaterial({
+      map: htex,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      fog: false,
+    });
+    this._horizonCards = this._horizonCards || [];
+    // v353: wide low cards (ridge panoramas) — tall 88–150 cards read as skyscrapers
+    for (var ci = 0; ci < 16; ci++) {
+      var ct = 0.04 + (ci / 16) * 0.9;
+      var cf = this._frame(ct);
+      var cside = ci % 3 === 0 ? -1 : 1; // mostly inland, some ocean
+      var clat = this._lat(EDGE.tower + 16 + (ci % 3) * 5, 4);
+      var ch = 36 + (ci % 4) * 8; // low ridge
+      var cw = 90 + (ci % 3) * 20; // wide
+      var card = new THREE.Mesh(new THREE.PlaneGeometry(cw, ch), hmat);
+      card.position.copy(cf.p).addScaledVector(cf.side, cside * clat);
+      card.position.y = cf.p.y + ch * 0.42;
+      card.lookAt(cf.p.x, card.position.y, cf.p.z);
+      card.userData.horizonCard = true;
+      card.userData.ignoreIntrusion = true;
+      card.userData.lod = 'far';
+      card.userData.noLod = true;
+      card.frustumCulled = false;
+      this.group.add(card);
+      this.buildings.push(card);
+      this._horizonCards.push(card);
+    }
+
+    // Inland cliff ridges — solid MeshBasic mass (chase must name something on land)
+    // v353: low wide mesas (not tall tower boxes that read as city)
+    var cliffMat = new THREE.MeshBasicMaterial({ color: 0x3a2a22, fog: false });
+    var amberBelt = new THREE.MeshBasicMaterial({ color: 0xff8a50, fog: false });
+    var cliffTs = [0.08, 0.14, 0.20, 0.28, 0.36, 0.46, 0.56, 0.66, 0.76, 0.86];
+    for (var cri = 0; cri < cliffTs.length; cri++) {
+      var crf = this._frame(cliffTs[cri]);
+      var crh = 18 + (cri % 4) * 6; // was 48–96 tower-tall
+      var crW = 28 + (cri % 3) * 10;
+      var crD = 40 + (cri % 2) * 12;
+      var crlat = this._lat(EDGE.tower + 12, 8);
+      var cliff = new THREE.Mesh(new THREE.BoxGeometry(crW, crh, crD), cliffMat);
+      cliff.position.copy(crf.p).addScaledVector(crf.side, crlat);
+      cliff.position.y = crf.p.y + crh * 0.38;
+      cliff.rotation.order = 'YXZ';
+      cliff.rotation.y = crf.yaw + (cri % 3 - 1) * 0.15;
+      cliff.rotation.x = -(crf.pitch || 0) * 0.5;
+      cliff.userData.lod = 'far';
+      cliff.userData.noLod = true;
+      cliff.userData.ignoreIntrusion = true;
+      cliff.frustumCulled = false;
+      this.group.add(cliff);
+      this.buildings.push(cliff);
+      trackExtra(this, cliff);
+      var belt = new THREE.Mesh(new THREE.BoxGeometry(crW + 0.8, 0.9, crD + 0.8), amberBelt);
+      belt.position.copy(cliff.position);
+      belt.position.y += crh * 0.42;
+      belt.rotation.copy(cliff.rotation);
+      belt.userData.lod = 'far';
+      belt.userData.noLod = true;
+      belt.userData.ignoreIntrusion = true;
+      belt.frustumCulled = false;
+      this.group.add(belt);
+      this.buildings.push(belt);
+      trackExtra(this, belt);
+    }
+
+    // Warm dusk haze — path-following (not a mid-map ring that misses chase FOV)
+    var hazeMat = new THREE.MeshBasicMaterial({
+      color: 0x5a3040,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      fog: false,
+    });
+    for (var hi = 0; hi < 12; hi++) {
+      var ht = 0.06 + hi * 0.075;
+      if (ht > 0.94) break;
+      var hf = this._frame(ht);
+      var hside = hi % 2 === 0 ? 1 : -1;
+      var haze = new THREE.Mesh(new THREE.PlaneGeometry(140, 70), hazeMat);
+      haze.position.copy(hf.p).addScaledVector(hf.side, hside * this._lat(EDGE.tower + 28, 10));
+      haze.position.y = hf.p.y + 28;
+      haze.lookAt(hf.p.x, haze.position.y * 0.5, hf.p.z);
+      haze.userData.ignoreIntrusion = true;
+      haze.userData.lod = 'far';
+      haze.userData.noLod = true;
+      this.group.add(haze);
+      this.buildings.push(haze);
+      trackExtra(this, haze);
+    }
+
+    // Sea stacks — ocean side mostly; stubby rock, not tower spires (v353)
+    var n = 36;
+    var rockGeo = new THREE.BoxGeometry(1, 1, 1);
+    var rockMat = new THREE.MeshBasicMaterial({ color: 0x3a342e, fog: false });
+    var rocks = new THREE.InstancedMesh(rockGeo, rockMat, n);
+    rocks.userData.lod = 'far';
+    rocks.userData.noLod = true;
+    rocks.userData.ignoreIntrusion = true;
+    rocks.frustumCulled = false;
+    var dummy = new THREE.Object3D();
+    var placed = 0;
+    for (var i = 0; i < n; i++) {
+      var t = 0.04 + (i / n) * 0.9;
+      var f = this._frame(t);
+      var side = (i % 5 === 0) ? 1 : -1; // mostly ocean (−)
+      var lat = this._lat(EDGE.tower + 14 + (i % 4) * 5, 5);
+      var h = 8 + (i % 5) * 4; // shorter
+      var w = 6 + (i % 4) * 3; // wider
+      dummy.position.copy(f.p).addScaledVector(f.side, side * lat);
+      dummy.position.y = f.p.y + h * 0.4;
+      dummy.rotation.set(0, f.yaw + (i % 3) * 0.4, 0);
+      dummy.scale.set(w, h, w * 0.85);
+      dummy.updateMatrix();
+      rocks.setMatrixAt(placed, dummy.matrix);
+      placed++;
+    }
+    rocks.count = placed;
+    rocks.instanceMatrix.needsUpdate = true;
+    this.group.add(rocks);
+    this.buildings.push(rocks);
+    trackExtra(this, rocks);
+
+    // Inland silos — farm grain elevators, not skyline (v353: shorter)
+    var siloGeo = new THREE.CylinderGeometry(2.2, 2.4, 1, 8);
+    var siloMat = new THREE.MeshBasicMaterial({ color: 0x5a4a38, fog: false });
+    var silos = new THREE.InstancedMesh(siloGeo, siloMat, 14);
+    silos.userData.lod = 'far';
+    silos.userData.noLod = true;
+    silos.userData.ignoreIntrusion = true;
+    silos.frustumCulled = false;
+    var sp = 0;
+    for (var si = 0; si < 14; si++) {
+      var st = 0.08 + si * 0.06;
+      if (st > 0.92) break;
+      var sf = this._frame(st);
+      var slat = this._lat(EDGE.billboard + 6 + (si % 3) * 4, 3);
+      var sh = 9 + (si % 4) * 3;
+      dummy.position.copy(sf.p).addScaledVector(sf.side, slat);
+      dummy.position.y = sf.p.y + sh * 0.5;
+      dummy.rotation.set(0, sf.yaw, 0);
+      dummy.scale.set(1.35, sh, 1.35);
+      dummy.updateMatrix();
+      silos.setMatrixAt(sp, dummy.matrix);
+      sp++;
+    }
+    silos.count = sp;
+    silos.instanceMatrix.needsUpdate = true;
+    this.group.add(silos);
+    this.buildings.push(silos);
+    trackExtra(this, silos);
+
+    // Lighthouse — keep always (landmark, not density fluff)
+    var lf = this._frame(0.38);
+    var lightLat = this._lat(EDGE.tower + 20, 4);
+    var base = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.2, 4.0, 8, 10),
+      new THREE.MeshBasicMaterial({ color: 0xd0c8b8, fog: false })
+    );
+    base.position.copy(lf.p).addScaledVector(lf.side, -lightLat);
+    base.position.y = lf.p.y + 4;
+    base.userData.ignoreIntrusion = true;
+    base.userData.lod = 'far';
+    base.userData.noLod = true;
+    this.group.add(base);
+    this.buildings.push(base);
+    var shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.0, 2.4, 32, 10),
+      new THREE.MeshBasicMaterial({ color: 0xf0e8d8, fog: false })
+    );
+    shaft.position.copy(base.position);
+    shaft.position.y += 18;
+    shaft.userData.ignoreIntrusion = true;
+    shaft.userData.lod = 'far';
+    shaft.userData.noLod = true;
+    this.group.add(shaft);
+    this.buildings.push(shaft);
+    var lantern = new THREE.Mesh(
+      new THREE.BoxGeometry(5.5, 4.5, 5.5),
+      new THREE.MeshBasicMaterial({ color: 0xffc878, fog: false })
+    );
+    lantern.position.copy(shaft.position);
+    lantern.position.y += 18;
+    lantern.userData.ignoreIntrusion = true;
+    lantern.userData.lod = 'far';
+    lantern.userData.noLod = true;
+    this.group.add(lantern);
+    this.buildings.push(lantern);
+    var glow = new THREE.Mesh(
+      new THREE.CircleGeometry(22, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0xffaa55,
+        transparent: true,
+        opacity: 0.28,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        fog: false,
+      })
+    );
+    glow.position.copy(lantern.position);
+    glow.position.y += 1;
+    glow.userData.ignoreIntrusion = true;
+    glow.userData.lod = 'far';
+    glow.userData.noLod = true;
+    this.group.add(glow);
+
+    // Dunes along ocean edge
+    var duneMat = new THREE.MeshBasicMaterial({ color: 0x3a3220, fog: false });
+    for (var di = 0; di < 16; di++) {
+      var dt = 0.05 + di * 0.055;
+      if (dt > 0.95) break;
+      var df = this._frame(dt);
+      var dune = new THREE.Mesh(new THREE.BoxGeometry(20, 4.5, 44), duneMat);
+      dune.position.copy(df.p).addScaledVector(df.side, -this._lat(EDGE.tower + 5, 8));
+      dune.position.y = df.p.y + 1.5;
+      dune.rotation.y = df.yaw;
+      dune.userData.ignoreIntrusion = true;
+      dune.userData.lod = 'far';
+      this.group.add(dune);
+      this.buildings.push(dune);
+      trackExtra(this, dune);
+    }
+  };
+
+  /**
    * Shoulder street life — planters, bollards, parked silhouettes.
    * All setback-safe, MeshBasic only. Gives canyon "alive" without lights.
    */
   World.prototype._buildStreetLife = function () {
     var pathLen = this.path.length || 2000;
-    var n = Math.max(16, Math.min(40, Math.floor(pathLen / 70)));
+    // v376: sparser street dressing for FPS
+    var n = Math.max(10, Math.min(22, Math.floor(pathLen / 110)));
     var potMat = new THREE.MeshBasicMaterial({ color: 0x2a2430 });
     var bushMat = new THREE.MeshBasicMaterial({ color: 0x1a4030 });
     var bollardMat = new THREE.MeshBasicMaterial({ color: 0xc8a040 });
@@ -1670,6 +2689,18 @@
       var side = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
       var yaw = Math.atan2(tan.x, tan.z);
       var postH = 9.2;
+      var isFinishGate = /FINISH/i.test(label || '');
+      var isStartGate = /START/i.test(label || '');
+      var gateGrp = new THREE.Group();
+      gateGrp.userData.gate = true;
+      if (isFinishGate) gateGrp.userData.isFinish = true;
+      if (isStartGate) gateGrp.userData.isStart = true;
+      function tagGate(obj) {
+        obj.userData.gate = true;
+        if (isFinishGate) obj.userData.isFinish = true;
+        if (isStartGate) obj.userData.isStart = true;
+        gateGrp.add(obj);
+      }
       var postMat = new THREE.MeshBasicMaterial({ color: 0x12141c });
       var neonMat = new THREE.MeshBasicMaterial({ color: col });
       var neonSoft = new THREE.MeshBasicMaterial({
@@ -1687,7 +2718,7 @@
         ped.position.copy(p).addScaledVector(side, s * baseX);
         ped.position.y = p.y + 0.35;
         ped.userData.lod = 'detail';
-        self.group.add(ped);
+        tagGate(ped);
         self.buildings.push(ped);
 
         // Thick post
@@ -1695,7 +2726,7 @@
         post.position.copy(p).addScaledVector(side, s * baseX);
         post.position.y = p.y + postH * 0.5 + 0.35;
         post.userData.lod = 'detail';
-        self.group.add(post);
+        tagGate(post);
         self.buildings.push(post);
 
         // Neon verticals (inner + outer)
@@ -1708,7 +2739,7 @@
           wrap.position.addScaledVector(side, -s * (0.42 + nv * 0.08));
           wrap.position.x += (nv ? 0.12 : -0.12) * Math.cos(yaw);
           wrap.userData.lod = 'detail';
-          self.group.add(wrap);
+          tagGate(wrap);
         }
         // Soft glow column
         var colGlow = new THREE.Mesh(
@@ -1717,7 +2748,7 @@
         );
         colGlow.position.copy(post.position);
         colGlow.userData.lod = 'detail';
-        self.group.add(colGlow);
+        tagGate(colGlow);
       }
 
       // Double crossbar (outer + inner neon)
@@ -1727,7 +2758,7 @@
       bar.position.y = barY;
       bar.rotation.y = yaw;
       bar.userData.lod = 'detail';
-      self.group.add(bar);
+      tagGate(bar);
       self.buildings.push(bar);
 
       var bar2 = new THREE.Mesh(new THREE.BoxGeometry(span * 0.98, 0.22, 0.22), neonSoft);
@@ -1735,7 +2766,7 @@
       bar2.position.y = barY - 0.55;
       bar2.rotation.y = yaw;
       bar2.userData.lod = 'detail';
-      self.group.add(bar2);
+      tagGate(bar2);
 
       // Corner cubes on bar ends
       for (var ce = -1; ce <= 1; ce += 2) {
@@ -1743,7 +2774,7 @@
         corner.position.copy(p).addScaledVector(side, ce * (span * 0.48));
         corner.position.y = barY;
         corner.userData.lod = 'detail';
-        self.group.add(corner);
+        tagGate(corner);
       }
 
       // Ground threshold strip across road (drive over — flat paint, no block)
@@ -1756,7 +2787,7 @@
       thresh.rotation.y = yaw;
       thresh.userData.isRoadSurface = true;
       thresh.userData.lod = 'detail';
-      self.group.add(thresh);
+      tagGate(thresh);
 
       var threshGlow = new THREE.Mesh(
         new THREE.BoxGeometry(rh * 2 - 0.5, 0.02, 2.4),
@@ -1766,7 +2797,7 @@
       threshGlow.position.y = p.y + 0.11;
       threshGlow.rotation.y = yaw;
       threshGlow.userData.isRoadSurface = true;
-      self.group.add(threshGlow);
+      tagGate(threshGlow);
 
       // Crisp banner
       var canvas = document.createElement('canvas');
@@ -1813,7 +2844,7 @@
       banner.position.y = barY - 2.0;
       banner.rotation.y = faceBack ? yaw + Math.PI : yaw;
       banner.userData.lod = 'sign';
-      self.group.add(banner);
+      tagGate(banner);
       self.buildings.push(banner);
 
       var back = new THREE.Mesh(
@@ -1825,12 +2856,106 @@
       var faceN = new THREE.Vector3(Math.sin(banner.rotation.y), 0, Math.cos(banner.rotation.y));
       back.position.addScaledVector(faceN, -0.14);
       back.userData.lod = 'sign';
-      self.group.add(back);
+      tagGate(back);
       self.buildings.push(back);
+
+      self.group.add(gateGrp);
+      if (isFinishGate) {
+        self._finishGate = gateGrp;
+        self._finishGateMats = [];
+        gateGrp.traverse(function (o) {
+          if (o.isMesh && o.material) {
+            var mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach(function (m) {
+              if (m && self._finishGateMats.indexOf(m) < 0) self._finishGateMats.push(m);
+            });
+          }
+        });
+      }
     }
 
     gate(0.025, 'START', 0x00e5ff, true);
     gate(0.975, 'FINISH', 0xff2d55, false);
+
+    // Original parole strip ads — side of road only, never driveline (v297 copy pass)
+    if (this.path && this.path.curve) {
+      var ads = [
+        'PAROLE PAID IN LAPS',
+        'WARDEN SEES LEADERS',
+        'SCRAP BUYS TOMORROW',
+        'FINISH OR BECOME FOOTAGE',
+        'NIGHT OWES YOU NOTHING',
+      ];
+      for (var ai = 0; ai < ads.length; ai++) {
+        var at = 0.16 + ai * 0.15;
+        if (at > 0.88) break;
+        var ap = this.path.curve.getPointAt(at);
+        var atan = this.path.curve.getTangentAt(at).normalize();
+        var aside = new THREE.Vector3(-atan.z, 0, atan.x);
+        var apos = ap.clone().addScaledVector(aside, (this.roadHalf || 11) + 6.5 * (ai % 2 ? 1 : -1));
+        apos.y = ap.y + 3.2;
+        var ac = document.createElement('canvas');
+        ac.width = 512; ac.height = 128;
+        var ax = ac.getContext('2d');
+        ax.fillStyle = '#0a0810';
+        ax.fillRect(0, 0, 512, 128);
+        ax.strokeStyle = ai % 2 ? '#ff2d55' : '#00e5ff';
+        ax.lineWidth = 5;
+        ax.strokeRect(6, 6, 500, 116);
+        ax.fillStyle = '#1a1020';
+        ax.fillRect(12, 12, 488, 104);
+        ax.fillStyle = '#ff2d55';
+        ax.font = 'bold 26px monospace';
+        ax.textAlign = 'center';
+        ax.fillText(ads[ai], 256, 58);
+        ax.fillStyle = '#8a7a88';
+        ax.font = 'bold 14px monospace';
+        ax.fillText('NIGHT CIRCUIT · OVERLORD MEDIA', 256, 96);
+        var atex = new THREE.CanvasTexture(ac);
+        atex.needsUpdate = true;
+        var board = new THREE.Mesh(
+          new THREE.PlaneGeometry(8.2, 2.05),
+          new THREE.MeshBasicMaterial({ map: atex, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+        );
+        board.position.copy(apos);
+        board.lookAt(ap.x, apos.y, ap.z);
+        board.userData.lod = 'sign';
+        board.userData.paroleAd = true;
+        this.group.add(board);
+        this.buildings.push(board);
+      }
+    }
+  };
+
+  /** Cyan pulse on whole FINISH arch group when player nears gate (v284) */
+  World.prototype.pulseFinish = function (t) {
+    if (!this.group) return;
+    var pulse = 0.55 + 0.45 * Math.sin((t || 0) * 7);
+    var cyanPulse = 0.5 + 0.5 * Math.sin((t || 0) * 9);
+    var bright = 0.55 + cyanPulse * 0.45;
+    // Prefer tagged finish gate group (whole arch)
+    var root = this._finishGate || this.group;
+    var wholeArch = !!this._finishGate;
+    root.traverse(function (o) {
+      if (!o.isMesh || !o.material) return;
+      if (!wholeArch && !(o.userData && (o.userData.isFinish || o.userData.gate))) return;
+      var mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach(function (m) {
+        if (!m) return;
+        if (m.map) {
+          m.transparent = true;
+          m.opacity = 0.75 + pulse * 0.25;
+        }
+        if (m.color && !m.map) {
+          // Neon bars/posts/threshold → cyan pulse
+          m.color.setRGB(0.15 + cyanPulse * 0.35, 0.8 + cyanPulse * 0.2, 1.0);
+          if (m.opacity != null) {
+            m.transparent = true;
+            m.opacity = bright;
+          }
+        }
+      });
+    });
   };
 
   /**
@@ -1850,7 +2975,8 @@
     var probes = [];
     this.group.traverse(function (obj) {
       if (!obj.isMesh || !obj.visible || !obj.geometry) return;
-      if (obj.userData && obj.userData.isRoadSurface) return;
+      if (obj.isInstancedMesh) return;
+      if (obj.userData && (obj.userData.isRoadSurface || obj.userData.noLod || obj.userData.ignoreIntrusion)) return;
       var box = new THREE.Box3().setFromObject(obj);
       if (box.isEmpty()) return;
       var size = box.getSize(new THREE.Vector3());
@@ -1863,7 +2989,7 @@
       probes.push({ obj: obj, box: box });
     });
 
-    var nSamples = Math.min(500, Math.max(160, Math.floor((path.length || 2000) / 8)));
+    var nSamples = Math.min(180, Math.max(80, Math.floor((path.length || 2000) / 16)));
     var laterals = [0, -clearR * 0.5, clearR * 0.5, -clearR * 0.88, clearR * 0.88];
     var origin = new THREE.Vector3();
     var killed = {};
@@ -1906,6 +3032,29 @@
   };
 
   // ─── Runtime API ─────────────────────────────────────────────────────
+
+  World.prototype.setDensity = function (level) {
+    var low = level === 'medium' || level === 'low';
+    this._qualityLow = low;
+    var cards = this._horizonCards || [];
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i]) cards[i].visible = !low;
+    }
+    // Wave 5: hide tagged extras on LOW (city ridges + coast stacks/haze)
+    var extras = this._qualityExtras || [];
+    for (var j = 0; j < extras.length; j++) {
+      if (extras[j]) extras[j].visible = !low;
+    }
+    // Belt-and-suspenders: any mesh flagged qualityExtra / horizonCard
+    if (this.group) {
+      this.group.traverse(function (o) {
+        if (!o || !o.userData) return;
+        if (o.userData.horizonCard || o.userData.qualityExtra) {
+          o.visible = !low;
+        }
+      });
+    }
+  };
 
   World.prototype.nearest = function (pos, hintProgress) {
     if (!this.path) return null;
@@ -1968,15 +3117,27 @@
     // LOD with hysteresis — wider ranges + show/hide gap kills hard pop-in.
     // (Not a PC issue: old cutoffs were 95/180/320 with instant visible=false.)
     // showDist = turn ON when closer; hideDist = turn OFF when farther.
+    // v391: tighter non-results bands after cards 19 FOV mass
+    // v379: results orbit expands bands so hero frame isn't asphalt void
+    var resultsPad = !!this._resultsLodBoost;
     function lodBand(lod, isSidewalk) {
-      // Tighter than v244 — still no hard pop at race speed
-      if (isSidewalk) return { show: 140, hide: 190 };
-      if (lod === 'far') return { show: 320, hide: 400 };
-      if (lod === 'detail' || lod === 'window' || lod === 'sign') return { show: 100, hide: 140 };
-      return { show: 200, hide: 260 }; // building / frontage / towers
+      if (resultsPad) {
+        if (isSidewalk) return { show: 110, hide: 140 };
+        if (lod === 'far') return { show: 240, hide: 300 };
+        if (lod === 'detail' || lod === 'window' || lod === 'sign') return { show: 80, hide: 110 };
+        return { show: 160, hide: 210 };
+      }
+      if (isSidewalk) return { show: 62, hide: 88 };
+      if (lod === 'far') return { show: 145, hide: 195 };
+      if (lod === 'detail' || lod === 'window' || lod === 'sign') return { show: 40, hide: 60 };
+      return { show: 88, hide: 120 }; // building / frontage / towers
     }
 
+    this._lodTick = ((this._lodTick | 0) + 1) % (resultsPad ? 1 : 3);
+    var parity = this._lodTick;
     for (var i = 0; i < this.buildings.length; i++) {
+      // Stagger: update 1/3 of list per frame (full scan on results pad)
+      if (!resultsPad && (i % 3) !== parity) continue;
       var b = this.buildings[i];
       if (!b || !b.position) continue;
       if (!b.userData) b.userData = {};
@@ -1984,17 +3145,21 @@
         b.visible = false;
         continue;
       }
+      if (b.userData.noLod) continue;
       var dx = b.position.x - cx, dy = (b.position.y || 0) - cy, dz = b.position.z - cz;
-      var d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      // Avoid sqrt — compare squared distances
+      var d2 = dx * dx + dy * dy + dz * dz;
       var lod = b.userData.lod || 'building';
       var band = lodBand(lod, !!b.userData.isSidewalk);
+      var show2 = band.show * band.show;
+      var hide2 = band.hide * band.hide;
       var on = b.userData._lodOn;
       if (on == null) {
-        on = d < band.show;
+        on = d2 < show2;
       } else if (on) {
-        if (d > band.hide) on = false;
+        if (d2 > hide2) on = false;
       } else {
-        if (d < band.show) on = true;
+        if (d2 < show2) on = true;
       }
       b.userData._lodOn = on;
       b.visible = on;

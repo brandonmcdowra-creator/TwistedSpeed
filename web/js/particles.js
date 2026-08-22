@@ -600,51 +600,51 @@
     this.rainStop();
 
     var S = this._wxEnsureShared();
-    // PERF budgets (was 280/340 + 80 splashes — matrix writes every frame)
-    var rainN = 110;
-    var mistN = 4;
+    // PERF budgets (v381 floor fix; v391: cards 19 FOV tax)
+    var rainN = 22;
+    var mistN = 2;
     var emberN = 0;
-    var rainOp = 0.22;
+    var rainOp = 0.18;
     var rainCol = 0xb0c8e0;
     var wind = 3.2;
     var fallMin = 26;
     var fallSpan = 28;
-    var spread = 32;
-    var mistOp = 0.16;
+    var spread = 30;
+    var mistOp = 0.12;
     var mistCol = 0xc0d0e0;
 
     if (t === 'industrial') {
-      rainN = 130;
-      mistN = 4;
-      emberN = 18;
-      rainOp = 0.2;
+      rainN = 72;
+      mistN = 2;
+      emberN = 8;
+      rainOp = 0.18;
       rainCol = 0xa8a090;
       wind = 2.4;
       fallMin = 24;
       fallSpan = 30;
       spread = 32;
-      mistOp = 0.14;
+      mistOp = 0.12;
       mistCol = 0xc8b090;
     } else if (t === 'coastal') {
-      rainN = 70;
-      mistN = 8;
+      rainN = 52;
+      mistN = 6;
       emberN = 0;
-      rainOp = 0.14;
+      rainOp = 0.12;
       rainCol = 0xc0d8f0;
       wind = 4.5;
       fallMin = 14;
       fallSpan = 16;
       spread = 36;
-      mistOp = 0.22;
+      mistOp = 0.18;
       mistCol = 0xa8c8e8;
     }
 
-    if (rainN > 160) rainN = 160;
-    if (rainN < 50) rainN = 50;
+    if (rainN > 120) rainN = 120;
+    if (rainN < 20) rainN = 20;
 
-    var splashN = t === 'coastal' ? 28 : t === 'industrial' ? 36 : 32;
-    if (splashN > 40) splashN = 40;
-    if (splashN < 20) splashN = 20;
+    var splashN = t === 'coastal' ? 14 : t === 'industrial' ? 16 : 12;
+    if (splashN > 20) splashN = 20;
+    if (splashN < 8) splashN = 8;
 
     S.rainMat.color.setHex(rainCol);
     S.rainMat.opacity = rainOp;
