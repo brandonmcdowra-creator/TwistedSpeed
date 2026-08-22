@@ -1,30 +1,35 @@
 # Twisted Speed — Progress
 
-**Build:** web **v399** (v398 overnight + visible BUILD stamp)  
-**Date:** 2026-08-15  
-**Serve:** `web/` → hard-refresh `?v=399` — title must say **BUILD 399**  
+**Build:** web **v403** (first-curve pure-W lateral hang)  
+**Date:** 2026-08-21  
+**Serve:** `web/` → hard-refresh `?v=403` — title must say **BUILD 403**  
 **Primary runtime:** **web** · Wave ∞  
 **Gate C:** CLOSED  
 
-## This block
+## This block (controller-verified in Chrome)
 | Check | Result |
 |-------|--------|
-| v396 | First-curve: stronger center pull · lat hang reduced (~6.2 peak) |
-| v397 | Toast: scrap rate-limit · rival special gate · shorter WASD |
-| v398 | Late both-side thin peeks 0.58/0.70/0.82 |
-| Locks | mph · garage · same-map · pack outer · both flanks · cast · Parole Arch · no map 3 |
+| v399 P0 | BUILD 399 boots. Keyboard THE REACH **does load coast** (`theme=coast`, water/mesas). HUD had no map name. MG projectiles spawned but chase-cam mute. |
+| v400 | HUD chip shows **THE REACH** / **NEON CIRCUIT**. Chase MG: muzzle burst + sparks visible (Choir van still hides thin rods). |
+| v401 | Large red hit chevron (right-hit screenshot). Special toast ` → NAME`. Banner no longer hardcodes REACH FINISH. |
+| Climb FOV | **v402 PASS vs pink-slab:** chase ~33% both canyon walls have depth. Skyline above lips still sparse/black. |
+| First-curve | **v403 PASS (controller Chrome):** Choir Neon hold-W peak `p._lat` **−0.92** (was −5.46). Hold-D still reaches |lat| **11.19** (player owns line). |
+| REACH load | PASS on keyboard select + R retry keepWorld. |
+| Results | REACH finish → populated results → R retry same map. |
+| Locks | mph · garage · same-map keepWorld · cast · Parole Arch · no map 3 |
 
 ## Don’t regress
-- Neon early **and** mid-climb both flanks · outer-left peeks · late peeks  
-- clearRace keepWorld · R retry · REACH coast · original cast  
+- Map name chip · chase MG muzzle · hit chevron HUD-safe frame  
+- Neon keepWorld / REACH rebuild on switch · R retry  
+- Late peeks 0.58/0.70/0.82 · original cast · Parole Arch  
+- First-curve: out-steer still owns lip (`steeringOutFC` weak pull)
 
 ## Next session
-Pickup list: **`docs/NEXT-SESSION.md`**  
-Stopped: overnight 4.5 **402** mid-v399. Nothing after **v398**.  
-First act: director play of `http://127.0.0.1:8765/?v=398` (hard-refresh). Then P0 90% table from **human** feel.
+Pickup: **`docs/NEXT-SESSION.md`**  
+Director still needs to play. No ship claim.
 
 ```powershell
 cd "C:\Users\brand\1. Game Making\twisted-speed-build-pack\web"
 python -m http.server 8765
-# http://127.0.0.1:8765/?v=398
+# http://127.0.0.1:8765/?v=403
 ```

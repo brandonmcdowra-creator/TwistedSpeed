@@ -394,7 +394,8 @@
     if (ctx.sfx && ctx.sfx.specialMarrow) ctx.sfx.specialMarrow(recentRam);
     else if (ctx.sfx && ctx.sfx.special) ctx.sfx.special();
     var label = recentRam ? 'BONE HARVEST · RAM-FED' : 'BONE HARVEST';
-    if (aimName) label += ' · ' + String(aimName).toUpperCase();
+    // v401: → NAME = aim target (not same-car attribution); · N NEAR stays count
+    if (aimName) label += ' → ' + String(aimName).toUpperCase();
     else if (nearN > 0) label += ' · ' + nearN + ' NEAR';
     if (ctx.toast) ctx.toast(label, 1.4, 2);
   }

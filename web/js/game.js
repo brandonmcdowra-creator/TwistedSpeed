@@ -1582,10 +1582,15 @@
     state.mode = 'race';
     var mutLabel = (state.mutators || []).map(function (m) { return m.name; }).join(' + ');
     // Banner names the live difficulty + rival count so map chip choice is obvious (v311)
+    // v401: no-mutator suffix uses live map name (was hard-coded REACH FINISH on every map)
     state.msg = '▶  ' + diff.name + '  ·  ' + rivalN + ' RIVALS'
-      + (mutLabel ? '  ·  ' + mutLabel : '  ·  REACH FINISH');
+      + (mutLabel ? '  ·  ' + mutLabel : '  ·  ' + (mapDef.name || 'COURSE'));
     state.msgT = 3.4;
     state._toastPri = 1; // hold over low-pri PACK ENGAGES
+    // Map identity toast once after world ready (v400) — HUD also shows mapDef.name
+    var themeTag = (mapDef.theme === 'coast') ? 'COASTAL DUSK'
+      : (mapDef.theme === 'city' ? 'NEON CANYON' : String(mapDef.theme || 'NIGHT').toUpperCase());
+    toast((mapDef.name || 'COURSE') + ' · ' + themeTag, 2.0, 1);
     // First 10s: queue a short drive hint so new players aren't stuck staring (v308)
     state._toastQueue = state._toastQueue || [];
     state._toastQueue.push({ t: 'WASD drive  ·  Space drift fills NITRO  ·  Q burn', d: 1.8, pri: 0 });
@@ -1941,6 +1946,13 @@
       p._underFireToastT = 2.4;
     }
     if (fromPos) {
+      // v401: screen-edge wedge — player-relative yaw toward attacker (~0.45s)
+      var hdx = fromPos.x - p.pos.x;
+      var hdz = fromPos.z - p.pos.z;
+      if (hdx * hdx + hdz * hdz > 0.01) {
+        state.hitDir = U.angDiff(p.yaw, Math.atan2(hdx, hdz));
+        state.hitDirT = 0.45;
+      }
       tmpV.subVectors(p.pos, fromPos).setY(0);
       if (tmpV.lengthSq() > 0.01) {
         tmpV.normalize().multiplyScalar(cfg.drive.collisionPush * (shieldHit > 0 && amt <= 0 ? 0.55 : 1));
@@ -2370,15 +2382,19 @@
     lookTmp: null,
   };
 
+  // Tracer cylinder base length (geo height). Scale.y = len / TRACER_BASE_LEN.
+  var TRACER_BASE_LEN = 3.0;
+
   function ensureCombatPool() {
     if (_combatPool.tracerGeo) return;
-    _combatPool.tracerGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.3, 5);
+    // v400: thicker/longer so chase cam can read MG at speed (was r=0.05, len=1.3)
+    _combatPool.tracerGeo = new THREE.CylinderGeometry(0.15, 0.15, TRACER_BASE_LEN, 6);
     _combatPool.tracerMatY = new THREE.MeshBasicMaterial({
-      color: 0xffe66d, transparent: true, opacity: 0.95,
+      color: 0xffe66d, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending,
     });
     _combatPool.tracerMatP = new THREE.MeshBasicMaterial({
-      color: 0xffcc66, transparent: true, opacity: 0.95,
+      color: 0xffcc66, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending,
     });
     _combatPool.rocketBodyGeo = new THREE.CylinderGeometry(0.1, 0.13, 0.9, 6);
@@ -2397,6 +2413,19 @@
     _combatPool.lookTmp = new THREE.Vector3();
   }
 
+  /**
+   * Aim an MG tracer along velocity.
+   * Root cause (v399 mute): CylinderGeometry is +Y; Object3D.lookAt aims local -Z
+   * at the target, so the long axis sat sideways (thin radius toward/along view).
+   * After lookAt, rotateX(-PI/2) so +Y aligns with former -Z (flight direction).
+   */
+  function aimMgTracer(mesh, pos, dir) {
+    ensureCombatPool();
+    _combatPool.lookTmp.copy(pos).add(dir);
+    mesh.lookAt(_combatPool.lookTmp);
+    mesh.rotateX(-Math.PI / 2);
+  }
+
   function makeTracer(color, length) {
     ensureCombatPool();
     var mesh;
@@ -2405,12 +2434,11 @@
       mesh.visible = true;
     } else {
       mesh = new THREE.Mesh(_combatPool.tracerGeo, _combatPool.tracerMatY);
-      mesh.rotation.x = Math.PI / 2;
     }
     // Pistol = warmer, MG = yellow — shared mats, just swap ref
     mesh.material = (color === 0xffcc66) ? _combatPool.tracerMatP : _combatPool.tracerMatY;
-    var len = length || 1.2;
-    mesh.scale.set(1, len / 1.3, 1);
+    var len = length || TRACER_BASE_LEN;
+    mesh.scale.set(1, len / TRACER_BASE_LEN, 1);
     mesh.userData.pooled = 'tracer';
     return mesh;
   }
@@ -2527,45 +2555,57 @@
     U.forward(p.yaw, tmpV);
     U.side(p.yaw, tmpV2);
     var hood = state.camMode === 'hood';
+    // Chase: van body occludes ahead-of-bumper tracers — spawn high + wide (v400)
     // Hood: spawn further ahead/higher so tracers sit in FOV (body is hidden) (v302)
-    var fwdOff = hood ? 4.2 : 2.5;
-    var yOff = hood ? 1.45 : (p.def.id === 'needle' ? 0.75 : 0.95);
-    var tracerLen = hood ? 2.4 : (W.mgLabel === 'PISTOL' ? 0.9 : 1.3);
+    var fwdOff = hood ? 4.2 : 1.8;
+    var yOff = hood ? 1.45 : 2.6;
+    // Chase length ~8 / radius ~0.30 via scale on base geo r=0.15 h=3
+    var tracerLen = hood ? 3.8 : (W.mgLabel === 'PISTOL' ? 6.0 : 8.0);
+    var radScale = hood ? 1.45 : 2.0; // chase effective r ≈ 0.30
     function spawnMgRound(sideOff) {
       if (state.projectiles.length > 28) return;
-      var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff * (hood ? 0.15 : 1));
+      var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff);
       origin.y += yOff;
       var col = W.mgLabel === 'PISTOL' ? 0xffcc66 : 0xffe66d;
       var mesh = makeTracer(col, tracerLen);
-      // thicker in hood; always reset so pool recycle doesn't keep fat scale
-      mesh.scale.x = mesh.scale.z = hood ? 1.85 : 1;
+      mesh.scale.x = mesh.scale.z = radScale;
       mesh.position.copy(origin);
-      ensureCombatPool();
-      _combatPool.lookTmp.copy(origin).add(tmpV);
-      mesh.lookAt(_combatPool.lookTmp);
+      aimMgTracer(mesh, origin, tmpV);
       scene.add(mesh);
       state.projectiles.push({
         type: 'mg', mesh: mesh, pos: origin.clone(),
         vel: tmpV.clone().multiplyScalar(cfg.combat.mgSpeed * (W.mgLabel === 'PISTOL' ? 0.92 : 1)),
-        life: hood ? 0.7 : 0.55, dmg: dmg, fromPlayer: true, trail: false,
+        life: hood ? 0.55 : 0.48, dmg: dmg, fromPlayer: true, trail: false,
       });
     }
     if (hasBuff('guns')) {
-      spawnMgRound(-0.35);
-      spawnMgRound(0.35);
+      spawnMgRound(hood ? -0.35 : -1.05);
+      spawnMgRound(hood ? 0.35 : 1.05);
+    } else if (hood) {
+      var sideOffH = (W.mgLabel === 'PISTOL') ? 0 : (Math.random() > 0.5 ? 1 : -1) * 0.22;
+      spawnMgRound(sideOffH);
     } else {
-      var sideOff = (W.mgLabel === 'PISTOL') ? 0 : (Math.random() > 0.5 ? 1 : -1) * 0.22;
-      spawnMgRound(sideOff);
+      // Alternate flanks so streaks clear the van silhouette from chase cam
+      var sideOffC = (W.mgLabel === 'PISTOL') ? ((Math.random() > 0.5 ? 1 : -1) * 0.85)
+        : (Math.random() > 0.5 ? 1 : -1) * 1.05;
+      spawnMgRound(sideOffC);
     }
     p._muzzleFxT = (p._muzzleFxT || 0);
     if (particles && p._muzzleFxT <= 0) {
       p._muzzleFxT = hood ? 0.03 : 0.04;
-      var mOrigin = p.pos.clone().addScaledVector(tmpV, fwdOff);
+      // Match tracer flank so muzzle isn't buried in the body
+      var mSide = hood ? 0 : ((Math.random() > 0.5 ? 1 : -1) * 1.0);
+      var mOrigin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, mSide);
       mOrigin.y += yOff;
       particles.muzzle(mOrigin, tmpV);
-      if (hood && particles.spawn) {
-        particles.spawn('muzzle', mOrigin, { count: 3, speed: 14, life: 0.1, scale: 0.9, dir: tmpV, gravity: 0 });
-        particles.spawn('spark', mOrigin, { count: 6, speed: 12, life: 0.12, gravity: 2 });
+      if (particles.spawn) {
+        particles.spawn('muzzle', mOrigin, {
+          count: hood ? 3 : 3, speed: hood ? 14 : 12, life: hood ? 0.1 : 0.09,
+          scale: hood ? 0.9 : 1.05, dir: tmpV, gravity: 0,
+        });
+        particles.spawn('spark', mOrigin, {
+          count: hood ? 6 : 5, speed: 12, life: hood ? 0.12 : 0.11, gravity: 2,
+        });
       }
       // Flash existing gun mesh if present
       if (p.mesh && p.mesh.userData) {
@@ -2580,10 +2620,12 @@
         }
       }
     }
-    // Hood screen muzzle flash — body is hidden so mesh gun flash never reads (v302)
+    // Screen muzzle flash — hood full; chase smaller (van occludes world flash) (v400)
     if (hood) {
       p._hoodMuzzleT = 0.08;
       state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + 0.18);
+    } else {
+      p._chaseMuzzleT = 0.07;
     }
     if (GAME.sfx) GAME.sfx.mg();
   }
@@ -2775,6 +2817,7 @@
   function updateRace(dt) {
     state.raceTime += dt;
     if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 2.8);
+    if (state.hitDirT > 0) state.hitDirT = Math.max(0, state.hitDirT - dt);
     if (state._startBannerT > 0) state._startBannerT = Math.max(0, state._startBannerT - dt);
     // Re-unlock + engine if AudioContext still suspended / silent after START (v311/v357)
     // Retry a few frames so first-click resume can land before we give up
@@ -3401,12 +3444,15 @@
     }
     // v346 first-curve calm: early course + wide/raised → face ribbon + pull to lane.
     // v396: pure-W was hanging lat~6–7 for whole bend — pull harder toward center
+    // v403: hang peak |lat|~5.5 sat BELOW asphalt gate (rh*0.50=5.75) → yaw-only outer line.
+    //        Gate must sit under target band or pure-W re-hangs on the threshold (saw ~2.5 on 0.22).
+    //        Bite earlier + stronger light-steer pull; steeringOutFC stays weak.
     if (
       !nearFolded &&
       near && near.tangent &&
       p.progress != null && p.progress < 0.26 &&
       Math.abs(p.speed) > 8 &&
-      (surface === 'raised' || (surface === 'asphalt' && dLat > rh * 0.50))
+      (surface === 'raised' || (surface === 'asphalt' && dLat > rh * 0.08))
     ) {
       var sideFC = new THREE.Vector3(-near.tangent.z, 0, near.tangent.x);
       var latFC = near.lateralDist != null ? near.lateralDist : 0;
@@ -3417,10 +3463,10 @@
       // Only hard out-steer owns the lip; pure-W / light steer gets full calm
       var calmMul = steeringOutFC ? 0.08 : (absSteerFC > 0.55 ? 0.32 : 1);
       if (calmMul > 0.05) {
-        // Target inner lane so pure-W doesn't camp outer asphalt
-        var tgtFC = Math.sign(latFC || 1) * Math.max(0, rh * 0.16);
-        var pullFC = 5.4 * calmMul;
-        if (Math.abs(latFC) > rh * 0.48 && absSteerFC < 0.35) pullFC *= 1.35;
+        // Target near-center so pure-W doesn't camp outer asphalt
+        var tgtFC = Math.sign(latFC || 1) * Math.max(0, rh * 0.06);
+        var pullFC = 9.2 * calmMul;
+        if (Math.abs(latFC) > rh * 0.18 && absSteerFC < 0.35) pullFC *= 1.65;
         p.pos.x -= sideFC.x * (latFC - tgtFC) * Math.min(1, dt * pullFC);
         p.pos.z -= sideFC.z * (latFC - tgtFC) * Math.min(1, dt * pullFC);
         var wantFC = Math.atan2(near.tangent.x, near.tangent.z);
@@ -3456,8 +3502,8 @@
       // v360/v396: first-curve openEase doesn't full-babysit when player is steering hard
       if (openEase && absSteerEase > 0.52) steerKeepMul *= 0.5;
       var edgeGate = speedNorm > 0.85 ? rh * 0.32 : (speedNorm > 0.72 ? rh * 0.40 : rh * 0.52);
-      // Opening: bite earlier so pure-W doesn't hang outer lane (v396)
-      if (openEase) edgeGate = Math.max(edgeGate, rh * 0.48);
+      // Opening: bite earlier so pure-W doesn't hang outer lane (v396/v403)
+      if (openEase) edgeGate = Math.min(edgeGate, rh * 0.14);
       var edgeKeep = latEase > edgeGate;
       if ((openEase || edgeKeep) && steerKeepMul > 0.05) {
         var openWant = Math.atan2(near.tangent.x, near.tangent.z);
@@ -3467,11 +3513,11 @@
       }
       if (edgeKeep && steerKeepMul > 0.05) {
         var sideKeep = new THREE.Vector3(-near.tangent.z, 0, near.tangent.x);
-        var laneT = openEase ? 0.22 : (speedNorm > 0.85 ? 0.28 : (speedNorm > 0.72 ? 0.32 : 0.40));
+        var laneT = openEase ? 0.08 : (speedNorm > 0.85 ? 0.28 : (speedNorm > 0.72 ? 0.32 : 0.40));
         var targetKeep = Math.sign(latSignedEase || 1) * rh * laneT;
         var latErrKeep = latSignedEase - targetKeep;
         var pullKeep = (1.25 + speedNorm * 2.6) * steerKeepMul;
-        if (openEase && latEase > rh * 0.55) pullKeep += 1.6 * Math.max(0.4, steerKeepMul);
+        if (openEase && latEase > rh * 0.18) pullKeep += 2.8 * Math.max(0.4, steerKeepMul);
         if (latEase > rh * 0.88) pullKeep += 2.2 * Math.max(0.35, steerKeepMul);
         p.pos.x -= sideKeep.x * latErrKeep * Math.min(1, dt * pullKeep);
         p.pos.z -= sideKeep.z * latErrKeep * Math.min(1, dt * pullKeep);
@@ -3673,6 +3719,7 @@
     }
     if (p._gunFlashT > 0) p._gunFlashT -= dt;
     if (p._hoodMuzzleT > 0) p._hoodMuzzleT -= dt;
+    if (p._chaseMuzzleT > 0) p._chaseMuzzleT -= dt;
     if (p._engineDipT > 0) {
       p._engineDipT -= dt;
       p.speed *= (1 - 0.35 * Math.min(1, p._engineDipT * 8));
@@ -3818,7 +3865,9 @@
       pr.pos.addScaledVector(pr.vel, dt);
       pr.mesh.position.copy(pr.pos);
       // Reuse lookTmp — never clone every frame
-      if (pr.type === 'rocket' || pr.type === 'mg' || pr.type === 'bone') {
+      if (pr.type === 'mg') {
+        aimMgTracer(pr.mesh, pr.pos, pr.vel);
+      } else if (pr.type === 'rocket' || pr.type === 'bone') {
         _combatPool.lookTmp.copy(pr.pos).add(pr.vel);
         pr.mesh.lookAt(_combatPool.lookTmp);
       }
@@ -3866,7 +3915,11 @@
             hurtRival(rv, pr.dmg);
             if (particles) {
               if (pr.type === 'rocket' || pr.type === 'bone') particles.explosion(pr.pos, false);
-              else particles.hitTrail(pr.pos, 'spark');
+              else {
+                // v400: MG hit spark must read in chase (hitTrail alone was too small)
+                if (particles.sparks) particles.sparks(pr.pos, pr.vel);
+                particles.hitTrail(pr.pos, 'spark');
+              }
             }
             if ((pr.type === 'rocket' || pr.type === 'bone') && GAME.sfx) GAME.sfx.explode();
             else if (GAME.sfx) GAME.sfx.hit();
@@ -3922,6 +3975,10 @@
         }
       }
       if (hit || pr.life <= 0) {
+        // v400: spent MG into world — tiny spark (no world collider; life expiry ~ miss/range)
+        if (!hit && pr.type === 'mg' && particles && particles.sparks && Math.random() < 0.35) {
+          particles.sparks(pr.pos);
+        }
         recycleProjectileMesh(pr.mesh);
         state.projectiles.splice(i, 1);
       }
@@ -4366,16 +4423,15 @@
             tmpV2.normalize();
             var origin = r.pos.clone().addScaledVector(tmpV2, 2.5);
             origin.y += 0.9;
-            var mesh = makeTracer(0xff2d55, 1.1);
+            var mesh = makeTracer(0xff2d55, 2.8);
+            mesh.scale.x = mesh.scale.z = 1.1;
             mesh.position.copy(origin);
-            ensureCombatPool();
-            _combatPool.lookTmp.copy(origin).add(tmpV2);
-            mesh.lookAt(_combatPool.lookTmp);
+            aimMgTracer(mesh, origin, tmpV2);
             scene.add(mesh);
             state.projectiles.push({
               type: 'mg', mesh: mesh, pos: origin.clone(),
               vel: tmpV2.clone().multiplyScalar(78),
-              life: 0.9, dmg: (5.2 + state.meta.stage * 0.55) * dmgMul, fromPlayer: false,
+              life: 0.7, dmg: (5.2 + state.meta.stage * 0.55) * dmgMul, fromPlayer: false,
             });
           }
         }
@@ -6120,6 +6176,8 @@
       msgT: 0,
       camMode: 'chase',
       hitFlash: 0,
+      hitDir: 0,
+      hitDirT: 0,
     };
     GAME.state = state;
     for (var i = 0; i < cfg.cars.length; i++) {

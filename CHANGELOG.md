@@ -1,5 +1,91 @@
 # Changelog
 
+## 2026-08-21 — Web v403: first-curve pure-W lateral hang
+
+### Frictions saw
+1. Choir Neon hold-W: `p._lat` peak **−5.46** at ~0.20 prog (still camping outer asphalt)
+
+### Root cause
+- `roadHalf` **11.5** → calm asphalt gate was `rh*0.50` (**5.75**)
+- Hang peaked at **|lat|~5.5** — **below** the gate → first-curve calm never fired
+- Opening assist stayed mostly **yaw-only** while the ribbon curved under pure-W
+
+### Fix (`game.js` calm + open edge keeper only)
+- Calm asphalt bite **0.50→0.08 rh** (must sit under target or pure-W re-hangs on the gate)
+- Target lane **0.16→0.06 rh**; pull **5.4→9.2** (+1.65 when outer+light)
+- Open edge gate **min** to **0.14 rh**; open laneT **0.22→0.08**; earlier outer bonus
+- `steeringOutFC` calmMul **0.08** unchanged (mixed/out still owns line)
+
+### Confirm
+- Choir · Neon · hold W ~20s · log `p._lat` — peak toward **0** (under ~**2**)
+- Holding A/D out should still let you take outer without hard yank
+
+Hard-refresh `?v=403`.
+
+---
+
+## 2026-08-21 — Web v402: Neon climb FOV (pink wall / left void)
+
+### Frictions saw
+1. Mid-climb chase (~0.28–0.35): **right half = solid pink slab**, left = near-black void
+2. Failed “name 2+ things past the wall on BOTH sides”
+
+### Root cause
+- Mid canyon used **20 segs across 0.16–0.88** → ~**166 m** wall boxes; bbox intersected chase cam as a near-clip flat face
+- Magenta crowns + pink glass bloom-washed that face
+- Chase +1.15 right offset + sparse left peeks → port void
+- Ground plane was LOD-far / not the slab
+
+### Fix
+- Densify climb canyon **0.22–0.42** (16 segs) · cap wall `along` ≤58 · mid `openEdge` 2.6→3.6
+- Fewer mid crowns / skip hot-pink glass + magenta neon on mid faces
+- Climb-band wall/glass `noLod`
+- 2 always-on mid-climb **left** peeks at **0.28 / 0.36** (keep late 0.58/0.70/0.82)
+
+### Confirm
+- Hold W Neon chase to ~30%: right wall has depth (not fullscreen pink) · left shows ≥2 extras
+
+Hard-refresh `?v=402`.
+
+---
+
+## 2026-08-21 — Web v401: hit direction + special toast lock + start banner identity
+
+### Frictions saw
+1. `BONE HARVEST · MAUSOLEUM` read as wrong-car attribution
+2. UNDER FIRE / hit flash gave no attacker direction
+3. No-mutator start banner always said `REACH FINISH` (lied on Neon)
+
+### Fix
+- Marrow aim toast: ` → NAME` (keep ` · N NEAR` for count)
+- `hurtPlayer(fromPos)` stores player-relative `hitDir` + `hitDirT` ~0.45s; HUD draws large red chevron in HUD-safe frame (L240/T90/R220/B140; tip~52)
+- Start banner no-mutator suffix uses `mapDef.name`
+
+Hard-refresh `?v=401`.
+
+---
+
+## 2026-08-21 — Web v400: map identity HUD + readable MG tracers
+
+### Frictions saw
+1. Race HUD top-right said generic `COURSE` — no THE REACH / NEON CIRCUIT
+2. Hold-J MG filled projectiles + heat/overheat but chase cam showed no tracers / muzzle / hit spark
+
+### Fix
+- HUD progress chip uses `state.mapDef.name`; start toast `MAP · THEME` once (pri 1)
+- MG tracers: CylinderGeometry was +Y while `lookAt` aims −Z → long axis sideways; `aimMgTracer` lookAt + `rotateX(-PI/2)`; thicker/longer MeshBasic `#ffe66d`
+- Chase occlusion: spawn high (yOff 2.6) + wide (±1.05), len~8 / r~0.30; chase HUD muzzle + particles
+- Rival/world MG hit sparks via existing particles
+
+### Confirm
+- Top-right shows map name + `% → FINISH`
+- Start toast names map/theme once
+- Chase cam hold-J: yellow streaks clear van roof/flanks + muzzle flash
+
+Hard-refresh `?v=400`.
+
+---
+
 ## 2026-08-15 — Web v398: Wave ∞ late FOV peeks
 
 ### Frictions saw

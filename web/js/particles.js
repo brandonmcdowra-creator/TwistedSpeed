@@ -199,10 +199,10 @@
   };
 
   Particles.prototype.muzzle = function (pos, dir) {
-    // Minimal flash — hold-to-fire must stay cheap
+    // v400: readable 1-frame flash in chase (was count:1 / scale:0.55 — mute at speed)
     if (this.items.length > 120) return;
-    this.spawn('muzzle', pos, { count: 1, speed: 8, life: 0.07, scale: 0.55, dir: dir, gravity: 0 });
-    this.spawn('spark', pos, { count: 1, speed: 10, life: 0.1, scale: 0.22, dir: dir, gravity: 2 });
+    this.spawn('muzzle', pos, { count: 2, speed: 10, life: 0.09, scale: 0.85, dir: dir, gravity: 0 });
+    this.spawn('spark', pos, { count: 2, speed: 12, life: 0.11, scale: 0.35, dir: dir, gravity: 2 });
   };
 
   Particles.prototype._ensureBoomMats = function () {

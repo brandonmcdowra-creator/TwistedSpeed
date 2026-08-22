@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 399', w / 2, h * 0.395);
+    ctx.fillText('BUILD 403', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -647,6 +647,44 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
+    // v401: hit chevron — large, HUD-safe frame (clear armor / minimap / weapon bar)
+    if (state.hitDirT > 0) {
+      var ha = state.hitDir || 0;
+      var haA = Math.min(1, state.hitDirT / 0.45);
+      var hcx = w * 0.5, hcy = h * 0.5;
+      // Safe rect: left armor~240, top chips~90, right minimap~220, bottom weapons~140
+      var hL = 240, hT = 90, hR = w - 220, hB = h - 140;
+      var hsx = Math.sin(ha), hsy = -Math.cos(ha);
+      var ht = 1e9;
+      if (hsx > 1e-4) ht = Math.min(ht, (hR - hcx) / hsx);
+      else if (hsx < -1e-4) ht = Math.min(ht, (hL - hcx) / hsx);
+      if (hsy > 1e-4) ht = Math.min(ht, (hB - hcy) / hsy);
+      else if (hsy < -1e-4) ht = Math.min(ht, (hT - hcy) / hsy);
+      if (!(ht < 1e8) || ht < 0) ht = Math.min(w, h) * 0.28;
+      // Pull tip slightly inward so ~3× chevron doesn't clip the safe edge
+      var hex = hcx + hsx * Math.max(0, ht - 8);
+      var hey = hcy + hsy * Math.max(0, ht - 8);
+      ctx.save();
+      ctx.translate(hex, hey);
+      ctx.rotate(ha);
+      ctx.globalAlpha = 0.82 + 0.18 * haA;
+      // ~3× prior size (was tip -18 / wing ±14)
+      ctx.beginPath();
+      ctx.moveTo(0, -52);
+      ctx.lineTo(40, 28);
+      ctx.lineTo(0, 8);
+      ctx.lineTo(-40, 28);
+      ctx.closePath();
+      ctx.fillStyle = '#ff1a3c';
+      ctx.fill();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+      ctx.stroke();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffe6ec';
+      ctx.stroke();
+      ctx.restore();
+    }
     // Hood MG muzzle — body hidden so world flash alone can vanish (v302)
     if (state.camMode === 'hood' && p._hoodMuzzleT > 0) {
       var hm = Math.min(1, p._hoodMuzzleT / 0.08);
@@ -657,6 +695,17 @@
       mg.addColorStop(1, 'rgba(255,100,0,0)');
       ctx.fillStyle = mg;
       ctx.fillRect(mx - w * 0.22, my - w * 0.18, w * 0.44, w * 0.36);
+    }
+    // Chase MG muzzle — smaller HUD burst; van occludes world flash at gun (v400)
+    if (state.camMode !== 'hood' && p._chaseMuzzleT > 0) {
+      var cm = Math.min(1, p._chaseMuzzleT / 0.07);
+      var cx = w * 0.5, cy = h * 0.62;
+      var cg = ctx.createRadialGradient(cx, cy, 2, cx, cy, w * 0.12);
+      cg.addColorStop(0, 'rgba(255,246,180,' + (0.55 * cm) + ')');
+      cg.addColorStop(0.4, 'rgba(255,180,40,' + (0.28 * cm) + ')');
+      cg.addColorStop(1, 'rgba(255,100,0,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(cx - w * 0.12, cy - w * 0.1, w * 0.24, w * 0.2);
     }
 
     // Armor + run scrap — high contrast for first-minute read (v303)
@@ -893,9 +942,12 @@
     } else {
       chipY = 48;
     }
+    // Map identity (v400) — was generic COURSE with no name
+    var mapName = (state.mapDef && state.mapDef.name) ? String(state.mapDef.name) : 'COURSE';
+    if (mapName.length > 16) mapName = mapName.slice(0, 15) + '…';
     ctx.fillStyle = '#00e5ff';
-    ctx.font = '11px monospace';
-    ctx.fillText('COURSE', w - 188, chipY);
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText(mapName, w - 188, chipY);
     var prog = p.progress != null ? p.progress : (p.maxProgress || 0);
     this.bar(w - 188, chipY + 6, 160, 7, prog, '#00e5ff');
     ctx.fillStyle = '#8a7a88';

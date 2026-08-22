@@ -1218,9 +1218,10 @@
      */
     var self = this;
     function buildCanyonSpan(tA, tB, nSeg, dense) {
-      var wallDepth = dense ? 4.5 : 3.8;
+      var wallDepth = dense ? 4.5 : 3.5;
       var halfD = wallDepth * 0.5;
-      var openEdge = dense ? 2.2 : 2.6;
+      // v402: mid walls pushed out — chase +1.15 right offset was near-clipping giant faces
+      var openEdge = dense ? 2.2 : 3.6;
       var span = Math.max(0.02, tB - tA);
       for (var side = 0; side < 2; side++) {
         var sideSign = side === 0 ? 1 : -1;
@@ -1231,7 +1232,8 @@
           var f1 = self._frame(t1);
           var mid = f0.p.clone().add(f1.p).multiplyScalar(0.5);
           // v347: more overlap + average pitch — climb canyon less stair-stepped
-          var along = f0.p.distanceTo(f1.p) + 1.35;
+          // v402: cap along so a sparse span can't spawn ~160m near-clip slabs
+          var along = Math.min(58, f0.p.distanceTo(f1.p) + 1.35);
           var yaw = f0.yaw;
           var pitch0 = f0.pitch != null ? f0.pitch : 0;
           var pitch1 = f1.pitch != null ? f1.pitch : pitch0;
@@ -1251,11 +1253,14 @@
           mass.rotation.x = -pitch;
           mass.userData.lod = 'building';
           mass.userData.opening = dense;
+          // Climb band: keep wall face in LOD so mid-climb isn't a missing flank
+          if (!dense && t0 >= 0.22 && t0 <= 0.42) mass.userData.noLod = true;
           self.group.add(mass);
           self.buildings.push(mass);
 
           // Neon crown on wall top — reads over black sky from chase (v339)
-          if (dense || i % 2 === 0) {
+          // v402 mid: fewer magenta crowns (was every 2nd → pink slab bloom)
+          if (dense || i % 3 === 0) {
             var crown = new THREE.Mesh(
               new THREE.BoxGeometry(wallDepth + 0.3, 0.45, along * 0.95),
               (i + side) % 2 ? crownMat : crownMag
@@ -1272,9 +1277,12 @@
           }
 
           var faceLat = self._lat(openEdge, 0.06);
+          // v402: mid canyon skip hot-pink glass (index 2) — bloom-washed near faces
+          var gi = (i + side) % glassMats.length;
+          if (!dense && gi === 2) gi = 1;
           var glass = new THREE.Mesh(
             new THREE.BoxGeometry(0.12, dense ? 2.4 : 2.0, along * 0.88),
-            glassMats[(i + side) % glassMats.length]
+            glassMats[gi]
           );
           glass.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
           glass.position.y = mid.y + 1.5;
@@ -1282,12 +1290,16 @@
           glass.rotation.y = yaw;
           glass.rotation.x = -pitch;
           glass.userData.lod = 'building';
+          if (!dense && t0 >= 0.22 && t0 <= 0.42) glass.userData.noLod = true;
           self.group.add(glass);
           self.buildings.push(glass);
 
+          // Prefer cyan/amber neon on mid faces (skip raw magenta wash)
+          var neonI = ni;
+          if (!dense && neonCols[neonI] === 0xff2d55) neonI = (neonI + 1) % neonMats.length;
           var neon = new THREE.Mesh(
             new THREE.BoxGeometry(0.14, 0.32, along * 0.9),
-            neonMats[ni]
+            neonMats[neonI]
           );
           neon.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
           neon.position.y = mid.y + 3.3;
@@ -1298,10 +1310,10 @@
           self.group.add(neon);
           self.buildings.push(neon);
 
-          if (dense || i % 2 === 0) {
+          if (dense || i % 3 === 0) {
             var halo = new THREE.Mesh(
               new THREE.BoxGeometry(0.08, 0.55, along * 0.92),
-              haloMats[ni]
+              haloMats[neonI]
             );
             halo.position.copy(neon.position);
             halo.position.addScaledVector(f0.side, -sideSign * 0.08);
@@ -1356,9 +1368,11 @@
       }
     }
 
-    // v376: canyon budget for both-flank mass elsewhere
+    // v376 budget; v402 densify climb so walls aren't ~160m near-clip slabs
     buildCanyonSpan(0.0, 0.16, 16, true);
-    buildCanyonSpan(0.16, 0.88, 20, false);
+    buildCanyonSpan(0.16, 0.22, 4, false);
+    buildCanyonSpan(0.22, 0.42, 16, false); // mid-climb ~50–58m segs
+    buildCanyonSpan(0.42, 0.88, 12, false);
     buildCanyonSpan(0.88, 1.0, 8, true);
 
     // Landmark towers — open + finish (mid cut for FPS)
@@ -2012,6 +2026,43 @@
         this.buildings.push(latePeek);
         this._qualityExtras.push(latePeek);
       }
+    }
+    // v402: mid-climb left FOV — chase right-offset left a black void past the wall
+    for (var mc = 0; mc < 2; mc++) {
+      var mct = 0.28 + mc * 0.08; // 0.28 / 0.36
+      var mcf = this._frame(mct);
+      var mch = 72 + mc * 8;
+      var mclat = this._lat(EDGE.tower + 3.2 + mc, 2.5);
+      var mcpeek = new THREE.Mesh(new THREE.BoxGeometry(11, mch, 18), peekMat);
+      mcpeek.position.copy(mcf.p).addScaledVector(mcf.side, -1 * mclat);
+      mcpeek.position.y = mcf.p.y + mch * 0.45;
+      mcpeek.rotation.order = 'YXZ';
+      mcpeek.rotation.y = mcf.yaw;
+      mcpeek.userData.lod = 'far';
+      mcpeek.userData.noLod = true;
+      mcpeek.userData.ignoreIntrusion = true;
+      mcpeek.userData.qualityExtra = true;
+      mcpeek.userData.horizonCard = true;
+      mcpeek.frustumCulled = false;
+      this.group.add(mcpeek);
+      this.buildings.push(mcpeek);
+      this._qualityExtras.push(mcpeek);
+      var mccap = new THREE.Mesh(
+        new THREE.BoxGeometry(12, 0.7, 20),
+        mc % 2 ? peekCapC : peekCapM
+      );
+      mccap.position.copy(mcpeek.position);
+      mccap.position.y += mch * 0.48;
+      mccap.rotation.order = 'YXZ';
+      mccap.rotation.y = mcf.yaw;
+      mccap.userData.lod = 'far';
+      mccap.userData.noLod = true;
+      mccap.userData.ignoreIntrusion = true;
+      mccap.userData.qualityExtra = true;
+      mccap.frustumCulled = false;
+      this.group.add(mccap);
+      this.buildings.push(mccap);
+      this._qualityExtras.push(mccap);
     }
     // v388: first right-curve leaves screen-left black — dense always-on outer peeks
     for (var li = 0; li < 4; li++) {
