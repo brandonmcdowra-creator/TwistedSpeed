@@ -1,56 +1,68 @@
-# Grok Build prompt — Twisted Speed improvement pass
+# Grok Build prompt — Twisted Speed v399+ friction pass
 
 Copy everything below the line into Grok Build with this repo folder open.
+(Rewritten 2026-08-22 for the v399 sync; the earlier v253-era prompt is obsolete.)
 
 ---
 
-You are working on **Twisted Speed**, a cyberpunk / Mad Max combat racer (web, three.js). The repo is a FutureIndustries build pack. Before writing any code, read these files in order — they are the source of truth, not this prompt:
+You are working on **Twisted Speed**, a cyberpunk / Mad Max combat racer (web, three.js), frozen at **web v399** after an overnight loop died mid-flight. Before writing any code, read these files in order — they are the source of truth, not this prompt:
 
-1. `AGENTS.md` — working rules (honest testing, small steps, don't wipe saves)
-2. `.grok/skills/twisted-speed/SKILL.md` — product locks (pillars, slice scope, non-goals)
-3. `PROGRESS.md` + `CHANGELOG.md` — current build is **web v253**; primary runtime is **web** (`web/`), do NOT touch `unity/` this session
-4. `web/js/config.js` — cars, combat numbers, difficulty, garage shop
-5. `web/js/game.js` — race loop, `fireSpecial()`, rivals, hazards, stage ladder
+1. `docs/NEXT-SESSION.md` — **the pickup list. This session executes that file.**
+2. `AGENTS.md` — working rules (honest testing, small steps, don't wipe saves)
+3. `.grok/skills/twisted-speed/SKILL.md` — product locks
+4. `PROGRESS.md` + top of `CHANGELOG.md` — what shipped through v398/v399
+5. Code as needed: `web/js/game.js` (drive/race), `web/js/world.js` (road/canyon/cards), `web/js/specials.js`, `web/js/quality.js`, `web/js/hud.js`
 
-## Current state (verified against code)
+## What is already done — do NOT redo
 
-- One map, **Neon Circuit**, point-to-point ~5 km. Stage ladder exists (`stageCount: 13`; rivals/hazards/powerups scale with `stage`).
-- **5 playable rigs** (Marrow, Needle, Mausoleum, Vesper, Choir). A sixth model, **Razorback**, is fully wired as a rival (`web/js/game.js` roster, `vehicles.js`, `vehicle_bodies.js`) but is **not in the playable `cfg.cars` roster**. Slice lock says 5–8 cars.
-- **Signature specials are the weakest part** (docs call them "parked"). In `fireSpecial()` every special is an instant radius check or a stat tweak with a generic particle puff and a shared flat 8 s cooldown. The #1 pillar is "every rig is a sentence" — right now the specials don't carry that.
-- Combat sweet-spot was **v244**; later env passes (v247–v253) were visual/perf only, so don't re-tune base combat numbers without playtesting first.
-- Gate C (shippable slice) is closed: the **8–10 minute continuous play** bar is not met, and "elimination rewards gear/stats" is only loosely represented by scrap.
+Waves 1–5 + Wave ∞ (v336–v398) shipped: signature specials with telegraphs (`specials.js`), Razorback playable (6-rig cast), second map **THE REACH** (coast dusk), quality toggle (**O**), night mutators, rival AI (`ai.js`), mph HUD, Parole Arch rename, elim juice, engine audio. Specials had a full range/toast pass — **no more special tweaks unless one visibly misses in play.**
 
-## Your mission, in priority order (P0 first; stop and report between phases)
+## The situation
 
-### P0 — Make the five specials feel signature
-Rework each special in `fireSpecial()` (and rival-side reactions) so each has a distinct fantasy, telegraph, and payoff. Keep the existing names and intent:
-- **Marrow · Bone Harvest** — rocket fan is okay mechanically; give it distinct bone-styled projectiles, sound, and screen kick so it reads as *his*.
-- **Needle · Thread the Vein** — visible harpoon tether line to the target, player gets a slingshot pull toward/past them; currently it's an invisible slow.
-- **Mausoleum · Last Rites** — mortar should have a visible arcing shell + ground crack telegraph before the AOE, not an instant hit.
-- **Vesper · Blackout Kiss** — EMP should visibly kill rival headlights/neon for the 3 s and add a screen-space pulse ring.
-- **Choir · Sermon** — visible expanding sonic ring that physically shoves rivals (it already moves them; make the ring readable at speed).
-Per-rig cooldowns (light rigs shorter, tanks longer) instead of the flat `specialCd: 8`. HUD: show the special name + a charge ring so players know what they have. Do **not** nerf/buff base MG/rocket/mine numbers — combat feel is signed at v244.
+Agents marked the overnight items PASS, but the **director has not played v398** — treat feel as unsolved. Your job is the v399 loop that never shipped, plus the open friction pile. Work at **v400+** (bump `?v=` in `web/index.html` per ship; title stamp must match).
 
-### P1 — Razorback playable + 8–10 minute ladder
-- Add **Razorback** to `cfg.cars` as a sixth playable rig with its own stat sentence, stock loadout, and a new signature special that fits the roster (it's the green raider — something ramming/aggression flavored). Reuse the existing GLB and rival wiring.
-- Make the stage ladder deliver the slice: finishing → **NEXT NIGHT** flow (stage++ with a results screen beat), and eliminations grant a **visible reward choice** (small stat/equipment enhance), matching the lock "elim → gear/stats". Target 8–10 minutes of meaningful continuous play across stages.
+## Priority order (verify each item reproduces before fixing it)
 
-### P2 — Living track
-Neon Circuit hazards exist (spikes/oil/debris/electric, stage-scaled). Add one **active** terrain trap that moves or triggers (e.g., timed steam vents or a collapsing sign) so the track feels like the warden. Hazards punish, never brick: no unavoidable full-width kills.
+### P0 — Reproduce first (agent playtest of v399)
+Serve `web/` (`python -m http.server 8765` or `web/serve.py`), open `http://127.0.0.1:8765/?v=399`, hard-refresh, confirm the title says **BUILD 399**. Then check, in chase cam, and record honest pass/fail with numbers/screenshots before touching code:
+1. **First right-hander, pure-W then W+D** — outer-lane hang: lateral offset was still ~6.2 peak at v396. Sample a car that is NOT Needle.
+2. **The climb** — does road + canyon read as one surface, or stairs/faceting? (climb second-derivative was ~0.74)
+3. **World beyond the wall** — holding W for 20 s, can you name 2+ things past the wall on BOTH sides? Left FOV has regressed to black after every FPS cut.
+4. **Neon FPS** — HIGH was soft (~36–38). THE REACH was fine (~43).
+5. **THE REACH from map select** — 30–45 s: coast not city-clone, no hop, no black inland.
+6. **Results/finish** — past 0.9: ceremony, results screen populated, **R** retry works on both win and lose.
 
-### P3 — Presentation only if FPS allows
-Optional Low/High quality toggle (PROGRESS lists it as wanted). Nothing else — env look is director-signed at v253.
+### P1 — Fix what reproduced, one ship per item
+- **First-curve hang**: get lateral hang toward 0 under mixed steer without adding center-pull yank elsewhere.
+- **Climb faceting**: smooth the elevated ribbon + adjacent canyon dress so it reads as one surface in chase cam.
+- **Black FOV vs FPS**: this is a tug-of-war — keep both flanks readable (early, mid-climb, late peeks at 0.58/0.70/0.82) **without** dropping Neon under ~38 FPS. If you must cut, cut far cards/buildings before combat, and re-verify flanks after every cut.
+- **REACH leftovers**: inland void, hop, or city cards sneaking back in.
 
-## Hard constraints (violating these fails the session)
+### P2 — Only if P0/P1 are green
+- Neon FPS toward 40+ without eating the horizon
+- Toast spam if it returned (scrap rate-limit 1.35 s, rival special gate 2.4 s were the v397 numbers)
+- Engine/nitro audible after first click
+- Pack fightable at 15–45 m — not on your grill, not 500 m theater
+- IP sweep: no "Freedom Gate" / TM / NFS names left in HUD or docs
+- Quality **O** still hides extras on both maps
 
-- **Perf contract:** MeshBasic scenery + fake neon, ≤4 PointLights in the world, PBR on hero car only. Test that FPS does not regress from v253.
-- **Saves:** `saveKey: 'twisted-speed-v5-night'` — existing saves (scrap, `meta.builds`, difficulty, stage) must still load. Migrate, never wipe.
-- **IP:** original names/liveries only. No Twisted Metal / NFS names, no Sweet Tooth.
-- **One runtime:** web only. Don't create Unity work.
-- **Cache:** bump the `?v=` version in `web/index.html` and reference it in your notes.
-- **Honesty:** run the game (`cd web && python -m http.server 8765`, open `http://127.0.0.1:8765/?v=NEW`) and confirm each change works before claiming it. Say "I ran it and saw X" or "changed but not yet verified".
-- **End of session:** update `CHANGELOG.md` and `PROGRESS.md` (now / next / gate status).
+## Hard "do not" list (from the pickup doc — violating these fails the session)
+
+- **No Unity.** Web three.js only.
+- **No `world.build` on every same-map START** — same-map START must reuse the world (`clearRace({ keepWorld })`). After any path/scenery ship, switch Neon ↔ REACH once so dress rebuilds — otherwise you're playing old hills.
+- **No distant camera look-ahead** (no `getPointAt(progress+0.05)` style glue changes).
+- **No pocket-spawn / bumper re-drop. No new PointLights (≤4 world). No map 3.**
+
+## Locks (never regress)
+
+mph HUD · garage car clear + stats RIGHT · camera glue · START same-map keepWorld · pack 50–120 m outer lanes · pack floor not bumper · void = lateral, no teleport · REACH stays coast · Neon both-side early + mid-climb + late peeks · one finishSting · R retry win+lose · Parole Arch · original cast (Marrow, Needle, Mausoleum, Vesper, Choir, Razorback) · saves under `twisted-speed-v5-night` must keep loading (migrate, never wipe).
+
+## Honesty + wrap-up
+
+- Every claim is "I ran it and saw X" (with the FPS/lat numbers or a screenshot) or "changed, not yet verified — check by doing Y". Agent PASS ≠ director sign-off; flag every feel item for Brandon's own play of the final build.
+- End of session: update `CHANGELOG.md` (per version shipped) and `PROGRESS.md` (build number, pass/fail table, next pickup), and refresh `docs/NEXT-SESSION.md` so the next session starts clean.
+- **Gate C stays CLOSED** — no ship claims.
 
 ## Definition of done
 
-A cold playtest from the garage: pick any of 6 rigs, each special is visually distinct and readable at speed with its own cooldown, finish a night → advance to the next, get an elim reward beat, survive one active trap, and total meaningful play across the ladder lands in the 8–10 minute window — all at v253-level FPS with old saves intact.
+A fresh serve of the final build: first curve holds line under pure-W in a non-Needle car, the climb reads as one surface, both flanks stay readable end-to-end at ≥38 FPS on Neon HIGH, THE REACH plays as coast with no hop, finish → populated results → R retry works both ways — each backed by an in-session run, with the honest leftovers written into `docs/NEXT-SESSION.md` for the director's play.
