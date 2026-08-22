@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 403', w / 2, h * 0.395);
+    ctx.fillText('BUILD 404', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -684,6 +684,52 @@
       ctx.strokeStyle = '#ffe6ec';
       ctx.stroke();
       ctx.restore();
+    }
+    // v404: MG hit confirm + rocket lock pip (chase-cam combat read)
+    if (p._hitConfirmT > 0) {
+      var hc = Math.min(1, p._hitConfirmT / 0.28);
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.65 * hc;
+      ctx.strokeStyle = '#ffe66d';
+      ctx.lineWidth = 2;
+      var hx = w * 0.5, hy = h * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(hx - 14, hy); ctx.lineTo(hx - 4, hy);
+      ctx.moveTo(hx + 4, hy); ctx.lineTo(hx + 14, hy);
+      ctx.moveTo(hx, hy - 14); ctx.lineTo(hx, hy - 4);
+      ctx.moveTo(hx, hy + 4); ctx.lineTo(hx, hy + 14);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (state._lockRival && state._lockRival.pos && GAME.camera) {
+      var lv = state._lockRival.pos.clone();
+      lv.y += 1.6;
+      lv.project(GAME.camera);
+      if (lv.z > -1 && lv.z < 1) {
+        var lsx = (lv.x * 0.5 + 0.5) * w;
+        var lsy = (-lv.y * 0.5 + 0.5) * h;
+        var pulse = 0.65 + 0.35 * Math.sin((state.raceTime || 0) * 9);
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#ff8a4a';
+        ctx.fillStyle = 'rgba(255,80,40,0.15)';
+        ctx.lineWidth = 2;
+        var s = 11;
+        ctx.beginPath();
+        ctx.moveTo(lsx, lsy - s);
+        ctx.lineTo(lsx + s, lsy);
+        ctx.lineTo(lsx, lsy + s);
+        ctx.lineTo(lsx - s, lsy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = 'bold 9px monospace';
+        ctx.fillStyle = '#ff8a4a';
+        ctx.textAlign = 'center';
+        ctx.fillText('LOCK', lsx, lsy - s - 6);
+        ctx.textAlign = 'left';
+        ctx.restore();
+      }
     }
     // Hood MG muzzle — body hidden so world flash alone can vanish (v302)
     if (state.camMode === 'hood' && p._hoodMuzzleT > 0) {

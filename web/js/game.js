@@ -2397,9 +2397,9 @@
       color: 0xffcc66, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending,
     });
-    _combatPool.rocketBodyGeo = new THREE.CylinderGeometry(0.1, 0.13, 0.9, 6);
-    _combatPool.rocketNoseGeo = new THREE.ConeGeometry(0.1, 0.32, 6);
-    _combatPool.rocketExGeo = new THREE.SphereGeometry(0.1, 6, 5);
+    _combatPool.rocketBodyGeo = new THREE.CylinderGeometry(0.16, 0.2, 1.35, 6);
+    _combatPool.rocketNoseGeo = new THREE.ConeGeometry(0.16, 0.48, 6);
+    _combatPool.rocketExGeo = new THREE.SphereGeometry(0.18, 6, 5);
     _combatPool.rocketBodyMat = new THREE.MeshBasicMaterial({
       color: 0xff6b35, transparent: true, opacity: 1,
     });
@@ -2457,10 +2457,10 @@
     g.add(body);
     var nose = new THREE.Mesh(_combatPool.rocketNoseGeo, _combatPool.rocketNoseMat);
     nose.rotation.x = -Math.PI / 2;
-    nose.position.z = 0.55;
+    nose.position.z = 0.82;
     g.add(nose);
     var exhaust = new THREE.Mesh(_combatPool.rocketExGeo, _combatPool.rocketExMat);
-    exhaust.position.z = -0.5;
+    exhaust.position.z = -0.72;
     g.add(exhaust);
     g.userData.exhaust = exhaust;
     g.userData.pooled = 'rocket';
@@ -2652,21 +2652,28 @@
     var dmg = cfg.combat.rocketDmg * p.mul.fire * (W.rocketDmgMul || 1) * upgradeMult('firepower');
     if (hasBuff('power')) dmg *= 1.5;
     U.forward(p.yaw, tmpV);
-    var origin = p.pos.clone().addScaledVector(tmpV, 2.8);
-    origin.y += 0.75;
+    var origin = p.pos.clone().addScaledVector(tmpV, 3.2);
+    origin.y += 1.15;
     var mesh = makeRocketMesh();
     mesh.position.copy(origin);
+    mesh.scale.setScalar(1.35);
     ensureCombatPool();
     _combatPool.lookTmp.copy(origin).add(tmpV);
     mesh.lookAt(_combatPool.lookTmp);
     scene.add(mesh);
     state.projectiles.push({
       type: 'rocket', mesh: mesh, pos: origin.clone(),
-      vel: tmpV.clone().setY(0.02).multiplyScalar(cfg.combat.rocketSpeed),
-      life: 2.2, dmg: dmg, fromPlayer: true, homing: true, smoke: true,
+      vel: tmpV.clone().setY(0.04).multiplyScalar(cfg.combat.rocketSpeed),
+      life: 2.4, dmg: dmg, fromPlayer: true, homing: true, smoke: true,
     });
-    state.camShake = Math.max(state.camShake, 0.16);
-    if (particles) particles.muzzle(origin, tmpV);
+    state.camShake = Math.max(state.camShake, 0.22);
+    if (particles) {
+      particles.muzzle(origin, tmpV);
+      if (particles.spawn) {
+        particles.spawn('fire', origin.clone(), { count: 5, speed: 10, life: 0.18, scale: 0.55, dir: tmpV, gravity: 0 });
+        particles.spawn('smoke', origin.clone(), { count: 3, speed: 4, life: 0.35, scale: 0.7, gravity: -1 });
+      }
+    }
     if (GAME.sfx) {
       if (GAME.sfx.beep) GAME.sfx.beep(880, 0.04, 'square', 0.06); // short lock tick
       GAME.sfx.rocket();
@@ -3442,43 +3449,9 @@
       var steerGate = Math.abs(p.steer) < 0.55 ? 1 : 0.55;
       p.yaw += dy * Math.min(0.75, dt * astr * U.clamp(edge, 0, 2) * steerGate);
     }
-    // v346 first-curve calm: early course + wide/raised → face ribbon + pull to lane.
-    // v396: pure-W was hanging lat~6–7 for whole bend — pull harder toward center
-    // v403: hang peak |lat|~5.5 sat BELOW asphalt gate (rh*0.50=5.75) → yaw-only outer line.
-    //        Gate must sit under target band or pure-W re-hangs on the threshold (saw ~2.5 on 0.22).
-    //        Bite earlier + stronger light-steer pull; steeringOutFC stays weak.
-    if (
-      !nearFolded &&
-      near && near.tangent &&
-      p.progress != null && p.progress < 0.26 &&
-      Math.abs(p.speed) > 8 &&
-      (surface === 'raised' || (surface === 'asphalt' && dLat > rh * 0.08))
-    ) {
-      var sideFC = new THREE.Vector3(-near.tangent.z, 0, near.tangent.x);
-      var latFC = near.lateralDist != null ? near.lateralDist : 0;
-      var absSteerFC = Math.abs(p.steer || 0);
-      var steeringOutFC =
-        absSteerFC > 0.42 &&
-        Math.sign(p.steer || 0) * Math.sign(latFC || 1) > 0;
-      // Only hard out-steer owns the lip; pure-W / light steer gets full calm
-      var calmMul = steeringOutFC ? 0.08 : (absSteerFC > 0.55 ? 0.32 : 1);
-      if (calmMul > 0.05) {
-        // Target near-center so pure-W doesn't camp outer asphalt
-        var tgtFC = Math.sign(latFC || 1) * Math.max(0, rh * 0.06);
-        var pullFC = 9.2 * calmMul;
-        if (Math.abs(latFC) > rh * 0.18 && absSteerFC < 0.35) pullFC *= 1.65;
-        p.pos.x -= sideFC.x * (latFC - tgtFC) * Math.min(1, dt * pullFC);
-        p.pos.z -= sideFC.z * (latFC - tgtFC) * Math.min(1, dt * pullFC);
-        var wantFC = Math.atan2(near.tangent.x, near.tangent.z);
-        var yawMul = steeringOutFC ? 0.22 : 1;
-        p.yaw += U.angDiff(p.yaw, wantFC) * Math.min(0.55, dt * 2.4 * calmMul * yawMul);
-      }
-    }
-
-    // Opening ribbon ease + high-speed edge keeper (Needle 228 mph flew to lip forever)
-    // v337: yaw-only left Vesper pure-W parked at lat~11 (raised scrub 199→104).
-    // v346: hard cut at |steer|<0.22 meant human A/D on first curve killed keeper
-    //        → 7s raised scrub. Progressive gate: soft help until intentional out-steer.
+    // v404: holding W must NOT drive the racing line. First-curve calm + opening
+    // yaw-babysit (v346–v403) made corners free. Assist only at the lip / void.
+    // Opening ribbon ease + high-speed edge keeper — lip only.
     if (
       surface === 'asphalt' &&
       !nearFolded &&
@@ -3492,33 +3465,24 @@
       var steeringOutEase =
         absSteerEase > 0.55 &&
         Math.sign(p.steer || 0) * Math.sign(latSignedEase || 1) > 0;
-      // Full help ≤0.28, fades to 0 by 0.78 (digital A/D still gets partial teeth)
       var steerKeepMul = 1;
       if (absSteerEase > 0.28) {
         steerKeepMul = U.clamp(1 - (absSteerEase - 0.28) / 0.5, 0, 1);
       }
       if (steeringOutEase) steerKeepMul *= 0.12;
-      var openEase = p.progress != null && p.progress < 0.22;
-      // v360/v396: first-curve openEase doesn't full-babysit when player is steering hard
-      if (openEase && absSteerEase > 0.52) steerKeepMul *= 0.5;
-      var edgeGate = speedNorm > 0.85 ? rh * 0.32 : (speedNorm > 0.72 ? rh * 0.40 : rh * 0.52);
-      // Opening: bite earlier so pure-W doesn't hang outer lane (v396/v403)
-      if (openEase) edgeGate = Math.min(edgeGate, rh * 0.14);
+      var edgeGate = rh * (D.pathAssistStart != null ? D.pathAssistStart : 0.92);
       var edgeKeep = latEase > edgeGate;
-      if ((openEase || edgeKeep) && steerKeepMul > 0.05) {
+      if (edgeKeep && steerKeepMul > 0.05) {
         var openWant = Math.atan2(near.tangent.x, near.tangent.z);
         var openDy = U.angDiff(p.yaw, openWant);
-        var easeK = (openEase ? (2.5 + speedNorm * 2.2) : (1.5 + speedNorm * 2.2)) * steerKeepMul;
-        p.yaw += openDy * Math.min(0.85, dt * easeK);
-      }
-      if (edgeKeep && steerKeepMul > 0.05) {
+        var easeK = (1.15 + speedNorm * 1.5) * steerKeepMul;
+        p.yaw += openDy * Math.min(0.5, dt * easeK);
         var sideKeep = new THREE.Vector3(-near.tangent.z, 0, near.tangent.x);
-        var laneT = openEase ? 0.08 : (speedNorm > 0.85 ? 0.28 : (speedNorm > 0.72 ? 0.32 : 0.40));
+        var laneT = 0.82;
         var targetKeep = Math.sign(latSignedEase || 1) * rh * laneT;
         var latErrKeep = latSignedEase - targetKeep;
-        var pullKeep = (1.25 + speedNorm * 2.6) * steerKeepMul;
-        if (openEase && latEase > rh * 0.18) pullKeep += 2.8 * Math.max(0.4, steerKeepMul);
-        if (latEase > rh * 0.88) pullKeep += 2.2 * Math.max(0.35, steerKeepMul);
+        var pullKeep = (0.85 + speedNorm * 1.6) * steerKeepMul;
+        if (latEase > rh * 1.02) pullKeep += 1.6 * Math.max(0.35, steerKeepMul);
         p.pos.x -= sideKeep.x * latErrKeep * Math.min(1, dt * pullKeep);
         p.pos.z -= sideKeep.z * latErrKeep * Math.min(1, dt * pullKeep);
       }
@@ -3832,6 +3796,27 @@
       }
     }
 
+    // v404: rocket lock — nearest living rival in a forward cone (HUD pip)
+    state._lockRival = null;
+    if (p && playerWeapons().rocket) {
+      U.forward(p.yaw, tmpV);
+      var lockBest = null, lockD2 = 70 * 70;
+      for (var li = 0; li < (state.rivals || []).length; li++) {
+        var lr = state.rivals[li];
+        if (!lr || lr.dead || !lr.pos) continue;
+        tmpV2.subVectors(lr.pos, p.pos).setY(0);
+        var ld2 = tmpV2.lengthSq();
+        if (ld2 < 8 * 8 || ld2 > lockD2) continue;
+        var llen = Math.sqrt(ld2);
+        if (llen < 0.1) continue;
+        var ldot = (tmpV2.x * tmpV.x + tmpV2.z * tmpV.z) / llen;
+        if (ldot < 0.52) continue;
+        lockD2 = ld2;
+        lockBest = lr;
+      }
+      state._lockRival = lockBest;
+    }
+
     // Projectiles (pooled meshes — no per-frame alloc storms)
     if (p._muzzleFxT > 0) p._muzzleFxT -= dt;
     if (p._hitConfirmT > 0) p._hitConfirmT -= dt;
@@ -3879,9 +3864,12 @@
             particles.spawn('fire', pr.pos.clone(), { count: 1, speed: 1.5, life: 0.14, scale: 0.28, gravity: 0 });
           }
         } else {
-          particles.wetMist(pr.pos, { scale: 0.48 });
-          if (pr.type === 'rocket' && Math.random() < 0.25 && particles.spawn) {
-            particles.spawn('fire', pr.pos.clone(), { count: 1, speed: 2, life: 0.12, scale: 0.35, gravity: 0 });
+          particles.wetMist(pr.pos, { scale: 0.62 });
+          if (pr.type === 'rocket' && particles.spawn) {
+            particles.spawn('fire', pr.pos.clone(), { count: 2, speed: 3, life: 0.16, scale: 0.5, gravity: 0 });
+            if (Math.random() < 0.45) {
+              particles.spawn('smoke', pr.pos.clone(), { count: 1, speed: 1.2, life: 0.28, scale: 0.7, gravity: -0.4 });
+            }
           }
         }
       }
@@ -3914,7 +3902,7 @@
           if (projHitsTarget(pr, rv.pos, hitR)) {
             hurtRival(rv, pr.dmg);
             if (particles) {
-              if (pr.type === 'rocket' || pr.type === 'bone') particles.explosion(pr.pos, false);
+              if (pr.type === 'rocket' || pr.type === 'bone') particles.explosion(pr.pos, pr.type === 'rocket');
               else {
                 // v400: MG hit spark must read in chase (hitTrail alone was too small)
                 if (particles.sparks) particles.sparks(pr.pos, pr.vel);

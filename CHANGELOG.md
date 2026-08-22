@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-08-22 — Web v404: steer the corners · meatier guns
+
+### Frictions saw
+1. v403 first-curve calm + opening yaw meant holding W drove the racing line
+2. MG/rockets still thin vs chase-cam combat-racers (TokenGremlin Mad Max / Three.js clip)
+
+### Fix
+- Removed first-curve center-pull and opening-curve yaw babysit. Lip assist only (~0.92 rh). Out-steer still owns the edge.
+- Rockets: larger mesh, launch puff, fire+smoke trail, big explosion on hit
+- HUD: `LOCK` pip on forward-cone rival; MG hit-confirm cross
+- Rocket launch SFX: thump + longer whoosh
+
+### Confirm
+- Hold W through first right-hander — car runs wide; A/D required
+- Marrow K: visible rocket + boom; LOCK diamond ahead; J hit-confirm tick
+
+Hard-refresh `?v=404`.
+
+---
+
 ## 2026-08-21 — Web v403: first-curve pure-W lateral hang
 
 ### Frictions saw

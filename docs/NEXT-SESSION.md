@@ -1,7 +1,7 @@
 # Twisted Speed — Next session pickup
 
-**Frozen at:** web **v403** (2026-08-21)  
-**Why we stopped:** Grok 4.6 + 4.5 friction pass. v400–v403 controller-verified. Durability / skyline / director play still open.  
+**Frozen at:** web **v404** (2026-08-22)  
+**Why we stopped:** Director: v403 auto-centered too hard; wanted more shooting. v404 lip-only steer + meatier rockets/LOCK. Durability / skyline still open.  
 **Primary runtime:** web three.js only. Do **not** touch Unity.  
 **Repo:** `C:\Users\brand\1. Game Making\twisted-speed-build-pack`  
 **Do not use:** `C:\Users\brand\TwistedSpeed` as the edit tree (sync that clone only when pushing GitHub).
@@ -13,7 +13,7 @@ cd "C:\Users\brand\1. Game Making\twisted-speed-build-pack\web"
 python -m http.server 8765
 ```
 
-Open **http://127.0.0.1:8765/?v=403** and hard-refresh (`Ctrl+Shift+R`). Title **BUILD 403**.
+Open **http://127.0.0.1:8765/?v=404** and hard-refresh (`Ctrl+Shift+R`). Title **BUILD 404**.
 
 Same-map START **reuses the world**. After any path/scenery ship, switch Neon ↔ THE REACH once so dress rebuilds.
 
@@ -26,7 +26,8 @@ Same-map START **reuses the world**. After any path/scenery ship, switch Neon �
 | v400 | HUD map name; chase MG muzzle/sparks | Tracer *rods* still easy to miss behind Choir van |
 | v401 | Hit chevron (large, HUD-safe); `BONE HARVEST → NAME`; banner not `REACH FINISH` | Chevron not yet proven on a live rival hit (forced `hitDir` screenshot) |
 | v402 | Neon climb: canyon densify, no pink fullscreen slab, both-side wall depth | Skyline above canyon lips still black/sparse |
-| v403 | First-curve: Choir pure-W peak **−0.92** (was −5.46); D still owns outer (~11) | Other cars unsampled; director feel |
+| v403 | First-curve auto-center (peak −0.92) | Director: overcorrected — W drove the line |
+| v404 | Lip-only assist (W peak **−11.5**); rocket boom + LOCK pip | MG rods still easy to miss; durability |
 
 **THE REACH load:** keyboard select **does** build coast (water, mesas, `theme=coast`). HUD now names the map.
 
@@ -35,7 +36,7 @@ Same-map START **reuses the world**. After any path/scenery ship, switch Neon �
 ## Still open
 
 ### P1
-- [x] **First-curve hang (v403)** — Choir · Neon · hold W 20s · peak **−0.92**. Hold-D still ~11. Re-check Needle/Marrow in director play.
+- [x] **Steer the corners (v404)** — W no longer drives the line (peak −11.5). Director play: does first bend still need A/D?
 - [ ] Climb still **faceted / steep** (y 0→18 by 30%) — one surface?
 - [ ] Skyline beyond canyon lips (name 2+ *city* things, not just wall texture)
 - [ ] Durability — armor evaporates (177→126 in ~30s). Prefer cues/pickups over flat HP. Director feel.

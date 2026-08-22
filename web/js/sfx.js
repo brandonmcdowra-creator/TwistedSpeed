@@ -190,7 +190,11 @@
   };
   S.rocket = function () {
     if (!gate('rk', 80)) return;
-    try { S.sweep(280, 70, 0.18, 'sawtooth', 0.12); noisePlay(0.12, 0.1, 1800); } catch (e) {}
+    try {
+      S.thump(70, 0.12);
+      S.sweep(320, 55, 0.28, 'sawtooth', 0.16);
+      noisePlay(0.16, 0.14, 1600);
+    } catch (e) {}
   };
   S.mine = function () {
     if (!gate('mn', 100)) return;
