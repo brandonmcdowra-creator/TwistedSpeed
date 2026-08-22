@@ -40,6 +40,9 @@ web/shots/
 *.blend1
 *.fbx
 
+# Local staging / Arcade zip (not the live playable tree)
+dist/
+
 # Source art outside the playable web package
 assets/models/
 !web/assets/models/

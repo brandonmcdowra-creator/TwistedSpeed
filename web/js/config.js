@@ -1,6 +1,6 @@
 /**
  * Twisted Speed — Night Circuit config
- * NFS Heat wet-night palette × TM Black combat loadouts.
+ * Wet-night neon palette × combat-racer loadouts (original cast).
  */
 window.GAME = window.GAME || {};
 GAME.config = {
@@ -8,6 +8,16 @@ GAME.config = {
   stageCount: 13,
   // Races are point-to-point (start → finish). Kept for save compat only.
   lapsDefault: 1,
+
+  /** Night mutators — 1–2 per stage, seeded (Wave 7). Same map, different rules. */
+  mutators: [
+    { id: 'blood_hour', name: 'BLOOD HOUR', desc: 'Heavy rain · grip down · more electric' },
+    { id: 'blackout', name: 'BLACKOUT', desc: 'Dim lamps · EMP bites harder' },
+    { id: 'warden_sweep', name: 'WARDEN SWEEP', desc: 'Searchlight hunts · heat cools slow' },
+    { id: 'pack', name: 'PACK MENTALITY', desc: '+1 rival · hunters ram more' },
+    { id: 'open_vein', name: 'OPEN VEIN', desc: 'More scrap · AI drops mines' },
+    { id: 'last_mile', name: 'LAST MILE', desc: 'Extra mid hazards · mean finish' },
+  ],
 
   /** Difficulty — scales rivals only (player loadouts unchanged).
    *  v244: sweet-spot pack — hittable, beatable, still bites. */
@@ -45,9 +55,10 @@ GAME.config = {
       rivalSpeed: 1.04,
       rivalCatchUp: 0.88,
       rivalLeadCap: 1.08,
-      rivalFire: 1.15,
-      rivalDmg: 1.2,
-      rivalCountMul: 1.2,
+      // Softened slightly — bites without 5s melt (v287 smoke)
+      rivalFire: 1.05,
+      rivalDmg: 1.08,
+      rivalCountMul: 1.15,
       rivalProgressLead: 0.14,
       rivalHpMul: 1.15,
     },
@@ -66,17 +77,17 @@ GAME.config = {
 
   // Exposure / grade targets (post uses these)
   grade: {
-    exposure: 1.38,
-    contrast: 1.26,
-    saturation: 1.1,
+    exposure: 1.48, // +hood/chase road read (no new lights)
+    contrast: 1.22,
+    saturation: 1.08,
     // Neon bloom — still capped to avoid road rainbow wash
-    bloomStrength: 0.22,
-    bloomThreshold: 0.72,
-    vignette: 0.38,
-    grain: 0.028,
-    chromatic: 0.0012,
-    liftCyan: 0.018,
-    liftAmber: 0.02,
+    bloomStrength: 0.2,
+    bloomThreshold: 0.74,
+    vignette: 0.28, // was 0.38 — vignette ate mid-FOV asphalt
+    grain: 0.024,
+    chromatic: 0.001,
+    liftCyan: 0.028,
+    liftAmber: 0.016,
   },
 
   colors: {
@@ -114,9 +125,9 @@ GAME.config = {
     accelFalloff: 0.55,
     coastDrag: 0.988,
     engineBrake: 0.992,
-    // Steering
-    steerRate: 2.35,
-    steerEase: 10.5,
+    // Steering — rate/ease only (no stronger path suction). v278: bite at ~50 without tank/ice.
+    steerRate: 2.6,
+    steerEase: 13.5,
     // At top speed, retain this fraction of turn rate (understeer)
     steerSpeedFalloff: 0.72,
     // Lateral grip / slip (arcade, not sim)
@@ -124,7 +135,7 @@ GAME.config = {
     driftGrip: 1.6,       // low grip while drifting = big slide
     driftSteerMul: 1.85,
     driftYawBoost: 2.4,   // strong yaw when holding shift
-    driftNitroFill: 0.42,
+    driftNitroFill: 0.55, // first-minute fill reads on the HUD bar (v314)
     driftSlipInject: 38,  // lateral kick while drifting
     driftMinSpeed: 5,
     // Slip → yaw coupling when sliding
@@ -146,12 +157,14 @@ GAME.config = {
     // Surface bands (lateral metres from path center) — match world EDGE sidewalk
     curbWidth: 0.65,       // asphalt edge → top of curb
     sidewalkWidth: 3.4,    // full walk band outside curb
-    curbHopMinSpeed: 9,    // need some speed to feel the lip
-    curbHopSpeedLoss: 0.2,
-    curbHopBoost: 0.32,    // short height pop (metres), not a physics spring
-    sidewalkMax: 26,       // slower on pavers
-    sidewalkDrag: 0.978,
-    sidewalkRumble: 0.03,
+    curbHopMinSpeed: 12,   // need real speed to feel the lip
+    curbHopSpeedLoss: 0.14, // rumble tax on hop
+    curbHopBoost: 0.28,    // short height pop (metres), not a physics spring
+    lipMax: 38,            // edge tax vs ~50+ center (not 22 brick, not free 50)
+    lipDrag: 0.955,        // continuous scrub on lip
+    sidewalkMax: 30,       // deep walk is a real tax (was 38 — edge surfing)
+    sidewalkDrag: 0.95,
+    sidewalkRumble: 0.035,
   },
 
   nitro: {
@@ -163,39 +176,49 @@ GAME.config = {
 
   heat: {
     fromNitro: 0.05,
-    fromWeapons: 0.012,
-    cool: 0.034,
+    fromWeapons: 0.009,
+    cool: 0.048,        // base cool
+    idleCoolMul: 1.45,  // extra cool when not firing — Eye clears ~8s after fight
     hostileAt: 0.72,
   },
 
   combat: {
+    // Wave 12 balance (Adventurous Night 1 teacher = Marrow)
+    // Needle ~2 rockets to kill (HP ~48-55 rivals; rocket 42*muls)
+    // Mausoleum shrugs one rocket; specials never full-delete mid-map tank
     playerHp: 120,
     shieldBase: 0,
-    rocketDmg: 42,
+    rocketDmg: 40,       // was 42 — keeps 2-rocket Needle kill, not one-shot
     rocketRate: 0.85,
     rocketSpeed: 92,
-    mineDmg: 48,
+    mineDmg: 46,
     mineRate: 1.35,
     mineArm: 0.5,
-    mgDmg: 7.2,
+    mgDmg: 7.0,          // slight soft — combat still bites with volume
     mgRate: 0.07,
     mgSpeed: 128,
     // Hit volumes (XZ) — was too tight to land shots at race speed
     mgHitR: 3.1,
     rocketHitR: 4.0,
-    enemyMgHitR: 2.6,
-    enemyRocketHitR: 3.2,
+    // v352: enemy return fire must read in fight band (was 2.6 — almost never hit)
+    enemyMgHitR: 3.5,
+    enemyRocketHitR: 4.0,
     ramDmg: 14,
     invuln: 0.55,
-    specialCd: 8,
+    specialCd: 6.5, // first-minute second Bones still in the same fight (v315)
     // Brief rival stagger on player hits so follow-ups land
     hitStun: 0.42,
     hitSlow: 0.72,
     // Needle stab-bike: mutual damage on pointy ends
-    needleStabFront: 28,
-    needleStabRear: 22,
+    needleStabFront: 26,
+    needleStabRear: 20,
     needleStabRange: 3.6,
     needleStabCd: 0.55,
+    // Special caps (Wave 12) — bone/mortar/sermon cannot delete full Mausoleum alone
+    specialBoneDmgMul: 0.72,
+    specialMortarDmg: 24,
+    specialSermonDmg: 10,
+    specialEmpDisable: 3,
   },
 
   // Legacy post-race quick upgrades (still work as global small bonuses)
@@ -290,7 +313,8 @@ GAME.config = {
       // Balanced mid-weight fighter
       stats: { spd: 3, arm: 3, fire: 3, hand: 3 },
       special: 'Bone Harvest',
-      specialDesc: 'Dual bone-rocket volley',
+      specialDesc: 'Triple bone rockets · ram-fed bonus',
+      flavor: 'A mid-weight sentence that teaches the pack how bones break.',
       model: 'assets/models/marrow.glb',
       mass: 1.05,
       weapons: {
@@ -310,6 +334,7 @@ GAME.config = {
       stats: { spd: 5, arm: 1, fire: 1, hand: 5 },
       special: 'Thread the Vein',
       specialDesc: 'Harpoon tether 2s',
+      flavor: 'Glass and knives — if you stop moving, you stop existing.',
       model: 'assets/models/needle.glb',
       mass: 0.55,
       weapons: {
@@ -327,7 +352,8 @@ GAME.config = {
       // Slow fortress — max armor + full guns/rockets/mines
       stats: { spd: 1, arm: 5, fire: 5, hand: 1 },
       special: 'Last Rites',
-      specialDesc: 'Mortar AOE crack',
+      specialDesc: 'Lobbed mortar · crater slow',
+      flavor: 'A rolling tomb that shrugs rockets and buries the road ahead.',
       model: 'assets/models/mausoleum.glb',
       mass: 1.75,
       weapons: {
@@ -350,6 +376,7 @@ GAME.config = {
       stats: { spd: 5, arm: 2, fire: 2, hand: 5 },
       special: 'Blackout Kiss',
       specialDesc: 'EMP pulse 3s',
+      flavor: 'A phantom hyper that kisses the lights out of a convoy.',
       model: 'assets/models/vesper.glb',
       mass: 0.72,
       weapons: {
@@ -368,6 +395,7 @@ GAME.config = {
       stats: { spd: 2, arm: 4, fire: 4, hand: 2 },
       special: 'Sermon',
       specialDesc: 'Sonic ring shove',
+      flavor: 'A white van that preaches in square waves until light cars fly.',
       model: 'assets/models/choir.glb',
       mass: 1.35,
       weapons: {
@@ -378,17 +406,36 @@ GAME.config = {
         mineDmgMul: 1.2, mineRateMul: 0.9,
       },
     },
+    {
+      id: 'razorback',
+      name: 'RAZORBACK',
+      role: 'Caltrop Hog',
+      color: 0x39ff14,
+      accent: 0x1aff80,
+      // Fast mid armor — mines + MG stock, no rocket (Tire Choir is the trick)
+      stats: { spd: 4, arm: 2, fire: 3, hand: 3 },
+      special: 'Tire Choir',
+      specialDesc: 'Rear caltrop fan · shred tires',
+      flavor: 'Leaves a green hail of caltrops for anyone who drafts too close.',
+      model: 'assets/models/razorback.glb',
+      mass: 0.95,
+      weapons: {
+        mg: true, rocket: false, mine: true,
+        mgLabel: 'MG', mineLabel: 'MINE',
+        mgDmgMul: 1.05, mgRateMul: 1.1,
+        mineDmgMul: 1.1, mineRateMul: 1.05,
+      },
+    },
   ],
 
-  // Scorched-earth foundation (v200): ONE clean map until the track is signed off.
-  // Throat / Freedom Gate return after Neon Circuit is solid.
+  // Neon Circuit solid (v332 90% PASS) → second map THE REACH unlocked.
   maps: [
     {
       id: 'sepulcher',
       name: 'NEON CIRCUIT',
       desc: 'Neon canyon open · dense first stretch · far skyline',
       pointToPoint: true,
-      fogDensity: 0.0018,
+      fogDensity: 0.00085, // Wave 2: was eating skyline cards from chase
       ambient: 0x3a4a68,
       ambientIntensity: 2.05,
       moon: 0xc8d8ff,
@@ -400,16 +447,44 @@ GAME.config = {
       fillIntensity: 0.5,
       streetFill: 0x40c0e0,
       streetFillIntensity: 0.48,
-      fogColor: 0x0a1220,
-      bg: 0x050810,
-      groundColor: 0x0c0e14,
+      fogColor: 0x152030, // lighter night so horizon mass reads
+      bg: 0x080c16,
+      groundColor: 0x12161f,
       theme: 'city',
       cleanTrack: false, // progressive soft traps enabled
       grade: {
         // Slightly brighter + more bloom so traps / neon read at speed
         exposure: 1.28, contrast: 1.18, saturation: 1.05,
-        bloomStrength: 0.16, bloomThreshold: 0.76,
+        bloomStrength: 0.1, bloomThreshold: 0.78, // v376 FPS
         liftCyan: 0.01, liftAmber: 0.008, vignette: 0.32, chromatic: 0.0006,
+      },
+    },
+    {
+      id: 'reach',
+      name: 'THE REACH',
+      desc: 'Coastal dusk · long straights · salt air horizon',
+      pointToPoint: true,
+      fogDensity: 0.00055,
+      ambient: 0x4a3a50,
+      ambientIntensity: 1.85,
+      moon: 0xffd0a0,
+      moonIntensity: 2.2,
+      hemiSky: 0x7080a8,
+      hemiGround: 0x3a2820,
+      hemiIntensity: 1.35,
+      fill: 0xff8a50,
+      fillIntensity: 0.55,
+      streetFill: 0xffb070,
+      streetFillIntensity: 0.35,
+      fogColor: 0x322838,
+      bg: 0x18101c,
+      groundColor: 0x242018, // v338: was near-black void under chase
+      theme: 'coast',
+      cleanTrack: false,
+      grade: {
+        exposure: 1.22, contrast: 1.12, saturation: 1.08,
+        bloomStrength: 0.14, bloomThreshold: 0.78,
+        liftCyan: 0.004, liftAmber: 0.014, vignette: 0.28, chromatic: 0.0005,
       },
     },
   ],

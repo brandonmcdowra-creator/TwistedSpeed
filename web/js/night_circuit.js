@@ -1,6 +1,6 @@
 /**
  * TWISTED SPEED — Night Circuit
- * Photoreal-leaning Three.js combat racer (TM Black weapons × NFS night streets).
+ * Photoreal-leaning Three.js combat racer (weapons × night streets).
  */
 (function () {
   'use strict';
@@ -330,7 +330,7 @@
     state.race = {
       t: 0, scrap: 0, kills: 0, lap: 0, laps: 5, along: 0.02, finished: false, lastGate: -999
     };
-    state.status = 'NIGHT ' + state.meta.night + ' · FREEDOM GATE ×' + 5;
+    state.status = 'NIGHT ' + state.meta.night + ' · PAROLE ARCH ×' + 5;
     spawnPlayer(function () {
       spawnRivals(3 + Math.min(2, state.meta.night >> 1));
     });
@@ -624,7 +624,7 @@
       hctx.textAlign = 'center';
       hctx.fillStyle = res && res.won ? '#3de0ff' : '#ff2d55';
       hctx.font = 'bold 36px Segoe UI';
-      hctx.fillText(res && res.won ? 'FREEDOM GATE CLEARED' : 'REEL OVER', w / 2, h * 0.4);
+      hctx.fillText(res && res.won ? 'PAROLE ARCH CLEARED' : 'REEL OVER', w / 2, h * 0.4);
       hctx.fillStyle = '#f2e9e4';
       hctx.font = '16px Segoe UI';
       if (res) hctx.fillText('Time ' + res.time.toFixed(1) + 's   Kills ' + res.kills + '   Scrap +' + res.scrap, w / 2, h * 0.48);
