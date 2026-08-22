@@ -21,6 +21,20 @@ Waves 1–5 + Wave ∞ (v336–v398) shipped: signature specials with telegraphs
 
 Agents marked the overnight items PASS, but the **director has not played v398** — treat feel as unsolved. Your job is the v399 loop that never shipped, plus the open friction pile. Work at **v400+** (bump `?v=` in `web/index.html` per ship; title stamp must match).
 
+## Fresh playtest findings (agent-played, 2026-08-22, build 399 — verified, not guesses)
+
+An agent played v399 in a real browser (garage → Neon race → death → results → R retry → map select → THE REACH). These reproduce and should be folded into the priorities below:
+
+1. **BUG — THE REACH does not load.** Map select lists both maps correctly and THE REACH highlights (red border, "Coastal dusk" description), but starting the race spawns the purple neon canyon: no water plane, no dusk sky, no coast. Code has a real coast theme (`world.js` `theme === 'coast'` → `buildPathCoast()`, water, mesas), so trace why the selected mapDef isn't reaching `world.build` — likely map-select index/state or a keepWorld path. **This is now the top P1 item.**
+2. **BUG — no on-screen map identity.** Nothing in the HUD names the current map ("REACH FINISH" is the generic goal text). Combined with (1), a player cannot tell which map they're on. Add the map name to the race-start banner or HUD strip.
+3. **Ground hop reproduced** — one fall-through/hover moment ~10 s into a run (known friction pile item; now agent-confirmed on a fresh serve).
+4. **MG is visually mute.** Tracers exist in code (`game.js` `_combatPool`, 0.05-radius, ~0.08 s life) but were invisible in play across repeated bursts — no muzzle flash, no readable line, no impact spark. Player only knows the MG worked from damage numbers. Thicken/lengthen tracers, add a 1-frame muzzle sprite and small hit spark within the perf contract (MeshBasic, no new lights).
+5. **Damage source unreadable.** Armor drops 20–30 in a beat with no cue of what hit you (rocket? MG? ram?). Add a directional hit indicator (screen-edge wedge toward attacker) or brief tint + "UNDER FIRE".
+6. **Toast copy misreads.** `BONE HARVEST · MAUSOLEUM` (aim-target name appended) reads as wrong-car attribution. Change to an arrow/lock form, e.g. `BONE HARVEST → MAUSOLEUM`.
+7. **Combat durability feels suicidal.** ~120 armor evaporates in seconds of return fire, discouraging the drive-and-destroy fantasy. Prefer readable counterplay (armor pickups on-track / clearer incoming-fire cues) over flat HP inflation, and treat as a feel item for director sign-off.
+
+What genuinely works (don't break it): 2–3 s load, instant R retry, 6 distinct rigs with readable stats, rival health bars, distinct special visuals (bone fan vs caltrop cloud), meaty results screen with progression that persists across reloads, quality toggle O visibly working.
+
 ## Priority order (verify each item reproduces before fixing it)
 
 ### P0 — Reproduce first (agent playtest of v399)
@@ -33,6 +47,7 @@ Serve `web/` (`python -m http.server 8765` or `web/serve.py`), open `http://127.
 6. **Results/finish** — past 0.9: ceremony, results screen populated, **R** retry works on both win and lose.
 
 ### P1 — Fix what reproduced, one ship per item
+- **THE REACH not loading** (playtest finding #1) — fix map selection → world build, and add the map name to the HUD/start banner so map identity is verifiable in one glance.
 - **First-curve hang**: get lateral hang toward 0 under mixed steer without adding center-pull yank elsewhere.
 - **Climb faceting**: smooth the elevated ribbon + adjacent canyon dress so it reads as one surface in chase cam.
 - **Black FOV vs FPS**: this is a tug-of-war — keep both flanks readable (early, mid-climb, late peeks at 0.58/0.70/0.82) **without** dropping Neon under ~38 FPS. If you must cut, cut far cards/buildings before combat, and re-verify flanks after every cut.
