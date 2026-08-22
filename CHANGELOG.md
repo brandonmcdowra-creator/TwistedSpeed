@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-22 — Web v406: flatten Neon · slower maglev
+
+- Neon Circuit path Y forced to **0** (elevation pass was faceting the ribbon / canyon)
+- Maglev: bigger cars, one obvious gap, crawls while you're in the approach, earlier `FREIGHT AHEAD` toast, yellow deck on the crossing
+
+Hard-refresh `?v=406` so the **world rebuilds** (same-map START reuses old elevated mesh).
+
+---
+
 ## 2026-08-22 — Web v405: greybox prison freight maglev
 
 Greybox timed crossing on Neon Circuit (~28% progress). Consist of lit boxes, a visible gap, yellow/red lamps. Wait or thread — hitting a car hurts and dumps speed. THE REACH has no maglev. Dress pass later at this same junction.

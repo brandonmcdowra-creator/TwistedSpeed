@@ -49,55 +49,54 @@
     var pts = [];
     function add(x, y, z) { pts.push(new THREE.Vector3(x, y, z)); }
 
-    // Opening: long straight then VERY wide right sweep, flat through exit (v329)
-    // v382: extra climb/descent Y steps — less faceted grade (was 2→12→22→26)
+    // v406: director — elevation pass jacked the ribbon (25m faceted climb).
+    // Flat night highway like the clip. XY layout unchanged.
     add(0, 0, 0);
     add(0, 0, -180);
     add(0, 0, -360);
-    add(10, 0, -500);   // barely starting to bend
-    add(50, 0, -620);   // long arc
+    add(10, 0, -500);
+    add(50, 0, -620);
     add(130, 0, -720);
-    add(250, 0, -780);  // curve exit still flat
-    // v393: even gentler mid-climb (was maxSecond ~0.87 faceted feel)
-    add(340, 0.3, -795);
-    add(400, 1.0, -800);
-    add(460, 2.4, -795);
-    add(510, 4.2, -785);
-    add(560, 6.5, -765);
-    add(610, 9.5, -720);
-    add(660, 13, -660);
-    add(700, 16, -600);
-    add(730, 18.5, -540);
-    add(755, 20.5, -480);
-    add(775, 22, -420);
-    add(790, 22.5, -340);
-    add(800, 21, -260);
-    add(800, 19, -180);
-    add(795, 16.5, -100);
-    add(790, 13.5, -20);
-    add(680, 10, 140);
-    add(560, 8, 260);
-    add(480, 9, 290);
-    add(400, 11, 320);
-    add(330, 14, 360);
-    add(260, 17, 400);
-    add(210, 20, 470);
-    add(170, 22, 540);
-    add(160, 24, 610);
-    add(175, 25, 680);
-    add(240, 22, 740);
-    add(300, 18, 800);
-    add(380, 15, 840);
-    add(460, 12, 880);
-    add(540, 10, 900);
-    add(620, 8, 900);
-    add(700, 6, 870);
-    add(780, 5, 840);
-    add(900, 4, 720);
-    add(960, 3, 560);
-    add(990, 2, 380);
-    add(1005, 1.5, 180);
-    add(1010, 1, 0);
+    add(250, 0, -780);
+    add(340, 0, -795);
+    add(400, 0, -800);
+    add(460, 0, -795);
+    add(510, 0, -785);
+    add(560, 0, -765);
+    add(610, 0, -720);
+    add(660, 0, -660);
+    add(700, 0, -600);
+    add(730, 0, -540);
+    add(755, 0, -480);
+    add(775, 0, -420);
+    add(790, 0, -340);
+    add(800, 0, -260);
+    add(800, 0, -180);
+    add(795, 0, -100);
+    add(790, 0, -20);
+    add(680, 0, 140);
+    add(560, 0, 260);
+    add(480, 0, 290);
+    add(400, 0, 320);
+    add(330, 0, 360);
+    add(260, 0, 400);
+    add(210, 0, 470);
+    add(170, 0, 540);
+    add(160, 0, 610);
+    add(175, 0, 680);
+    add(240, 0, 740);
+    add(300, 0, 800);
+    add(380, 0, 840);
+    add(460, 0, 880);
+    add(540, 0, 900);
+    add(620, 0, 900);
+    add(700, 0, 870);
+    add(780, 0, 840);
+    add(900, 0, 720);
+    add(960, 0, 560);
+    add(990, 0, 380);
+    add(1005, 0, 180);
+    add(1010, 0, 0);
 
     // v382 smooth Y; v386: cap samples so nearestOnPath stays cheap (was 521)
     var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.08);

@@ -1,18 +1,20 @@
 /**
- * Prison freight maglev — greybox timed crossing (v405).
+ * Prison freight maglev — greybox timed crossing (v405/v406).
  * Perpendicular consist, visible gap, wait or thread. Do not smash.
+ * v406: slower, bigger, crawls while you're in the approach so it isn't a blink.
  */
 (function () {
   var GAME = (window.GAME = window.GAME || {});
 
-  var CROSS_T = 0.28;
-  var SPEED = 16;
-  var CAR_Z = 7.2;
-  var CAR_X = 16;
-  var CAR_Y = 3.1;
-  var CAR_PITCH = 8.4;
-  var HOLE = 26;
-  var SPAN = 78;
+  var CROSS_T = 0.30;
+  var SPEED = 7.5;
+  var SPEED_NEAR = 3.6;
+  var CAR_Z = 11;
+  var CAR_X = 20;
+  var CAR_Y = 5.6;
+  var CAR_PITCH = 12.5;
+  var HOLE = 34;
+  var SPAN = 90;
 
   function wrap(u) {
     var w = SPAN * 2;
@@ -23,7 +25,7 @@
 
   function makeCarMat(i) {
     return new THREE.MeshBasicMaterial({
-      color: i % 2 ? 0x2a2438 : 0x1a2030,
+      color: i % 2 ? 0x5a4068 : 0x304050,
     });
   }
 
@@ -40,19 +42,27 @@
       var group = new THREE.Group();
       group.name = 'maglev';
 
-      var railMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.55 });
+      var railMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.7 });
       for (var r = -1; r <= 1; r += 2) {
-        var rail = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, SPAN * 2), railMat);
-        rail.position.copy(pt).addScaledVector(tan, r * 6.2);
-        rail.position.y = pt.y + 0.08;
+        var rail = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, SPAN * 2), railMat);
+        rail.position.copy(pt).addScaledVector(tan, r * 7.4);
+        rail.position.y = pt.y + 0.1;
         rail.rotation.y = yaw;
         group.add(rail);
       }
+      var deck = new THREE.Mesh(
+        new THREE.BoxGeometry(26, 0.08, 22),
+        new THREE.MeshBasicMaterial({ color: 0xffe66d, transparent: true, opacity: 0.35 })
+      );
+      deck.position.copy(pt);
+      deck.position.y = pt.y + 0.06;
+      deck.rotation.y = Math.atan2(tan.x, tan.z);
+      group.add(deck);
 
       var rest = [];
-      var u = -52;
-      var nCars = 9;
-      var holeAfter = { 2: 1, 6: 1 };
+      var u = -62;
+      var nCars = 8;
+      var holeAfter = { 3: 1 };
       for (var i = 0; i < nCars; i++) {
         rest.push(u);
         u += CAR_PITCH;
@@ -77,15 +87,15 @@
       function pole(sign) {
         var g = new THREE.Group();
         var post = new THREE.Mesh(
-          new THREE.BoxGeometry(0.35, 5.2, 0.35),
+          new THREE.BoxGeometry(0.55, 9.2, 0.55),
           new THREE.MeshBasicMaterial({ color: 0x2a2430 })
         );
-        post.position.y = 2.6;
+        post.position.y = 4.6;
         g.add(post);
-        var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), gapGlowMat.clone());
-        lamp.position.y = 5.1;
+        var lamp = new THREE.Mesh(new THREE.SphereGeometry(1.15, 10, 8), gapGlowMat.clone());
+        lamp.position.y = 9.2;
         g.add(lamp);
-        g.position.copy(pt).addScaledVector(side, sign * 18);
+        g.position.copy(pt).addScaledVector(side, sign * 22);
         g.position.y = pt.y;
         group.add(g);
         return lamp;
@@ -119,7 +129,8 @@
       if (!ml || !ctx || !ctx.player) return;
       var p = ctx.player;
       var rh = (ctx.roadHalf != null ? ctx.roadHalf : 11.5);
-      ml.u0 += SPEED * dt;
+      var nearXing = Math.abs((p.progress || 0) - ml.t) < 0.16;
+      ml.u0 += (nearXing ? SPEED_NEAR : SPEED) * dt;
       if (ml.u0 > SPAN * 2) ml.u0 -= SPAN * 2;
       if (ml.hitCd > 0) ml.hitCd -= dt;
 
@@ -145,14 +156,14 @@
       }
 
       var prog = p.progress || 0;
-      var approaching = prog > ml.t - 0.12 && prog < ml.t - 0.02;
-      var atXing = Math.abs(prog - ml.t) < 0.035;
+      var approaching = prog > ml.t - 0.18 && prog < ml.t - 0.04;
+      var atXing = Math.abs(prog - ml.t) < 0.045;
       if (approaching && !ml.warned && ctx.toast) {
-        ctx.toast(blocked ? 'FREIGHT AHEAD — WAIT THE GAP' : 'FREIGHT AHEAD — GAP OPEN', 2.2, 2);
+        ctx.toast(blocked ? 'FREIGHT AHEAD — WAIT THE GAP' : 'FREIGHT AHEAD — GAP OPEN', 2.8, 2);
         ml.warned = true;
       }
       if (atXing && !blocked && !ml.gapSaid && ctx.toast) {
-        ctx.toast('GAP — GO', 0.85, 2);
+        ctx.toast('GAP — GO', 1.4, 2);
         ml.gapSaid = true;
       }
       if (prog > ml.t + 0.05) {

@@ -1,8 +1,8 @@
 # Twisted Speed — Progress
 
-**Build:** web **v405** (greybox prison freight maglev on Neon)  
+**Build:** web **v406** (flat Neon highway · slower maglev)  
 **Date:** 2026-08-22  
-**Serve:** `web/` → hard-refresh `?v=405` — title must say **BUILD 405**  
+**Serve:** `web/` → hard-refresh `?v=406` — title must say **BUILD 406**  
 **Primary runtime:** **web** · Wave ∞  
 **Gate C:** CLOSED  
 
