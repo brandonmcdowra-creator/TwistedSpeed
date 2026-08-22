@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-22 — Web v409: playable Neon hills
+
+Gentle highway rolls (crest ~7 m), not the old 25 m faceted climb. First corner + maglev stay flat. Then rise, dip, second rise, home to 0.
+
+Hard-refresh `?v=409` so the world rebuilds.
+
+---
+
 ## 2026-08-22 — Web v408: maglev wall then gap at the crossing
 
 v406 crawled and the hole never cleared the road. v407 opened the gap too early (while you were still 200m out).

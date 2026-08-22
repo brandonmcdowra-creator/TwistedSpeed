@@ -1,6 +1,6 @@
 # Twisted Speed — Progress
 
-**Build:** web **v406** (flat Neon highway · slower maglev)  
+**Build:** web **v409** (gentle Neon hills · maglev gap hold)  
 **Date:** 2026-08-22  
 **Serve:** `web/` → hard-refresh `?v=406` — title must say **BUILD 406**  
 **Primary runtime:** **web** · Wave ∞  

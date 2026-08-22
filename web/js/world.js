@@ -49,8 +49,8 @@
     var pts = [];
     function add(x, y, z) { pts.push(new THREE.Vector3(x, y, z)); }
 
-    // v406: director — elevation pass jacked the ribbon (25m faceted climb).
-    // Flat night highway like the clip. XY layout unchanged.
+    // v409: gentle highway hills (~7 m), not the 25 m faceted climb.
+    // First corner + maglev (~0.30) stay flat. Then roll, dip, roll, home.
     add(0, 0, 0);
     add(0, 0, -180);
     add(0, 0, -360);
@@ -60,46 +60,46 @@
     add(250, 0, -780);
     add(340, 0, -795);
     add(400, 0, -800);
-    add(460, 0, -795);
-    add(510, 0, -785);
-    add(560, 0, -765);
-    add(610, 0, -720);
-    add(660, 0, -660);
-    add(700, 0, -600);
-    add(730, 0, -540);
-    add(755, 0, -480);
-    add(775, 0, -420);
-    add(790, 0, -340);
-    add(800, 0, -260);
-    add(800, 0, -180);
-    add(795, 0, -100);
-    add(790, 0, -20);
-    add(680, 0, 140);
-    add(560, 0, 260);
-    add(480, 0, 290);
-    add(400, 0, 320);
-    add(330, 0, 360);
-    add(260, 0, 400);
-    add(210, 0, 470);
-    add(170, 0, 540);
-    add(160, 0, 610);
-    add(175, 0, 680);
-    add(240, 0, 740);
-    add(300, 0, 800);
-    add(380, 0, 840);
-    add(460, 0, 880);
-    add(540, 0, 900);
-    add(620, 0, 900);
-    add(700, 0, 870);
-    add(780, 0, 840);
-    add(900, 0, 720);
-    add(960, 0, 560);
-    add(990, 0, 380);
+    add(460, 0, -795);   // maglev plateau
+    add(510, 0.4, -785);
+    add(560, 1.0, -765);
+    add(610, 1.8, -720);
+    add(660, 2.8, -660);
+    add(700, 3.8, -600);
+    add(730, 4.8, -540);
+    add(755, 5.6, -480);
+    add(775, 6.4, -420);
+    add(790, 7.0, -340);  // crest 1
+    add(800, 6.6, -260);
+    add(800, 5.8, -180);
+    add(795, 4.6, -100);
+    add(790, 3.4, -20);
+    add(680, 2.4, 140);
+    add(560, 1.8, 260);   // dip
+    add(480, 2.0, 290);
+    add(400, 2.6, 320);
+    add(330, 3.4, 360);
+    add(260, 4.2, 400);
+    add(210, 5.0, 470);
+    add(170, 5.6, 540);
+    add(160, 6.0, 610);   // crest 2
+    add(175, 5.6, 680);
+    add(240, 4.8, 740);
+    add(300, 4.0, 800);
+    add(380, 3.2, 840);
+    add(460, 2.4, 880);
+    add(540, 1.8, 900);
+    add(620, 1.4, 900);
+    add(700, 1.0, 870);
+    add(780, 0.7, 840);
+    add(900, 0.4, 720);
+    add(960, 0.2, 560);
+    add(990, 0.1, 380);
     add(1005, 0, 180);
     add(1010, 0, 0);
 
-    // v382 smooth Y; v386: cap samples so nearestOnPath stays cheap (was 521)
-    var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.08);
+    // Low tension = highway-smooth; denser samples keep nearestOnPath honest
+    var curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.06);
     var pathLen = curve.getLength();
     var nSamples = Math.max(320, Math.min(440, Math.floor(pathLen / 5.5)));
     var dense = curve.getSpacedPoints(nSamples);
