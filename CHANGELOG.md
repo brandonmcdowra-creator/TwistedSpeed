@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-22 — Web v408: maglev wall then gap at the crossing
+
+v406 crawled and the hole never cleared the road. v407 opened the gap too early (while you were still 200m out).
+v408: when you hit ~22%, a **moving wall** is on the asphalt; lamps red. ~3.5s later the **52 m gap** is on the road (lamps green, `GAP — GO`). Brake on red, go on green.
+
+Hard-refresh `?v=408`. Neon Circuit.
+
+---
+
 ## 2026-08-22 — Web v406: flatten Neon · slower maglev
 
 - Neon Circuit path Y forced to **0** (elevation pass was faceting the ribbon / canyon)

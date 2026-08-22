@@ -1,31 +1,37 @@
 /**
- * Prison freight maglev — greybox timed crossing (v405/v406).
- * Perpendicular consist, visible gap, wait or thread. Do not smash.
- * v406: slower, bigger, crawls while you're in the approach so it isn't a blink.
+ * Prison freight maglev — greybox timed crossing.
+ * v407: real gap (full road clears), visible motion, gap scheduled ~3.5s after you arrive.
  */
 (function () {
   var GAME = (window.GAME = window.GAME || {});
 
   var CROSS_T = 0.30;
-  var SPEED = 7.5;
-  var SPEED_NEAR = 3.6;
-  var CAR_Z = 11;
-  var CAR_X = 20;
-  var CAR_Y = 5.6;
-  var CAR_PITCH = 12.5;
-  var HOLE = 34;
-  var SPAN = 90;
+  var SPEED = 12;
+  var SPEED_NEAR = 8;
+  var CAR_Z = 10;
+  var CAR_X = 18;
+  var CAR_Y = 5.4;
+  var CAR_PITCH = 12;
+  var N_CARS = 5;
+  var GAP = 52;
+  var LOOP = N_CARS * CAR_PITCH + GAP; // 112
+  var WAIT = 3.4; // unused; wall duration comes from car0 at u=-6
 
-  function wrap(u) {
-    var w = SPAN * 2;
-    while (u > SPAN) u -= w;
-    while (u < -SPAN) u += w;
-    return u;
+  function mod(x, m) {
+    var r = x % m;
+    if (r < 0) r += m;
+    return r;
+  }
+
+  function wrapHalf(x, m) {
+    var r = mod(x, m);
+    if (r > m * 0.5) r -= m;
+    return r;
   }
 
   function makeCarMat(i) {
     return new THREE.MeshBasicMaterial({
-      color: i % 2 ? 0x5a4068 : 0x304050,
+      color: i % 2 ? 0x6a4878 : 0x3a5060,
     });
   }
 
@@ -44,44 +50,32 @@
 
       var railMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.7 });
       for (var r = -1; r <= 1; r += 2) {
-        var rail = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, SPAN * 2), railMat);
+        var rail = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, LOOP), railMat);
         rail.position.copy(pt).addScaledVector(tan, r * 7.4);
         rail.position.y = pt.y + 0.1;
         rail.rotation.y = yaw;
         group.add(rail);
       }
-      var deck = new THREE.Mesh(
-        new THREE.BoxGeometry(26, 0.08, 22),
-        new THREE.MeshBasicMaterial({ color: 0xffe66d, transparent: true, opacity: 0.35 })
-      );
+      var deckMat = new THREE.MeshBasicMaterial({ color: 0xffe66d, transparent: true, opacity: 0.4 });
+      var deck = new THREE.Mesh(new THREE.BoxGeometry(26, 0.08, 22), deckMat);
       deck.position.copy(pt);
       deck.position.y = pt.y + 0.06;
       deck.rotation.y = Math.atan2(tan.x, tan.z);
       group.add(deck);
 
-      var rest = [];
-      var u = -62;
-      var nCars = 8;
-      var holeAfter = { 3: 1 };
-      for (var i = 0; i < nCars; i++) {
-        rest.push(u);
-        u += CAR_PITCH;
-        if (holeAfter[i]) u += HOLE;
-      }
-
       var cars = [];
       var stripMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
       var gapGlowMat = new THREE.MeshBasicMaterial({
-        color: 0xffe66d, transparent: true, opacity: 0.85,
+        color: 0xffe66d, transparent: true, opacity: 0.9,
       });
-      for (i = 0; i < nCars; i++) {
+      for (var i = 0; i < N_CARS; i++) {
         var body = new THREE.Mesh(new THREE.BoxGeometry(CAR_X, CAR_Y, CAR_Z), makeCarMat(i));
-        var strip = new THREE.Mesh(new THREE.BoxGeometry(CAR_X * 0.92, 0.18, 0.22), stripMat);
+        var strip = new THREE.Mesh(new THREE.BoxGeometry(CAR_X * 0.92, 0.22, 0.28), stripMat);
         strip.position.y = CAR_Y * 0.28;
         body.add(strip);
         body.rotation.y = yaw;
         group.add(body);
-        cars.push({ mesh: body, rest: rest[i] });
+        cars.push({ mesh: body, index: i });
       }
 
       function pole(sign) {
@@ -100,19 +94,21 @@
         group.add(g);
         return lamp;
       }
-      var lampL = pole(-1);
-      var lampR = pole(1);
 
       scene.add(group);
       return {
         group: group,
         cars: cars,
+        deck: deck,
         pt: pt,
         side: side,
         tan: tan,
         t: t,
-        u0: 0,
-        lamps: [lampL, lampR],
+        phase: 0,
+        lamps: [pole(-1), pole(1)],
+        synced: false,
+        mode: 'run',
+        modeT: 0,
         warned: false,
         gapSaid: false,
         hitCd: 0,
@@ -129,47 +125,56 @@
       if (!ml || !ctx || !ctx.player) return;
       var p = ctx.player;
       var rh = (ctx.roadHalf != null ? ctx.roadHalf : 11.5);
-      var nearXing = Math.abs((p.progress || 0) - ml.t) < 0.16;
-      ml.u0 += (nearXing ? SPEED_NEAR : SPEED) * dt;
-      if (ml.u0 > SPAN * 2) ml.u0 -= SPAN * 2;
+      var prog = p.progress || 0;
+      var approaching = prog > ml.t - 0.08 && prog < ml.t + 0.06;
+      var spd = SPEED;
+      if (approaching && !ml.synced) {
+        ml.synced = true;
+        ml.mode = 'wall';
+        ml.phase = 0;
+        if (ctx.toast) ctx.toast('FREIGHT AHEAD — WAIT THE GAP', 2.8, 2);
+        ml.warned = true;
+      }
+      if (ml.mode === 'wall') {
+        ml.phase = mod(ml.phase + 8 * dt, CAR_PITCH);
+        if (prog > ml.t - 0.028) {
+          ml.mode = 'gap';
+          ml.phase = 40;
+          if (ctx.toast) ctx.toast('GAP — GO', 1.8, 2);
+          ml.gapSaid = true;
+        }
+      } else if (ml.mode === 'gap') {
+        ml.phase = 40;
+        if (prog > ml.t + 0.05) ml.mode = 'run';
+      } else {
+        ml.phase = mod(ml.phase + SPEED * dt, LOOP);
+      }
       if (ml.hitCd > 0) ml.hitCd -= dt;
 
       var blocked = false;
-      var i, car, u, pos;
+      var i, car, u;
+      var blockR = rh + CAR_Z * 0.5 + 1.5;
       for (i = 0; i < ml.cars.length; i++) {
         car = ml.cars[i];
-        u = wrap(car.rest + ml.u0);
-        pos = ml.pt.clone().addScaledVector(ml.side, u);
-        pos.y = ml.pt.y + CAR_Y * 0.52;
-        car.mesh.position.copy(pos);
+        u = wrapHalf(ml.phase + i * CAR_PITCH, LOOP);
         car.u = u;
-        if (Math.abs(u) < rh + 4) blocked = true;
+        car.mesh.position.copy(ml.pt).addScaledVector(ml.side, u);
+        car.mesh.position.y = ml.pt.y + CAR_Y * 0.52;
+        if (Math.abs(u) < blockR) blocked = true;
       }
 
       var lampCol = blocked ? 0xff2d55 : 0x39ff14;
-      var lampOp = blocked ? 0.95 : 0.7;
       for (i = 0; i < ml.lamps.length; i++) {
         if (ml.lamps[i] && ml.lamps[i].material) {
           ml.lamps[i].material.color.setHex(lampCol);
-          ml.lamps[i].material.opacity = lampOp;
         }
       }
+      if (ml.deck && ml.deck.material) {
+        ml.deck.material.color.setHex(blocked ? 0xff2d55 : 0x39ff14);
+        ml.deck.material.opacity = blocked ? 0.5 : 0.35;
+      }
 
-      var prog = p.progress || 0;
-      var approaching = prog > ml.t - 0.18 && prog < ml.t - 0.04;
-      var atXing = Math.abs(prog - ml.t) < 0.045;
-      if (approaching && !ml.warned && ctx.toast) {
-        ctx.toast(blocked ? 'FREIGHT AHEAD — WAIT THE GAP' : 'FREIGHT AHEAD — GAP OPEN', 2.8, 2);
-        ml.warned = true;
-      }
-      if (atXing && !blocked && !ml.gapSaid && ctx.toast) {
-        ctx.toast('GAP — GO', 1.4, 2);
-        ml.gapSaid = true;
-      }
-      if (prog > ml.t + 0.05) {
-        ml.warned = true;
-        ml.gapSaid = true;
-      }
+      var atXing = Math.abs(prog - ml.t) < 0.05;
 
       function hitBody(body, isPlayer) {
         if (!body || !body.pos || body.dead) return;
