@@ -1,8 +1,8 @@
 # Twisted Speed — Progress
 
-**Build:** web **v404** (steer the corners · meatier guns)  
+**Build:** web **v405** (greybox prison freight maglev on Neon)  
 **Date:** 2026-08-22  
-**Serve:** `web/` → hard-refresh `?v=404` — title must say **BUILD 404**  
+**Serve:** `web/` → hard-refresh `?v=405` — title must say **BUILD 405**  
 **Primary runtime:** **web** · Wave ∞  
 **Gate C:** CLOSED  
 
@@ -32,5 +32,5 @@ Director still needs to play. No ship claim.
 ```powershell
 cd "C:\Users\brand\1. Game Making\twisted-speed-build-pack\web"
 python -m http.server 8765
-# http://127.0.0.1:8765/?v=404
+# http://127.0.0.1:8765/?v=405
 ```

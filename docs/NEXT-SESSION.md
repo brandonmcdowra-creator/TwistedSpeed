@@ -1,6 +1,6 @@
 # Twisted Speed — Next session pickup
 
-**Frozen at:** web **v404** (2026-08-22)  
+**Frozen at:** web **v405** (2026-08-22) — greybox maglev on Neon ~28%. Dress that junction next.  
 **Why we stopped:** Director: v403 auto-centered too hard; wanted more shooting. v404 lip-only steer + meatier rockets/LOCK. Durability / skyline still open.  
 **Primary runtime:** web three.js only. Do **not** touch Unity.  
 **Repo:** `C:\Users\brand\1. Game Making\twisted-speed-build-pack`  

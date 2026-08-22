@@ -1229,6 +1229,8 @@
     (state.rivals || []).forEach(function (r) { kill(r.mesh); });
     (state.scraps || []).forEach(function (s) { kill(s.mesh); });
     (state.hazards || []).forEach(function (h) { kill(h.mesh); });
+    if (GAME.maglev && GAME.maglev.clear) GAME.maglev.clear(state.maglev, scene);
+    state.maglev = null;
     (state.projectiles || []).forEach(function (pr) {
       recycleProjectileMesh(pr.mesh);
     });
@@ -1379,6 +1381,9 @@
       try { particles.rainStart('city'); } catch (e) {}
     }
     state.hazards = makeHazards(state.path, state.meta.stage);
+    if (GAME.maglev && GAME.maglev.spawn) {
+      state.maglev = GAME.maglev.spawn(scene, state.path, state.mapDef);
+    }
     if (hasMutator('last_mile')) {
       // LAST MILE (Night 7): finish stretch is mean — not a label
       state._lastMile = true;
@@ -3695,6 +3700,16 @@
     }
 
     // v340: heat applied inside fire* on successful discharge (not hold-frame tax)
+    if (GAME.maglev && GAME.maglev.update && state.maglev) {
+      GAME.maglev.update(state.maglev, dt, {
+        player: p,
+        rivals: state.rivals,
+        roadHalf: cfg.drive.roadHalf,
+        toast: toast,
+        hurtPlayer: hurtPlayer,
+        hurtRival: hurtRival,
+      });
+    }
     if (I.key('j') || I.key('z')) fireMg();
     if (I.pressed('k') || I.pressed('x')) fireRocket();
     if (I.pressed('l')) dropMine();

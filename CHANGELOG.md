@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-22 — Web v405: greybox prison freight maglev
+
+Greybox timed crossing on Neon Circuit (~28% progress). Consist of lit boxes, a visible gap, yellow/red lamps. Wait or thread — hitting a car hurts and dumps speed. THE REACH has no maglev. Dress pass later at this same junction.
+
+Hard-refresh `?v=405`.
+
+---
+
 ## 2026-08-22 — Web v404: steer the corners · meatier guns
 
 ### Frictions saw
