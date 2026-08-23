@@ -1,10 +1,11 @@
 # Twisted Speed — Next session pickup
 
-**Frozen at:** web **v405** (2026-08-22) — greybox maglev on Neon ~28%. Dress that junction next.  
-**Why we stopped:** Director: v403 auto-centered too hard; wanted more shooting. v404 lip-only steer + meatier rockets/LOCK. Durability / skyline still open.  
-**Primary runtime:** web three.js only. Do **not** touch Unity.  
-**Repo:** `C:\Users\brand\1. Game Making\twisted-speed-build-pack`  
-**Do not use:** `C:\Users\brand\TwistedSpeed` as the edit tree (sync that clone only when pushing GitHub).
+**Frozen at:** web **v411** (2026-08-22)  
+**Why we stopped:** Director asked to save the round. Arcade zip shipped; play server off.  
+**Primary runtime:** **web** three.js only. Do **not** touch Unity.  
+**Gate C:** CLOSED (director play, not a ship claim).  
+**Edit tree:** `C:\Users\brand\1. Game Making\twisted-speed-build-pack`  
+**Do not edit:** `C:\Users\brand\TwistedSpeed` (GitHub clone — sync + push only).
 
 ## Start play (do this first)
 
@@ -13,49 +14,81 @@ cd "C:\Users\brand\1. Game Making\twisted-speed-build-pack\web"
 python -m http.server 8765
 ```
 
-Open **http://127.0.0.1:8765/?v=404** and hard-refresh (`Ctrl+Shift+R`). Title **BUILD 404**.
+Open **http://127.0.0.1:8765/?v=411** and hard-refresh (`Ctrl+Shift+R`). Title **BUILD 411**.
 
-Same-map START **reuses the world**. After any path/scenery ship, switch Neon ↔ THE REACH once so dress rebuilds.
+Same-map START **reuses the world**. After any path/scenery change, switch Neon ↔ THE REACH once (or hard-refresh) so dress rebuilds.
+
+**Arcade zip (already built):**  
+`C:\Users\brand\Desktop\TwistedSpeed-v411-arcade.zip`  
+(also `...\twisted-speed-build-pack\dist\TwistedSpeed-v411-arcade.zip`)  
+Zip root = `index.html`. ~43 MB. GitHub: https://github.com/brandonmcdowra-creator/TwistedSpeed (`83cf7e0`).
 
 ---
 
-## Shipped this session
+## Quality bar (director, this round)
 
-| Ver | What | Honest leftover |
-|-----|------|-----------------|
-| v400 | HUD map name; chase MG muzzle/sparks | Tracer *rods* still easy to miss behind Choir van |
-| v401 | Hit chevron (large, HUD-safe); `BONE HARVEST → NAME`; banner not `REACH FINISH` | Chevron not yet proven on a live rival hit (forced `hitDir` screenshot) |
-| v402 | Neon climb: canyon densify, no pink fullscreen slab, both-side wall depth | Skyline above canyon lips still black/sparse |
-| v403 | First-curve auto-center (peak −0.92) | Director: overcorrected — W drove the line |
-| v404 | Lip-only assist (W peak **−11.5**); rocket boom + LOCK pip | MG rods still easy to miss; durability |
+Reference clip: https://x.com/TokenGremlin/status/2089812957274230962  
+**Steal:** clip-level *quality* and *amount of world* (asphalt, props with scale, both flanks a place, haze, chase-cam combat). **Do not** reskin to dusty wasteland day. **Neon over rust** stays.
 
-**THE REACH load:** keyboard select **does** build coast (water, mesas, `theme=coast`). HUD now names the map.
+Living track pattern (the train): the world occupies the road; yellow→red telegraph; **wait or thread a gap**; punish, don’t brick. First beat = **prison freight maglev** on Neon.
+
+Build approach (locked): **greybox the beat, then dress that same junction** — not whole-map polish.
+
+---
+
+## Shipped this round (honest)
+
+| Ver | What | Leftover |
+|-----|------|----------|
+| v400 | HUD map name; chase MG muzzle/sparks | Tracer *rods* still easy to miss behind Choir |
+| v401 | Hit chevron; special toast ` → NAME` | Chevron proven with forced `hitDir`, not only live hit |
+| v402 | Canyon densify vs pink-slab | Skyline above lips still sparse |
+| v403 | First-curve auto-center | **Overcorrected** — W drove the line |
+| v404 | Lip-only assist; rocket boom + LOCK pip | Must steer; MG rods still thin |
+| v405 | Greybox maglev ~28% | Blink / no readable gap |
+| v406 | Flatten 25 m faceted climb; slower maglev | Still no real gap; crawled |
+| v407–v408 | Maglev **wall then held gap** (red wait → green GO) | Greybox boxes; dress junction not done |
+| v409 | Gentle hills (~6 m, ~1.5% grade); first corner + maglev flat | Can raise crests later with same sample density |
+| v410 | Rivals **own pace** — no warp-ahead, no pack tug, no finish camp; remount from behind | Blocker brake-check still exists (dirty racing, not teleport) |
+| v411 | Sidewalks/curbs = path **ribbons**; canyon ~13 m mid-framed; shopfronts **face the street** | Still a neon trench vs clip density; 43 driveline hides |
+
+**THE REACH:** keyboard select **does** load coast (`theme=coast`). HUD names the map. No maglev on REACH.
+
+---
+
+## First acts next round
+
+1. Director play **v411** Neon: maglev at ~22–30% — brake on red, go on green. Confirm rivals don’t pop in front when you’re leading.
+2. If maglev is “the beat”: **dress that junction** (wet asphalt, gantry/lamps/cargo, haze) — clip quality *there*, not the whole map.
+3. Scenery density: name 2+ city things past the wall on **both** flanks (horizon still black).
+4. Durability (armor melts) — cues/pickups, not a silent HP nerf. Director feel.
 
 ---
 
 ## Still open
 
 ### P1
-- [x] **Steer the corners (v404)** — W no longer drives the line (peak −11.5). Director play: does first bend still need A/D?
-- [ ] Climb still **faceted / steep** (y 0→18 by 30%) — one surface?
-- [ ] Skyline beyond canyon lips (name 2+ *city* things, not just wall texture)
-- [ ] Durability — armor evaporates (177→126 in ~30s). Prefer cues/pickups over flat HP. Director feel.
+- [ ] Maglev junction **dress** (greybox boxes → prison freight silhouette + place)
+- [ ] Skyline / world beyond canyon lips
+- [ ] Durability
+- [ ] Director sign-off on maglev wait/gap and rival AI
 
 ### P2
-- [ ] Neon FPS toward 40+ if it dipped
-- [ ] Ground hop (not seen this session, hopLift 0)
-- [ ] Special toast in *play* (Marrow ` → NAME`)
-- [ ] Pack fight 15–45 m
-- [ ] IP sweep
-- [ ] Quality **O** both maps
+- [ ] Neon FPS if v411 canyon segs hurt
+- [ ] MG tracer rods in chase (muzzle/sparks exist)
+- [ ] Ground hop (not seen; hopLift 0)
+- [ ] Special toast in live Marrow play
+- [ ] IP sweep · Quality **O** both maps
 
 ### Do not
-- Unity · `world.build` on same-map START · distant camera look-ahead · pocket-spawn · new PointLights · map 3
+- Unity · `world.build` on same-map START · camera look-ahead · pocket-spawn · new PointLights · map 3  
+- Desert reskin · smash-through maglev as a valid line · teleport rivals ahead · W-only auto-steer through corners  
+- 25 m faceted climb (hills stay gentle + dense samples)
 
 ---
 
 ## Locks (never regress)
 
-mph HUD · garage car clear + stats **RIGHT** · camera glue · START same-map `clearRace({ keepWorld })` · pack 50–120m **outer** · void = lateral · REACH stays **coast** · Neon both-side climb walls · late peeks 0.58/0.70/0.82 · map name chip · chase MG muzzle · hit chevron HUD-safe · R retry win+lose · Parole Arch · original cast · saves `twisted-speed-v5-night`
+mph HUD · garage stats **RIGHT** · camera glue · START same-map `clearRace({ keepWorld })` · void = lateral · REACH **coast** · map name chip · chase MG muzzle · hit chevron HUD-safe · maglev: wait/thread, not ram · rivals own-pace (no warp-ahead) · lip-only steer assist · ribbon sidewalks + short canyon segs · R retry win+lose · Parole Arch · original cast · saves `twisted-speed-v5-night`
 
 Gate C **CLOSED**.

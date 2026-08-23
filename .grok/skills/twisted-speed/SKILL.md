@@ -73,5 +73,6 @@ Gate A status: `GATE-A-AUDIT.md`.
 
 ## Session reminder
 Gate A/B/C from game-developer. Override phrase: **`send it!`**
-State **primary runtime** (web | Unity) in PROGRESS at session start.
+State **primary runtime** (web | Unity) in PROGRESS at session start.  
+**Pickup:** `docs/NEXT-SESSION.md` — frozen **web v411** (2026-08-22). Quality bar = clip-level night city (not desert). Maglev = wait/thread gap. Dress that junction next. No Unity.
 

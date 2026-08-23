@@ -1,36 +1,35 @@
 # Twisted Speed — Progress
 
-**Build:** web **v410** (rivals own-pace; no teleport-ahead)  
+**Build:** web **v411** (ribbon-aligned scenery · own-pace rivals · maglev gap hold · gentle hills)  
 **Date:** 2026-08-22  
-**Serve:** `web/` → hard-refresh `?v=406` — title must say **BUILD 406**  
+**Serve:** `web/` → hard-refresh `?v=411` — title must say **BUILD 411**  
 **Primary runtime:** **web** · Wave ∞  
 **Gate C:** CLOSED  
 
-## This block (controller-verified in Chrome)
+## This block
 | Check | Result |
 |-------|--------|
-| v399 P0 | BUILD 399 boots. Keyboard THE REACH **does load coast** (`theme=coast`, water/mesas). HUD had no map name. MG projectiles spawned but chase-cam mute. |
-| v400 | HUD chip shows **THE REACH** / **NEON CIRCUIT**. Chase MG: muzzle burst + sparks visible (Choir van still hides thin rods). |
-| v401 | Large red hit chevron (right-hit screenshot). Special toast ` → NAME`. Banner no longer hardcodes REACH FINISH. |
-| Climb FOV | **v402 PASS vs pink-slab:** chase ~33% both canyon walls have depth. Skyline above lips still sparse/black. |
-| First-curve | **v404 PASS:** Marrow Neon hold-W peak `p._lat` **−11.51** (lip). Must steer the first right-hander. |
-| Guns | **v404 PASS:** LOCK pip on rival ahead (screenshot). Rocket fireball/trail in chase. |
-| REACH load | PASS on keyboard select + R retry keepWorld. |
-| Results | REACH finish → populated results → R retry same map. |
-| Locks | mph · garage · same-map keepWorld · cast · Parole Arch · no map 3 |
+| Play | BUILD 411. Arcade zip on Desktop (`TwistedSpeed-v411-arcade.zip`, ~43 MB, `index.html` at zip root). |
+| REACH | Keyboard select loads coast. HUD names the map. |
+| Maglev | v408: wall then held gap on Neon ~22–30%. Greybox. Not on REACH. |
+| Hills | v409: ~6 m, ~1.5% grade. First corner + maglev plateau flat. |
+| Rivals | v410: no teleport-ahead / pack tug / finish camp. Remount from behind. |
+| Scenery | v411: sidewalk ribbons, short canyon segs, shopfronts face the road. |
+| Steer | v404: W does **not** drive the racing line (lip assist only). |
+| Quality bar | Night city at clip density — not wasteland day. Maglev = living-track train pattern. |
 
 ## Don’t regress
-- Map name chip · chase MG muzzle · hit chevron HUD-safe frame  
-- Neon keepWorld / REACH rebuild on switch · R retry  
-- Late peeks 0.58/0.70/0.82 · original cast · Parole Arch  
-- First-curve: out-steer still owns lip (`steeringOutFC` weak pull)
+- keepWorld on same-map START · REACH rebuild on switch  
+- Maglev wait/thread · rivals own-pace  
+- Ribbon sidewalks · shopfronts face street  
+- Lip-only steer · map name chip · Parole Arch · original cast  
+- Saves `twisted-speed-v5-night`
 
 ## Next session
-Pickup: **`docs/NEXT-SESSION.md`**  
-Director still needs to play. No ship claim.
+Pickup: **`docs/NEXT-SESSION.md`**
 
 ```powershell
 cd "C:\Users\brand\1. Game Making\twisted-speed-build-pack\web"
 python -m http.server 8765
-# http://127.0.0.1:8765/?v=405
+# http://127.0.0.1:8765/?v=411
 ```

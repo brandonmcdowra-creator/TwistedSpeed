@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-22 — Session save (v411 frozen)
+
+Pickup written: `docs/NEXT-SESSION.md` + `PROGRESS.md`. Next: director play v411, then dress the maglev junction. Arcade zip on Desktop.
+
+---
+
 ## 2026-08-22 — Web v411: scenery follows the ribbon
 
 Sidewalks/curbs are path ribbons (same as the asphalt). Canyon walls are short mid-framed segments (~13 m) so they don't chord through curves. Shopfronts face the road (`lookAt` was 90° off). Lamp heads face the curb.
