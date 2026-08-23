@@ -1,6 +1,6 @@
 # Twisted Speed — Progress
 
-**Build:** web **v409** (gentle Neon hills · maglev gap hold)  
+**Build:** web **v410** (rivals own-pace; no teleport-ahead)  
 **Date:** 2026-08-22  
 **Serve:** `web/` → hard-refresh `?v=406` — title must say **BUILD 406**  
 **Primary runtime:** **web** · Wave ∞  

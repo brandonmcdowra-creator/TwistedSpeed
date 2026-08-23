@@ -1974,24 +1974,23 @@
   }
 
   /**
-   * Late hunters after wipe so the stretch to 0.85 isn't lonely.
-   * Max 2 remounts per race (v287 first, v288 second). Fair HP — not on top of player.
+   * v410: if the pack is wiped, one chaser can remount BEHIND the player.
+   * Never seat ahead — winning should stay winning.
    */
   function trySpawnLateHunter(player, path) {
     if (!player || !path || !path.curve || !state.rivals) return;
     var nLate = state._lateHunterCount | 0;
-    if (nLate >= 2) return;
+    if (nLate >= 1) return;
     if (player.finished || player.hp <= 0) return;
     var pProg = player.progress || 0;
-    if (pProg >= 0.85) return;
+    if (pProg < 0.18 || pProg >= 0.82) return;
     var alive = 0;
     state.rivals.forEach(function (rv) { if (!rv.dead) alive++; });
     if (alive > 0) return;
-    // Need a real wipe moment (at least one kill) before remounting
     if ((player.kills | 0) < 1) return;
 
     state._lateHunterCount = nLate + 1;
-    state._lateHunterSpawned = true; // legacy flag (any remount happened)
+    state._lateHunterSpawned = true;
     var diff = difficulty();
     var spdMul = diff.rivalSpeed != null ? diff.rivalSpeed : 0.78;
     var hpMul = diff.rivalHpMul != null ? diff.rivalHpMul : 1;
@@ -2001,14 +2000,13 @@
     var pool = roster.filter(function (id) { return id !== playerId; });
     if (!pool.length) pool = roster.slice();
     var rivalId = pool[((player.kills | 0) + nLate) % pool.length];
-    // Seat ahead on path — not on top of player
-    var dropT = U.clamp(pProg + 0.10 + nLate * 0.04, 0.12, 0.82);
+    var dropT = U.clamp(pProg - 0.045, 0.04, pProg - 0.02);
     var dropPt = path.curve.getPointAt(dropT);
     var dropTan = path.curve.getTangentAt(dropT).normalize();
     var dropSide = new THREE.Vector3(-dropTan.z, 0, dropTan.x);
-    var pos = dropPt.clone().addScaledVector(dropSide, 3.2 + nLate * 0.4);
+    var pos = dropPt.clone().addScaledVector(dropSide, -3.4);
     pos.y = dropPt.y + 0.2;
-    var mesh = GAME.vehicles.create(rivalId, false); // already Basic (v322)
+    var mesh = GAME.vehicles.create(rivalId, false);
     var defR = GAME.vehicles.def(rivalId);
     var accentCol = (defR && defR.accent) != null ? defR.accent : 0xff2d55;
     attachVehicleMarkers(mesh, { player: false, color: accentCol });
@@ -2019,10 +2017,9 @@
     else mesh.rotation.y = yaw;
     var hp = Math.round((82 + stage * 7) * hpMul * 1.05);
     var baseMax = Math.min(50, (38 + stage * 1.1) * spdMul);
-    var wave = state._lateHunterCount;
     var late = {
       mesh: mesh, pos: pos, yaw: yaw, defId: rivalId,
-      speed: Math.max(18, Math.abs(player.speed || 28) * 0.95),
+      speed: Math.max(16, Math.abs(player.speed || 28) * 0.92),
       maxSpeed: baseMax,
       hp: hp, maxHp: hp,
       shield: Math.round(10 + stage * 1.2), maxShield: Math.round(10 + stage * 1.2),
@@ -2030,21 +2027,16 @@
       progress: dropT,
       aggro: 0.85 * (diff.rivalFire || 1),
       fireCd: 0.35, rocketCd: 1.8, disabledT: 0, ramCd: 0, hurtFlash: 0,
-      laneOff: 3.2, skill: 0.72 + stage * 0.01,
+      laneOff: -3.4, skill: 0.7 + stage * 0.01,
       role: 'hunter',
       specialCd: 6 + Math.random() * 3,
       mineCd: 0,
-      invT: 1.35,
+      invT: 1.1,
       _lateHunter: true,
-      _lateWave: wave,
-      _packAnchor: true,
+      _lateWave: 1,
+      _packAnchor: false,
     };
     state.rivals.push(late);
-    // pri 1 — below wrecks (2); queues if wreck/DOUBLE still on channel (v298)
-    toast(wave >= 2 ? 'ANOTHER RIG AHEAD' : 'RIVAL AHEAD ON THE LINE', 1.4, 1);
-    if (GAME.sfx && GAME.sfx.lateHunter) GAME.sfx.lateHunter(wave);
-    else if (GAME.sfx && GAME.sfx.wardenWarn) GAME.sfx.wardenWarn();
-    state.camShake = Math.max(state.camShake || 0, 0.14);
   }
 
   /**
@@ -4270,51 +4262,8 @@
           if (!rv.dead) rv.ramCd = Math.max(rv.ramCd || 0, 1.1);
         });
       }
-      // Advance soft re-seat lerp (v313)
-      if (r._reSeat && !r.dead) {
-        var rs = r._reSeat;
-        rs.age = (rs.age || 0) + dt;
-        var u = U.clamp(rs.age / (rs.dur || 0.4), 0, 1);
-        // smoothstep
-        u = u * u * (3 - 2 * u);
-        r.pos.x = rs.fromX + (rs.toX - rs.fromX) * u;
-        r.pos.y = rs.fromY + (rs.toY - rs.fromY) * u;
-        r.pos.z = rs.fromZ + (rs.toZ - rs.fromZ) * u;
-        r.yaw = rs.fromYaw + U.angDiff(rs.fromYaw, rs.toYaw) * u;
-        r.progress = rs.fromProg + (rs.toProg - rs.fromProg) * u;
-        r.speed = Math.max(r.speed, Math.abs(p.speed || 0) * 1.05 + 6);
-        if (r.mesh) {
-          r.mesh.position.copy(r.pos);
-          if (GAME.vehicles.setYaw) GAME.vehicles.setYaw(r.mesh, r.yaw);
-          else r.mesh.rotation.y = r.yaw;
-        }
-        if (u >= 1) {
-          r._reSeat = null;
-          r._reSeatCd = 0.45; // avoid chain re-seats after lerp (v313)
-        }
-        toP = p.pos.distanceTo(r.pos);
-      }
+      r._reSeat = null;
       if (r._reSeatCd > 0) r._reSeatCd -= dt;
-      // Grill-only push during open grace — never launch pack to 500m (v364)
-      if (openGrace && !r.dead && !r._reSeat && (r._reSeatCd || 0) <= 0 && toP < 14) {
-        var pathLenSeat = path.length || (path.curve && path.curve.getLength && path.curve.getLength()) || 4000;
-        var seatFrac = U.clamp(42 / pathLenSeat, 0.008, 0.018);
-        var seatT = U.clamp((p.progress || 0) + seatFrac + (ri | 0) * 0.0035, 0.02, 0.9);
-        var seatPt = path.curve.getPointAt(seatT);
-        var seatTan = path.curve.getTangentAt(seatT).normalize();
-        var seatSide = new THREE.Vector3(-seatTan.z, 0, seatTan.x);
-        var toX = seatPt.x + seatSide.x * ((r.laneOff || 0) * 0.85);
-        var toZ = seatPt.z + seatSide.z * ((r.laneOff || 0) * 0.85);
-        var toY = seatPt.y + 0.2;
-        var toYaw = Math.atan2(seatTan.x, seatTan.z);
-        r._reSeat = {
-          fromX: r.pos.x, fromY: r.pos.y, fromZ: r.pos.z,
-          toX: toX, toY: toY, toZ: toZ,
-          fromYaw: r.yaw, toYaw: toYaw,
-          fromProg: r.progress || 0, toProg: seatT,
-          age: 0, dur: 0.35,
-        };
-      }
       // Aim fire when roughly facing player (weapons aim independent of car yaw)
       U.forward(r.yaw, tmpV);
       tmpV2.subVectors(p.pos, r.pos).setY(0);
@@ -4448,112 +4397,24 @@
       wantYaw += U.clamp(laneErr * 0.028, -0.12, 0.12);
       // Snap hard to path so GLBs never look parked sideways
       r.yaw += U.angDiff(r.yaw, wantYaw) * Math.min(1, (5.5 + skill) * dt);
-      // Pack AI — presence rubber band: fight the player without +40% top speed (v286)
-      var catchUp = diff.rivalCatchUp != null ? diff.rivalCatchUp : 0.7;
-      var leadCap = diff.rivalLeadCap != null ? diff.rivalLeadCap : 1.02;
-      var leadProg = diff.rivalProgressLead != null ? diff.rivalProgressLead : 0.08;
-      var bandTarget = r.maxSpeed * 0.92 * (roleIntent ? roleIntent.speedMul : 1);
+      // v410: own-pace racing. Mild catch-up if behind. Never teleport. Never hang on the grill.
+      var skillMul = 0.86 + skill * 0.16;
+      var bandTarget = r.maxSpeed * skillMul * (roleIntent ? roleIntent.speedMul : 1);
       var progLead = (r.progress || 0) - (p.progress || 0);
-      var pProg = p.progress || 0;
-      var needFight = p.hp > 0 && !p.finished && pProg < 0.88;
-      var isPresence = !!(r._packAnchor || r._packGun || (r.role === 'hunter'));
       if (roleIntent && roleIntent.brakeCheck) {
-        bandTarget = Math.min(bandTarget, Math.max(12, p.speed * 0.5));
+        bandTarget = Math.min(bandTarget, Math.max(12, Math.abs(p.speed || 0) * 0.55));
       }
       if (roleIntent && roleIntent.flee) {
-        bandTarget = Math.min(r.maxSpeed * 1.1, bandTarget * 1.08);
-      }
-      // Gate camp / delay — pack parks the finish stretch until player arrives
-      if (needFight && ((roleIntent && roleIntent.gateCamp) || (r.progress || 0) > 0.90)) {
-        if (isPresence) {
-          bandTarget = Math.min(bandTarget, 14);
-        } else if ((r.progress || 0) > 0.92) {
-          bandTarget = Math.min(bandTarget, 16);
-        }
-      }
-      // Theater stickiness for presence units
-      // v349/v351 floor; v363 tighter bands so pack stays fightable (rear fire + MG)
-      if (needFight && isPresence) {
-        var pPace = Math.max(14, Math.abs(p.speed || 0));
-        if (toP > 80) {
-          bandTarget = Math.min(r.maxSpeed * 0.96, pPace * 0.9 + 1.5);
-        } else if (toP > 48) {
-          // Close into rocket range
-          bandTarget = Math.min(r.maxSpeed * 0.99, pPace * 0.92 + 0.8);
-        } else if (toP > 30) {
-          bandTarget = Math.min(r.maxSpeed * 1.02, pPace * 0.96 + 0.8);
-        } else if (toP > 18) {
-          // Fight band — hang just ahead
-          bandTarget = Math.min(r.maxSpeed * 1.05, pPace * 1.02 + 1.5);
-        } else if (toP > 13) {
-          // Soft floor — pull away from grill into ~18–28m
-          bandTarget = Math.min(r.maxSpeed * 1.1, pPace * 1.1 + 3.5);
-        } else {
-          // Hard floor — in the grill / alongside: punch forward
-          bandTarget = Math.min(r.maxSpeed * 1.14, pPace * 1.16 + 5.5);
-        }
-      }
-      // All pack: ease only when still far (don't drag close pack into bumper)
-      if (needFight && progLead > 0.03 && toP > 36) {
-        bandTarget = Math.min(bandTarget, Math.max(14, Math.abs(p.speed || 20) * 0.82));
-      }
-      if (needFight && progLead > 0.055 && toP > 48) {
-        bandTarget = Math.min(bandTarget, Math.max(12, Math.abs(p.speed || 18) * 0.72));
-      }
-      // Re-drop AHEAD on the ribbon — never seat on the player's bumper (v323)
-      // v363: re-engage sooner (90m) so theater doesn't go silent after open grace
-      if (r._reengageCd > 0) r._reengageCd -= dt;
-      var farByDist = toP > 90;
-      var farByProg = progLead > 0.055;
-      if (
-        needFight &&
-        isPresence &&
-        (r._reengageCd || 0) <= 0 &&
-        (state.raceTime || 0) > 12 &&
-        (farByDist || farByProg)
-      ) {
-        var liveProg = pProg;
-        var pathLenDrop = (path.length || (path.curve && path.curve.getLength()) || 4000);
-        // ~55m ahead — rocket hits; player can close without empty highway
-        var seatFrac = U.clamp(55 / pathLenDrop, 0.01, 0.025);
-        var dropT = U.clamp(liveProg + seatFrac + (r._packGun ? 0.006 : 0), 0.08, 0.86);
-        // Never seat behind or on player
-        if (dropT <= liveProg + 0.01) dropT = liveProg + 0.015;
-        var dropPt = path.curve.getPointAt(dropT);
-        var dropTan = path.curve.getTangentAt(dropT).normalize();
-        var dropSide = new THREE.Vector3(-dropTan.z, 0, dropTan.x);
-        r.pos.copy(dropPt).addScaledVector(dropSide, r.laneOff || 0);
-        r.pos.y = dropPt.y + 0.2;
-        r.progress = dropT;
-        r.yaw = Math.atan2(dropTan.x, dropTan.z);
-        r.speed = Math.max(18, Math.min(r.maxSpeed, Math.abs(p.speed || 30) * 0.94));
-        r._reengageCd = 10;
-        if (!state._packReToastOnce) {
-          toast('PACK AHEAD', 0.85, 0);
-          state._packReToastOnce = true;
-        }
+        bandTarget = Math.min(r.maxSpeed * 1.08, bandTarget * 1.06);
       }
       if (r.disabledT > 0) {
         bandTarget = Math.min(bandTarget, r.maxSpeed * 0.45);
-      } else if (needFight && isPresence) {
-        // v349: presence already set theater band — do NOT overwrite with catch-up sprint
-        // (was else-if toP>35 → p*1.12+1.75 which locked pack ~200m forever)
-      } else if (progLead > leadProg) {
-        // Leading — ease off so player can close and shoot
-        bandTarget = Math.min(bandTarget, Math.max(18, p.speed * 0.9 + 1));
-      } else if (p.speed > 5) {
-        if (toP > 35) {
-          bandTarget = Math.min(r.maxSpeed * 1.05, p.speed * (0.94 + catchUp * 0.26) + 2.5 * catchUp);
-        } else if (toP < 18) {
-          // Close — race near player pace (not always faster)
-          bandTarget = Math.min(r.maxSpeed * leadCap, Math.max(p.speed * 0.9, r.maxSpeed * 0.7));
-        } else {
-          bandTarget = r.maxSpeed * Math.min(1.0, leadCap);
-        }
-      } else {
-        bandTarget = r.maxSpeed * 0.65;
+      } else if (progLead < -0.025) {
+        bandTarget = Math.min(r.maxSpeed * 1.05, bandTarget * 1.05 + 1.2);
+      } else if (progLead > 0.05) {
+        bandTarget = Math.min(bandTarget, r.maxSpeed * 0.97);
       }
-      r.speed = U.lerp(r.speed, bandTarget, 1 - Math.pow(0.35, dt));
+      r.speed = U.lerp(r.speed, bandTarget, 1 - Math.pow(0.4, dt));
       // Move along path-forward facing (sin/cos matches player convention)
       r.pos.x += Math.sin(r.yaw) * r.speed * dt;
       r.pos.z += Math.cos(r.yaw) * r.speed * dt;
@@ -4567,13 +4428,7 @@
         r.pos.z -= sideNr.z * latR * pullAmtR * 0.7;
         r.speed *= 0.98;
       }
-      // Presence: don't let pack crawl past finish while player still mid-course
-      if (needFight && (r.progress || 0) > 0.94 && rn.progress > 0.94) {
-        r.progress = Math.min(r.progress || 0, 0.94);
-        r.speed = Math.min(r.speed, 10);
-      } else {
-        r.progress = Math.max(r.progress || 0, rn.progress);
-      }
+      r.progress = Math.max(r.progress || 0, rn.progress);
       if (r.progress > 0.97) r.speed *= 0.88;
       r.pos.y = rn.point.y + 0.2;
       r.mesh.position.copy(r.pos);
@@ -4593,7 +4448,6 @@
           if (particles && particles.sparks) {
             particles.sparks(p.pos.clone().lerp(r.pos, 0.5).setY(0.45));
           }
-          state.camShake = Math.max(state.camShake || 0, 0.06);
         }
       }
       if (r._scrapeT > 0) r._scrapeT -= dt;

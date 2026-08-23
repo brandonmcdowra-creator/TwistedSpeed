@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-22 — Web v410: rivals race like a pack, not a magnet
+
+Killed theater AI: no teleport-ahead, no `PACK AHEAD` re-drop, no opening lerp onto your bumper, no finish-line camp. Rivals run their own pace with a little catch-up only if they're behind. Late remount (if the pack is wiped) spawns **behind** you. Camera shake only on real rams/explosions — not on pack magic.
+
+Hard-refresh `?v=410`.
+
+---
+
 ## 2026-08-22 — Web v409: playable Neon hills
 
 Gentle highway rolls (crest ~7 m), not the old 25 m faceted climb. First corner + maglev stay flat. Then rise, dip, second rise, home to 0.
