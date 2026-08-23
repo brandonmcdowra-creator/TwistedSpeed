@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-22 — Web v411: scenery follows the ribbon
+
+Sidewalks/curbs are path ribbons (same as the asphalt). Canyon walls are short mid-framed segments (~13 m) so they don't chord through curves. Shopfronts face the road (`lookAt` was 90° off). Lamp heads face the curb.
+
+Hard-refresh `?v=411` so the world rebuilds.
+
+---
+
 ## 2026-08-22 — Web v410: rivals race like a pack, not a magnet
 
 Killed theater AI: no teleport-ahead, no `PACK AHEAD` re-drop, no opening lerp onto your bumper, no finish-line camp. Rivals run their own pace with a little catch-up only if they're behind. Late remount (if the pack is wiped) spawns **behind** you. Camera shake only on real rams/explosions — not on pack magic.

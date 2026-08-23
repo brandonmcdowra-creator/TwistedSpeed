@@ -724,6 +724,60 @@
     return geo;
   };
 
+  /** Path-following strip between two signed laterals (side = left-of-forward). */
+  World.prototype._flankRibbonGeo = function (latA, latB, yOff, uvAlongScale) {
+    var pts = this.path.points;
+    var n = pts.length;
+    if (n < 2) return null;
+    var pos = new Float32Array(n * 2 * 3);
+    var uv = new Float32Array(n * 2 * 2);
+    var idx = new Uint32Array((n - 1) * 6);
+    var along = 0;
+    var prev = pts[0];
+    for (var i = 0; i < n; i++) {
+      var a = pts[i];
+      var b = pts[Math.min(i + 1, n - 1)];
+      var dir = new THREE.Vector3().subVectors(b, a);
+      if (i === n - 1) dir.subVectors(a, pts[i - 1]);
+      if (dir.lengthSq() < 1e-10) dir.set(0, 0, 1);
+      else dir.normalize();
+      var side = new THREE.Vector3(-dir.z, 0, dir.x);
+      if (side.lengthSq() < 1e-8) side.set(1, 0, 0);
+      else side.normalize();
+      if (i > 0) along += a.distanceTo(prev);
+      prev = a;
+      var y = a.y + yOff;
+      var li = i * 2;
+      var ri = li + 1;
+      pos[li * 3] = a.x + side.x * latA;
+      pos[li * 3 + 1] = y;
+      pos[li * 3 + 2] = a.z + side.z * latA;
+      pos[ri * 3] = a.x + side.x * latB;
+      pos[ri * 3 + 1] = y;
+      pos[ri * 3 + 2] = a.z + side.z * latB;
+      var v = along * (uvAlongScale != null ? uvAlongScale : 0.08);
+      uv[li * 2] = 0;
+      uv[li * 2 + 1] = v;
+      uv[ri * 2] = 1;
+      uv[ri * 2 + 1] = v;
+      if (i < n - 1) {
+        var base = i * 6;
+        idx[base] = li;
+        idx[base + 1] = ri;
+        idx[base + 2] = li + 2;
+        idx[base + 3] = ri;
+        idx[base + 4] = ri + 2;
+        idx[base + 5] = li + 2;
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    geo.computeVertexNormals();
+    return geo;
+  };
+
   World.prototype._buildRoad = function () {
     var pts = this.path.points;
     var rh = this.roadHalf;
@@ -1050,79 +1104,43 @@
   // ─── Sidewalks — cheap 2-mesh corridor (perf: was ~5600 meshes) ───────
 
   World.prototype._buildSidewalks = function () {
-    var pts = this.path.points;
-    var closed = !!this.path.closed;
-    var segCount = closed ? pts.length : Math.max(0, pts.length - 1);
     var tex = this._sidewalkTextures();
-
+    var rh = this.roadHalf;
     var walkW = 3.2;
-    var slabH = 0.28;
-    var curbH = 0.42;
-    var curbW = 0.32;
-    var halfW = walkW * 0.5;
-    var slabW = walkW - curbW;
+    var curbW = 0.34;
+    var gap = 0.06;
+    var innerL = rh + gap;
+    var outerL = rh + gap + walkW;
+    var curbOuter = innerL + curbW;
 
-    // Unlit + map — reads at night without multi-light Standard cost
     var deckMat = new THREE.MeshBasicMaterial({
       map: tex.albedo,
       color: 0xffffff,
-      transparent: false,
+      side: THREE.DoubleSide,
     });
     var curbMat = new THREE.MeshBasicMaterial({
-      color: 0x8a90a0,
+      color: 0x9aa0b0,
+      side: THREE.DoubleSide,
     });
 
-    // Unit geos stretched along Z per segment
-    var deckGeo = new THREE.BoxGeometry(slabW, slabH, 1);
-    var curbGeo = new THREE.BoxGeometry(curbW, curbH, 1);
-
-    var count = 0;
-    // Stride 1 (coarser path already) — 2 meshes/side vs old 7–12
-    for (var i = 0; i < segCount; i++) {
-      var a = pts[i];
-      var b = pts[closed ? ((i + 1) % pts.length) : (i + 1)];
-      var mid = a.clone().add(b).multiplyScalar(0.5);
-      var dir = new THREE.Vector3().subVectors(b, a);
-      var len = dir.length();
-      if (len < 0.08) continue;
-      dir.normalize();
-      var yaw = Math.atan2(dir.x, dir.z);
-      var pitch = Math.asin(U.clamp(dir.y, -1, 1));
-      var sideN = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
-      var segLen = len + 0.25;
-      var lat = this._lat(EDGE.sidewalk, halfW);
-
-      for (var s = -1; s <= 1; s += 2) {
-        var g = new THREE.Group();
-        g.name = 'Sidewalk';
-        g.userData.isSidewalk = true;
-        g.userData.lod = 'building';
-
-        var deck = new THREE.Mesh(deckGeo, deckMat);
-        deck.position.set(curbW * 0.5, slabH * 0.5, 0);
-        deck.scale.z = segLen;
-        deck.userData.isSidewalk = true;
-        g.add(deck);
-
-        var curb = new THREE.Mesh(curbGeo, curbMat);
-        curb.position.set(-halfW + curbW * 0.5, curbH * 0.5 - 0.02, 0);
-        curb.scale.z = segLen + 0.05;
-        curb.userData.isSidewalk = true;
-        g.add(curb);
-
-        g.position.copy(mid).addScaledVector(sideN, s * lat);
-        g.position.y = mid.y + 0.02;
-        g.rotation.order = 'YXZ';
-        g.rotation.y = yaw;
-        g.rotation.x = -pitch;
-        g.scale.x = s;
-
-        this.group.add(g);
-        this.buildings.push(g);
-        count++;
-      }
+    function addStrip(self, a, b, y, mat, name) {
+      var geo = self._flankRibbonGeo(a, b, y, 0.12);
+      if (!geo) return;
+      var mesh = new THREE.Mesh(geo, mat);
+      mesh.name = name;
+      mesh.userData.isSidewalk = true;
+      mesh.userData.lod = 'building';
+      mesh.frustumCulled = false;
+      self.group.add(mesh);
+      self.buildings.push(mesh);
     }
-    this._sidewalkCount = count;
+
+    // Left (+side) and right (−side) decks hug the asphalt edge
+    addStrip(this, innerL, outerL, 0.16, deckMat, 'walkL');
+    addStrip(this, -outerL, -innerL, 0.16, deckMat, 'walkR');
+    addStrip(this, innerL, curbOuter, 0.22, curbMat, 'curbL');
+    addStrip(this, -curbOuter, -innerL, 0.22, curbMat, 'curbR');
+    this._sidewalkCount = 4;
   };
 
   World.prototype._buildEdgeAmbient = function () {
@@ -1229,14 +1247,10 @@
           var t1 = tA + ((i + 1) / nSeg) * span;
           var f0 = self._frame(t0);
           var f1 = self._frame(t1);
-          var mid = f0.p.clone().add(f1.p).multiplyScalar(0.5);
-          // v347: more overlap + average pitch — climb canyon less stair-stepped
-          // v402: cap along so a sparse span can't spawn ~160m near-clip slabs
-          var along = Math.min(58, f0.p.distanceTo(f1.p) + 1.35);
-          var yaw = f0.yaw;
-          var pitch0 = f0.pitch != null ? f0.pitch : 0;
-          var pitch1 = f1.pitch != null ? f1.pitch : pitch0;
-          var pitch = (pitch0 + pitch1) * 0.5;
+          var fm = self._frame((t0 + t1) * 0.5);
+          var along = Math.min(14, f0.p.distanceTo(f1.p) + 0.7);
+          var yaw = fm.yaw;
+          var pitch = fm.pitch || 0;
           var lat = self._lat(openEdge, halfD);
           var ni = (i + side * 2 + Math.floor(tA * 20)) % neonMats.length;
           var wallH = dense ? 11 : (8.0 + 3.6 * Math.abs(Math.sin(t0 * Math.PI * 4)));
@@ -1245,8 +1259,8 @@
             new THREE.BoxGeometry(wallDepth, wallH, along),
             wallMat
           );
-          mass.position.copy(mid).addScaledVector(f0.side, sideSign * lat);
-          mass.position.y = mid.y + wallH * 0.48;
+          mass.position.copy(fm.p).addScaledVector(fm.side, sideSign * lat);
+          mass.position.y = fm.p.y + wallH * 0.48;
           mass.rotation.order = 'YXZ';
           mass.rotation.y = yaw;
           mass.rotation.x = -pitch;
@@ -1265,7 +1279,7 @@
               (i + side) % 2 ? crownMat : crownMag
             );
             crown.position.copy(mass.position);
-            crown.position.y = mid.y + wallH + 0.15;
+            crown.position.y = fm.p.y + wallH + 0.15;
             crown.rotation.order = 'YXZ';
             crown.rotation.y = yaw;
             crown.rotation.x = -pitch;
@@ -1283,8 +1297,8 @@
             new THREE.BoxGeometry(0.12, dense ? 2.4 : 2.0, along * 0.88),
             glassMats[gi]
           );
-          glass.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
-          glass.position.y = mid.y + 1.5;
+          glass.position.copy(fm.p).addScaledVector(fm.side, sideSign * faceLat);
+          glass.position.y = fm.p.y + 1.5;
           glass.rotation.order = 'YXZ';
           glass.rotation.y = yaw;
           glass.rotation.x = -pitch;
@@ -1300,8 +1314,8 @@
             new THREE.BoxGeometry(0.14, 0.32, along * 0.9),
             neonMats[neonI]
           );
-          neon.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
-          neon.position.y = mid.y + 3.3;
+          neon.position.copy(fm.p).addScaledVector(fm.side, sideSign * faceLat);
+          neon.position.y = fm.p.y + 3.3;
           neon.rotation.order = 'YXZ';
           neon.rotation.y = yaw;
           neon.rotation.x = -pitch;
@@ -1315,7 +1329,7 @@
               haloMats[neonI]
             );
             halo.position.copy(neon.position);
-            halo.position.addScaledVector(f0.side, -sideSign * 0.08);
+            halo.position.addScaledVector(fm.side, -sideSign * 0.08);
             halo.rotation.order = 'YXZ';
             halo.rotation.y = yaw;
             halo.rotation.x = -pitch;
@@ -1327,8 +1341,8 @@
             new THREE.BoxGeometry(0.1, dense ? 1.3 : 1.0, along * 0.85),
             winMat
           );
-          win1.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
-          win1.position.y = mid.y + (dense ? 5.8 : 5.0);
+          win1.position.copy(fm.p).addScaledVector(fm.side, sideSign * faceLat);
+          win1.position.y = fm.p.y + (dense ? 5.8 : 5.0);
           win1.rotation.order = 'YXZ';
           win1.rotation.y = yaw;
           win1.rotation.x = -pitch;
@@ -1342,8 +1356,8 @@
               new THREE.BoxGeometry(0.1, 1.1, along * 0.8),
               glassMats[(i + 1) % glassMats.length]
             );
-            win2.position.copy(mid).addScaledVector(f0.side, sideSign * faceLat);
-            win2.position.y = mid.y + 8.2;
+            win2.position.copy(fm.p).addScaledVector(fm.side, sideSign * faceLat);
+            win2.position.y = fm.p.y + 8.2;
             win2.rotation.order = 'YXZ';
             win2.rotation.y = yaw;
             win2.rotation.x = -pitch;
@@ -1355,8 +1369,8 @@
               new THREE.BoxGeometry(1.1, 0.1, along * 0.9),
               awningMat
             );
-            awn.position.copy(mid).addScaledVector(f0.side, sideSign * (faceLat - 0.55));
-            awn.position.y = mid.y + 2.85;
+            awn.position.copy(fm.p).addScaledVector(fm.side, sideSign * (faceLat - 0.55));
+            awn.position.y = fm.p.y + 2.85;
             awn.rotation.order = 'YXZ';
             awn.rotation.y = yaw;
             awn.rotation.x = -pitch;
@@ -1367,12 +1381,16 @@
       }
     }
 
-    // v376 budget; v402 densify climb so walls aren't ~160m near-clip slabs
-    buildCanyonSpan(0.0, 0.16, 16, true);
-    buildCanyonSpan(0.16, 0.22, 4, false);
-    buildCanyonSpan(0.22, 0.42, 16, false); // mid-climb ~50–58m segs
-    buildCanyonSpan(0.42, 0.88, 12, false);
-    buildCanyonSpan(0.88, 1.0, 8, true);
+    var pathLen = this.path.length || 2000;
+    function segsFor(tA, tB, meters) {
+      var len = pathLen * Math.max(0.02, tB - tA);
+      return Math.max(8, Math.ceil(len / meters));
+    }
+    buildCanyonSpan(0.0, 0.16, segsFor(0.0, 0.16, 12), true);
+    buildCanyonSpan(0.16, 0.22, segsFor(0.16, 0.22, 12), false);
+    buildCanyonSpan(0.22, 0.42, segsFor(0.22, 0.42, 13), false);
+    buildCanyonSpan(0.42, 0.88, segsFor(0.42, 0.88, 13), false);
+    buildCanyonSpan(0.88, 1.0, segsFor(0.88, 1.0, 12), true);
 
     // Landmark towers — open + finish (mid cut for FPS)
     // v339/v373 early both sides; v376 drop mid landmarks
@@ -1569,7 +1587,10 @@
 
         g.position.copy(f.p).addScaledVector(f.side, sideSign * lat);
         g.position.y = f.p.y;
-        g.lookAt(f.p.x, g.position.y, f.p.z);
+        g.rotation.order = 'YXZ';
+        g.rotation.y = Math.atan2(sideSign * f.side.x, sideSign * f.side.z);
+        g.rotation.x = 0;
+        g.rotation.z = 0;
         g.userData.lod = 'building';
         this.group.add(g);
         this.buildings.push(g);
@@ -2700,6 +2721,7 @@
       head.position.copy(pole.position);
       head.position.y += 3.3;
       head.position.addScaledVector(side, -s * 0.35);
+      head.rotation.y = Math.atan2(-s * side.x, -s * side.z);
       this.group.add(head);
 
       // Fake glow blob + ground pool (cheap "light" without PointLight per pole)
