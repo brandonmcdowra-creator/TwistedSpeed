@@ -1,11 +1,11 @@
 {
-  "build": "v413",
-  "round": "2 · Pieces A+B shipped — critics pending",
+  "build": "v414",
+  "round": "3 · C+D shipped — r1 critic in flight",
   "started": "2026-08-30",
   "branch": "cursor/gauntlet-aaa-loop-b53d",
-  "bar": "Blind A/B vs NFS Heat night-rain stills (gauntlet/refs/heat-*-sm.jpg). TM combat refs pending.",
-  "log": "2026-08-30 — Lead Gauntlet Loop live.\nv412 Piece B: maglev junction dressed (gantry, freight, wet sheen, haze).\nv413 Piece A: late skyline cards both flanks, mid-climb right peeks, neon blade fins.\nFixed ref pack (removed wrong Mont St-Michel image; real Heat 4K downs).\nCritics: inspect real game, blind A/B vs Heat stills, name biggest gap.\n",
-  "piecesHtml": "<tr><td>A · Chase world density</td><td class=\"status-crit\">CRITIC</td><td>Name 2+ past wall both sides vs Heat</td><td>v413</td></tr><tr><td>B · Maglev junction dress</td><td class=\"status-crit\">CRITIC</td><td>Wait red / gap green + place vs Heat</td><td>v412</td></tr><tr><td>C · Wet road</td><td class=\"status-open\">OPEN</td><td>Full-course sheen still thin</td><td>—</td></tr><tr><td>D · Combat readability</td><td class=\"status-open\">OPEN</td><td>MG / durability</td><td>—</td></tr><tr><td>E · Hero car</td><td class=\"status-open\">OPEN</td><td>—</td><td>—</td></tr><tr><td>F · Atmosphere</td><td class=\"status-open\">OPEN</td><td>Junction haze only</td><td>—</td></tr>",
-  "refsHtml": "<div class=\"card\"><img src=\"refs/heat-feature-sm.jpg\" alt=\"Heat\" /><div class=\"cap\">heat-feature — NFS Heat wet neon chase (bar)</div></div><div class=\"card\"><img src=\"refs/heat-chase-01-sm.jpg\" alt=\"Heat\" /><div class=\"cap\">heat-chase-01 — Palm City night</div></div><div class=\"card\"><img src=\"refs/heat-chase-02-sm.jpg\" alt=\"Heat\" /><div class=\"cap\">heat-chase-02</div></div>",
-  "shotsHtml": "<div class=\"card\"><img src=\"shots/r0-chase-open.png\" alt=\"ours\" /><div class=\"cap\">r0-chase-open (v411 baseline) — neon trench gap vs Heat</div></div>"
+  "bar": "Blind A/B vs NFS Heat night-rain stills (gauntlet/refs/heat-*-sm.jpg).",
+  "log": "2026-08-30 — Lead Gauntlet.\nR0 critic: Heat wins. Gap = wet road + mute MG.\nv412 B maglev dress · v413 A flank density · v414 C wet asphalt + D MG rods.\nR1 critic (v413/414) in flight.\n",
+  "piecesHtml": "<tr><td>A · Chase world density</td><td class=\"status-crit\">CRITIC</td><td>Heat still favored at r0</td><td>v413</td></tr><tr><td>B · Maglev dress</td><td class=\"status-crit\">CRITIC</td><td>Fresh wait/gap shots needed</td><td>v412</td></tr><tr><td>C · Wet road</td><td class=\"status-crit\">CRITIC</td><td>Sheen + neon patches</td><td>v414</td></tr><tr><td>D · Combat readability</td><td class=\"status-crit\">CRITIC</td><td>Thicker MG rods</td><td>v414</td></tr><tr><td>E · Hero car</td><td class=\"status-open\">OPEN</td><td>—</td><td>—</td></tr><tr><td>F · Atmosphere</td><td class=\"status-open\">OPEN</td><td>Rain/haze next</td><td>—</td></tr>",
+  "refsHtml": "<div class=\"card\"><img src=\"refs/heat-feature-sm.jpg\" alt=\"Heat\" /><div class=\"cap\">Heat bar — wet neon chase</div></div><div class=\"card\"><img src=\"refs/heat-chase-01-sm.jpg\" alt=\"Heat\" /><div class=\"cap\">heat-chase-01</div></div>",
+  "shotsHtml": "<div class=\"card\"><img src=\"shots/r0-chase-open.png\" alt=\"ours\" /><div class=\"cap\">r0 open — Heat wins</div></div><div class=\"card\"><img src=\"shots/r0-combat-mg.png\" alt=\"mg\" /><div class=\"cap\">r0 MG — mute VFX</div></div><div class=\"card\"><img src=\"shots/r0-maglev.png\" alt=\"maglev\" /><div class=\"cap\">r0 maglev zone</div></div>"
 }

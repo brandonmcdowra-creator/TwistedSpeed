@@ -800,19 +800,61 @@
     }
 
     var wetSheen = new THREE.MeshBasicMaterial({
-      color: 0x88b8e0,
+      // v414 Gauntlet C: stronger Heat-night wet read (still MeshBasic fake)
+      color: 0xa8d4f0,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.38,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
     });
-    var sheenGeo = this._ribbonGeo(rh * 0.85, 0.05, 0.07);
+    var sheenGeo = this._ribbonGeo(rh * 0.92, 0.04, 0.055);
     if (sheenGeo) {
       var sheenMesh = new THREE.Mesh(sheenGeo, wetSheen);
       sheenMesh.userData.isRoadSurface = true;
       sheenMesh.frustumCulled = false;
       this.group.add(sheenMesh);
+    }
+    // Second hotter sheen band (center lane) — neon mirror cue without SSR
+    var wetHot = new THREE.MeshBasicMaterial({
+      color: 0xff6a9a,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    var hotGeo = this._ribbonGeo(rh * 0.35, 0.055, 0.05);
+    if (hotGeo) {
+      var hotMesh = new THREE.Mesh(hotGeo, wetHot);
+      hotMesh.userData.isRoadSurface = true;
+      hotMesh.frustumCulled = false;
+      this.group.add(hotMesh);
+    }
+    // Sparse neon reflection cards on asphalt (fake SSR patches)
+    var patchMatC = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff, transparent: true, opacity: 0.22,
+      depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    });
+    var patchMatM = new THREE.MeshBasicMaterial({
+      color: 0xff2d55, transparent: true, opacity: 0.18,
+      depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    });
+    var patchGeo = new THREE.PlaneGeometry(4.5, 9);
+    var patchN = Math.min(28, Math.floor(segCount / 8));
+    for (var pi = 0; pi < patchN; pi++) {
+      var pt = (pi + 0.35) / patchN;
+      if (!closed) pt = Math.min(0.97, pt);
+      var f = this._frame(pt);
+      var patch = new THREE.Mesh(patchGeo, pi % 2 ? patchMatC : patchMatM);
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.copy(f.p).addScaledVector(f.side, ((pi % 3) - 1) * (rh * 0.35));
+      patch.position.y = f.p.y + 0.06;
+      patch.rotation.z = -f.yaw;
+      patch.userData.isRoadSurface = true;
+      patch.userData.ignoreIntrusion = true;
+      patch.frustumCulled = true;
+      this.group.add(patch);
     }
 
     var lineY = new THREE.MeshBasicMaterial({ color: 0xffe066, side: THREE.DoubleSide });

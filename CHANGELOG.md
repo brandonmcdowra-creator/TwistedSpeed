@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-30 — Web v414: Gauntlet C+D — wet asphalt + MG rods
+
+Round 0 critic (Heat wins): biggest gaps were matte road and mute MG.
+
+- **C wet:** stronger additive sheen ribbon + hot center band + sparse cyan/magenta asphalt reflection patches (MeshBasic fake SSR)
+- **D MG:** thicker/longer/brighter tracers (r≈0.73 chase), longer life, higher spawn — fog:false
+
+Hard-refresh `?v=414` · Neon↔REACH once for road dress.
+
+---
+
 ## 2026-08-30 — Web v413: Gauntlet Piece A — both-flank over-wall density
 
 Chase FOV was a neon trench (flat canyon + black void). Added:

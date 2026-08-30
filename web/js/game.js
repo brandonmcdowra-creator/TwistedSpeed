@@ -2384,15 +2384,15 @@
 
   function ensureCombatPool() {
     if (_combatPool.tracerGeo) return;
-    // v400: thicker/longer so chase cam can read MG at speed (was r=0.05, len=1.3)
-    _combatPool.tracerGeo = new THREE.CylinderGeometry(0.15, 0.15, TRACER_BASE_LEN, 6);
+    // v414 Gauntlet D: chase-readable rods (was still mute in r0 critic)
+    _combatPool.tracerGeo = new THREE.CylinderGeometry(0.28, 0.22, TRACER_BASE_LEN, 6);
     _combatPool.tracerMatY = new THREE.MeshBasicMaterial({
-      color: 0xffe66d, transparent: true, opacity: 1,
-      depthWrite: false, blending: THREE.AdditiveBlending,
+      color: 0xfff0a0, transparent: true, opacity: 1,
+      depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
     });
     _combatPool.tracerMatP = new THREE.MeshBasicMaterial({
-      color: 0xffcc66, transparent: true, opacity: 1,
-      depthWrite: false, blending: THREE.AdditiveBlending,
+      color: 0xffaa55, transparent: true, opacity: 1,
+      depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
     });
     _combatPool.rocketBodyGeo = new THREE.CylinderGeometry(0.16, 0.2, 1.35, 6);
     _combatPool.rocketNoseGeo = new THREE.ConeGeometry(0.16, 0.48, 6);
@@ -2554,11 +2554,11 @@
     var hood = state.camMode === 'hood';
     // Chase: van body occludes ahead-of-bumper tracers — spawn high + wide (v400)
     // Hood: spawn further ahead/higher so tracers sit in FOV (body is hidden) (v302)
-    var fwdOff = hood ? 4.2 : 1.8;
-    var yOff = hood ? 1.45 : 2.6;
+    var fwdOff = hood ? 4.2 : 2.2;
+    var yOff = hood ? 1.45 : 2.9;
     // Chase length ~8 / radius ~0.30 via scale on base geo r=0.15 h=3
-    var tracerLen = hood ? 3.8 : (W.mgLabel === 'PISTOL' ? 6.0 : 8.0);
-    var radScale = hood ? 1.45 : 2.0; // chase effective r ≈ 0.30
+    var tracerLen = hood ? 4.5 : (W.mgLabel === 'PISTOL' ? 8.0 : 11.0);
+    var radScale = hood ? 1.6 : 2.6; // chase effective r ≈ 0.73
     function spawnMgRound(sideOff) {
       if (state.projectiles.length > 28) return;
       var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff);
@@ -2572,7 +2572,7 @@
       state.projectiles.push({
         type: 'mg', mesh: mesh, pos: origin.clone(),
         vel: tmpV.clone().multiplyScalar(cfg.combat.mgSpeed * (W.mgLabel === 'PISTOL' ? 0.92 : 1)),
-        life: hood ? 0.55 : 0.48, dmg: dmg, fromPlayer: true, trail: false,
+        life: hood ? 0.7 : 0.65, dmg: dmg, fromPlayer: true, trail: false,
       });
     }
     if (hasBuff('guns')) {
