@@ -1,6 +1,21 @@
 # Changelog
 
+## 2026-08-30 — Web v412: Gauntlet Piece B — dress the maglev junction
+
+Lead Gauntlet Loop started (`gauntlet/progress.html`). First ship: prison-freight silhouette on the same Neon crossing (`CROSS_T=0.30`).
+
+- Freight cars: dark container shells + ribs, end doors, deck crates (hit volumes unchanged)
+- Dark rails + thin cyan edge (replaced neon glow slabs)
+- Gantry portal + amber strip; signal housing/arm on poles
+- Off-road cargo stacks, local wet sheen, flank haze cards
+- Wait-red / gap-green still owned only by lamp spheres + deck
+
+MeshBasic only · no new PointLights. Hard-refresh `?v=412`. Critic A/B pending.
+
+---
+
 ## 2026-08-22 — Session save (v411 frozen)
+
 
 Pickup written: `docs/NEXT-SESSION.md` + `PROGRESS.md`. Next: director play v411, then dress the maglev junction. Arcade zip on Desktop.
 

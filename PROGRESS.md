@@ -1,35 +1,37 @@
 # Twisted Speed — Progress
 
-**Build:** web **v411** (ribbon-aligned scenery · own-pace rivals · maglev gap hold · gentle hills)  
-**Date:** 2026-08-22  
-**Serve:** `web/` → hard-refresh `?v=411` — title must say **BUILD 411**  
-**Primary runtime:** **web** · Wave ∞  
+**Build:** web **v412** (Gauntlet · maglev junction dressed)  
+**Date:** 2026-08-30  
+**Serve:** `web/` → hard-refresh `?v=412` — title must say **BUILD 412**  
+**Primary runtime:** **web** · Gauntlet Loop  
 **Gate C:** CLOSED  
+**Branch:** `cursor/gauntlet-aaa-loop-b53d`  
+**Live page:** http://127.0.0.1:8766/gauntlet/progress.html  
+
+## Gauntlet bar
+Blind A/B vs NFS Heat night-rain + Twisted Metal combat stills in `gauntlet/refs/`.
 
 ## This block
 | Check | Result |
 |-------|--------|
-| Play | BUILD 411. Arcade zip on Desktop (`TwistedSpeed-v411-arcade.zip`, ~43 MB, `index.html` at zip root). |
-| REACH | Keyboard select loads coast. HUD names the map. |
-| Maglev | v408: wall then held gap on Neon ~22–30%. Greybox. Not on REACH. |
-| Hills | v409: ~6 m, ~1.5% grade. First corner + maglev plateau flat. |
-| Rivals | v410: no teleport-ahead / pack tug / finish camp. Remount from behind. |
-| Scenery | v411: sidewalk ribbons, short canyon segs, shopfronts face the road. |
-| Steer | v404: W does **not** drive the racing line (lip assist only). |
-| Quality bar | Night city at clip density — not wasteland day. Maglev = living-track train pattern. |
+| Loop | Lead agent running; pieces A–F open |
+| v412 | Maglev junction dress (gantry, freight silhouette, wet cue, haze) |
+| Critic | Pending chase-cam A/B at ~22–30% (wait red / gap green) |
+| Baseline | Round 0 capture in flight |
 
 ## Don’t regress
-- keepWorld on same-map START · REACH rebuild on switch  
-- Maglev wait/thread · rivals own-pace  
-- Ribbon sidewalks · shopfronts face street  
+- Maglev wait/gap timing + hit volumes  
+- keepWorld · REACH null maglev · MeshBasic · ≤4 PointLights  
 - Lip-only steer · map name chip · Parole Arch · original cast  
 - Saves `twisted-speed-v5-night`
 
-## Next session
-Pickup: **`docs/NEXT-SESSION.md`**
+## Next
+1. Critic: maglev wait/gap screenshots vs Heat density bar  
+2. Piece A: both-flank / skyline density  
+3. Piece D: MG readability if still mute in live fire  
 
 ```powershell
 cd "C:\Users\brand\1. Game Making\twisted-speed-build-pack\web"
 python -m http.server 8765
-# http://127.0.0.1:8765/?v=411
+# http://127.0.0.1:8765/?v=412
 ```

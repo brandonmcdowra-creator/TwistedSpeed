@@ -1,11 +1,11 @@
 {
-  "build": "v411 → …",
-  "round": "0 · baseline",
+  "build": "v412",
+  "round": "1 · Piece B shipped — critic pending",
   "started": "2026-08-30",
   "branch": "cursor/gauntlet-aaa-loop-b53d",
   "bar": "Blind A/B vs NFS Heat night-rain + Twisted Metal combat stills in gauntlet/refs/",
-  "log": "2026-08-30 — Lead agent started Gauntlet Loop on branch cursor/gauntlet-aaa-loop-b53d.\nServe up on :8765. Assembling reference pack + baseline chase/combat stills.\nPieces A–F opened. No ship claims until a critic A/B wins.\n",
-  "piecesHtml": "",
-  "refsHtml": "",
-  "shotsHtml": ""
+  "log": "2026-08-30 — Lead started Gauntlet Loop.\nServe :8765 (game) + :8766 (progress).\nRound 0 baseline capture launched.\nPiece B builder: dressed maglev junction → v412 (gantry, freight silhouette, wet sheen, haze). Wait/gap logic untouched.\nCritic A/B of maglev still pending.\n",
+  "piecesHtml": "<tr><td>A · Chase world density</td><td class=\"status-open\">OPEN</td><td>Baseline pending</td><td>—</td></tr><tr><td>B · Maglev junction dress</td><td class=\"status-crit\">CRITIC</td><td>Greybox→freight place; verify red/green + Heat density</td><td>v412</td></tr><tr><td>C · Wet road / neon asphalt</td><td class=\"status-open\">OPEN</td><td>Local sheen at maglev only so far</td><td>—</td></tr><tr><td>D · Combat readability</td><td class=\"status-open\">OPEN</td><td>MG rods / durability</td><td>v400–v404</td></tr><tr><td>E · Hero car silhouette</td><td class=\"status-open\">OPEN</td><td>Baseline pending</td><td>—</td></tr><tr><td>F · Atmosphere</td><td class=\"status-open\">OPEN</td><td>Junction haze cards only</td><td>—</td></tr>",
+  "refsHtml": "<div class=\"card\"><img src=\"refs/heat-chase-night-rain.jpg\" alt=\"Heat night\" /><div class=\"cap\">heat-chase-night-rain — NFS Heat night wet street (bar)</div></div>",
+  "shotsHtml": "<div class=\"card\"><div class=\"cap\">r0 / r1 shots landing after critic pass…</div></div>"
 }
