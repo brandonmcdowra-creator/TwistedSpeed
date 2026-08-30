@@ -1,7 +1,7 @@
 # Twisted Speed — Next session pickup
 
-**Frozen at:** web **v411** (2026-08-22)  
-**Why we stopped:** Director asked to save the round. Arcade zip shipped; play server off.  
+**Frozen at:** web **v412** (2026-08-30) — Gauntlet Loop active  
+**Why we stopped:** Lead Gauntlet in progress (Piece B maglev dress shipped; critic pending).  
 **Primary runtime:** **web** three.js only. Do **not** touch Unity.  
 **Gate C:** CLOSED (director play, not a ship claim).  
 **Edit tree:** `C:\Users\brand\1. Game Making\twisted-speed-build-pack`  
