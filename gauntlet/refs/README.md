@@ -1,8 +1,12 @@
 # Gauntlet reference pack
 
-Local stills used as the **quality bar** for blind A/B critics.
+Local stills for blind A/B critics (comparison only — not game assets).
 
-- `heat-*` — Need for Speed Heat night / wet neon street (chase-cam energy)
-- `tm-*` — Twisted Metal / car-combat at speed (weapon + damage readability)
+## Heat night (bar)
+- `heat-feature.jpg` / `heat-feature-sm.jpg` — NFS Heat wet neon chase (official-style promo)
+- `heat-chase-0*-sm.jpg` — 4K Heat screenshot downs (Palm City night)
 
-These are **comparison references only**, not game assets. Do not redistribute as Twisted Speed content. Original IP only in the game.
+## Twisted Metal combat
+- Pending: capture gameplay combat stills into `tm-*-sm.jpg`
+
+Full 4K dumps are gitignored (`heat-imgur-*`, full `heat-chase-0[1-5].jpg`).

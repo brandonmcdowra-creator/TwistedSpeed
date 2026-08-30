@@ -58,10 +58,10 @@ Build approach (locked): **greybox the beat, then dress that same junction** —
 
 ## First acts next round
 
-1. Director play **v411** Neon: maglev at ~22–30% — brake on red, go on green. Confirm rivals don’t pop in front when you’re leading.
-2. If maglev is “the beat”: **dress that junction** (wet asphalt, gantry/lamps/cargo, haze) — clip quality *there*, not the whole map.
-3. Scenery density: name 2+ city things past the wall on **both** flanks (horizon still black).
-4. Durability (armor melts) — cues/pickups, not a silent HP nerf. Director feel.
+1. Critic A/B **v412** maglev (~22–30%): wait-red / gap-green + prison-freight place vs Heat night bar.
+2. Piece A: both-flank / skyline density (name 2+ things past the wall each side).
+3. Piece D: MG readability + durability cues (not silent HP buff).
+4. Director play when critic rounds land.
 
 ---
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-30 — Web v413: Gauntlet Piece A — both-flank over-wall density
+
+Chase FOV was a neon trench (flat canyon + black void). Added:
+
+- Late both-flank skyline cards at 0.58 / 0.72 (LOD far; cut in v394 for FPS)
+- Mid-climb **right** peeks (left already densified)
+- Neon blade fins over the lip on both shoulders (nameable)
+
+MeshBasic · qualityExtra · no new PointLights. Hard-refresh `?v=413` + Neon↔REACH once.
+
+---
+
 ## 2026-08-30 — Web v412: Gauntlet Piece B — dress the maglev junction
 
 Lead Gauntlet Loop started (`gauntlet/progress.html`). First ship: prison-freight silhouette on the same Neon crossing (`CROSS_T=0.30`).

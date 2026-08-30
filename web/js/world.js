@@ -2120,6 +2120,100 @@
       this.buildings.push(lcap);
       this._qualityExtras.push(lcap);
     }
+
+    // v413 Gauntlet Piece A — nameable over-wall mass both flanks (Heat night density)
+    // Late skyline cards (cut in v394 for FPS) — thin pair only, LOD far
+    var lateCardTs = [0.58, 0.72];
+    for (var lci = 0; lci < lateCardTs.length; lci++) {
+      var lcf = this._frame(lateCardTs[lci]);
+      for (var lcsi = 0; lcsi < 2; lcsi++) {
+        var lcside = lcsi === 0 ? -1 : 1;
+        var lclat = this._lat(EDGE.tower + 10 + lci * 2, 2.5);
+        var lcH = 88 + lci * 8;
+        var lcW = 54 + lci * 6;
+        var lcard = new THREE.Mesh(new THREE.PlaneGeometry(lcW, lcH), mat);
+        lcard.position.copy(lcf.p).addScaledVector(lcf.side, lcside * lclat);
+        lcard.position.y = lcf.p.y + lcH * 0.5;
+        lcard.lookAt(lcf.p.x, lcard.position.y, lcf.p.z);
+        lcard.userData.lod = 'far';
+        lcard.userData.noLod = false;
+        lcard.userData.ignoreIntrusion = true;
+        lcard.userData.horizonCard = true;
+        lcard.userData.qualityExtra = true;
+        lcard.frustumCulled = true;
+        this.group.add(lcard);
+        this.buildings.push(lcard);
+        this._horizonCards.push(lcard);
+        this._qualityExtras.push(lcard);
+      }
+    }
+    // Mid-climb RIGHT peeks (left already densified v402) — both flanks nameable
+    for (var mr = 0; mr < 2; mr++) {
+      var mrt = 0.30 + mr * 0.08;
+      var mrf = this._frame(mrt);
+      var mrh = 68 + mr * 8;
+      var mrlat = this._lat(EDGE.tower + 3.4 + mr, 2.5);
+      var mrpeek = new THREE.Mesh(new THREE.BoxGeometry(11, mrh, 18), peekMat);
+      mrpeek.position.copy(mrf.p).addScaledVector(mrf.side, 1 * mrlat);
+      mrpeek.position.y = mrf.p.y + mrh * 0.45;
+      mrpeek.rotation.order = 'YXZ';
+      mrpeek.rotation.y = mrf.yaw;
+      mrpeek.userData.lod = 'far';
+      mrpeek.userData.noLod = true;
+      mrpeek.userData.ignoreIntrusion = true;
+      mrpeek.userData.qualityExtra = true;
+      mrpeek.userData.horizonCard = true;
+      mrpeek.frustumCulled = false;
+      this.group.add(mrpeek);
+      this.buildings.push(mrpeek);
+      this._qualityExtras.push(mrpeek);
+      var mrcap = new THREE.Mesh(
+        new THREE.BoxGeometry(12, 0.7, 20),
+        mr % 2 ? peekCapM : peekCapC
+      );
+      mrcap.position.copy(mrpeek.position);
+      mrcap.position.y += mrh * 0.48;
+      mrcap.rotation.order = 'YXZ';
+      mrcap.rotation.y = mrf.yaw;
+      mrcap.userData.lod = 'far';
+      mrcap.userData.noLod = true;
+      mrcap.userData.ignoreIntrusion = true;
+      mrcap.userData.qualityExtra = true;
+      mrcap.frustumCulled = false;
+      this.group.add(mrcap);
+      this.buildings.push(mrcap);
+      this._qualityExtras.push(mrcap);
+    }
+    // Blade neon signs — short tall fins over lip, both shoulders (nameable)
+    var bladeMatC = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff, transparent: true, opacity: 0.85, fog: false, depthWrite: false,
+    });
+    var bladeMatM = new THREE.MeshBasicMaterial({
+      color: 0xff2d55, transparent: true, opacity: 0.85, fog: false, depthWrite: false,
+    });
+    var bladeTs = [0.06, 0.14, 0.22, 0.34, 0.42, 0.62];
+    for (var bi = 0; bi < bladeTs.length; bi++) {
+      var bf = this._frame(bladeTs[bi]);
+      for (var bs = -1; bs <= 1; bs += 2) {
+        var blade = new THREE.Mesh(
+          new THREE.BoxGeometry(0.55, 14 + (bi % 3) * 3, 3.2),
+          (bi + bs) % 2 ? bladeMatC : bladeMatM
+        );
+        var blat = this._lat(EDGE.tower + 0.6, 1.5);
+        blade.position.copy(bf.p).addScaledVector(bf.side, bs * blat);
+        blade.position.y = bf.p.y + 16;
+        blade.rotation.order = 'YXZ';
+        blade.rotation.y = bf.yaw;
+        blade.userData.lod = 'far';
+        blade.userData.noLod = bi < 3;
+        blade.userData.ignoreIntrusion = true;
+        blade.userData.qualityExtra = true;
+        blade.frustumCulled = bi >= 3;
+        this.group.add(blade);
+        this.buildings.push(blade);
+        this._qualityExtras.push(blade);
+      }
+    }
   };
 
   /**
