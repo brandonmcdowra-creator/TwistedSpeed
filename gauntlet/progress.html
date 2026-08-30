@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Twisted Speed — Gauntlet Loop</title>
+<style>
+  :root {
+    --bg: #07060c;
+    --panel: #12101a;
+    --ink: #f2e9e4;
+    --mute: #8a7a88;
+    --pink: #ff2d55;
+    --cyan: #00e5ff;
+    --ok: #39ff14;
+    --warn: #ffc857;
+    --bad: #ff2d55;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, #1a1028, var(--bg));
+    color: var(--ink); line-height: 1.45;
+  }
+  header {
+    padding: 1.5rem 2rem 1rem; border-bottom: 1px solid #2a2033;
+  }
+  header h1 { margin: 0; font-size: 1.35rem; letter-spacing: 0.04em; }
+  header p { margin: 0.35rem 0 0; color: var(--mute); max-width: 70ch; }
+  .bar {
+    display: flex; flex-wrap: wrap; gap: 0.75rem; padding: 0.75rem 2rem;
+    border-bottom: 1px solid #2a2033; background: #0c0a12;
+  }
+  .chip {
+    font-size: 0.75rem; padding: 0.25rem 0.6rem; border: 1px solid #3a3048;
+    border-radius: 999px; color: var(--mute);
+  }
+  .chip strong { color: var(--cyan); font-weight: 600; }
+  main { padding: 1.25rem 2rem 3rem; display: grid; gap: 1.25rem; }
+  section {
+    background: var(--panel); border: 1px solid #2a2033; border-radius: 8px;
+    padding: 1rem 1.15rem;
+  }
+  section h2 {
+    margin: 0 0 0.75rem; font-size: 0.85rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--cyan);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid #221c2c; vertical-align: top; }
+  th { color: var(--mute); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; }
+  .status-open { color: var(--warn); }
+  .status-building { color: var(--cyan); }
+  .status-crit { color: var(--pink); }
+  .status-pass { color: var(--ok); }
+  .status-fail { color: var(--bad); }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem;
+  }
+  .card {
+    background: #0c0a12; border: 1px solid #2a2033; border-radius: 6px; overflow: hidden;
+  }
+  .card img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #000; }
+  .card .cap { padding: 0.5rem 0.65rem; font-size: 0.78rem; color: var(--mute); }
+  .log { font-family: ui-monospace, monospace; font-size: 0.8rem; white-space: pre-wrap; color: #c8b8c4; }
+  a { color: var(--cyan); }
+</style>
+</head>
+<body>
+<header>
+  <h1>TWISTED SPEED · GAUNTLET LOOP</h1>
+  <p>
+    Lead goal: AAA combat-racer quality. Bar: blind A/B vs fixed NFS Heat night-rain + Twisted Metal combat stills.
+    Live page — refresh as rounds land.
+  </p>
+</header>
+<div class="bar">
+  <span class="chip">Build <strong id="build">v411 → …</strong></span>
+  <span class="chip">Round <strong id="round">0 · baseline</strong></span>
+  <span class="chip">Primary <strong>web</strong></span>
+  <span class="chip">Gate C <strong>CLOSED</strong></span>
+  <span class="chip">Serve <strong>http://127.0.0.1:8765/?v=411</strong></span>
+</div>
+<main>
+  <section>
+    <h2>Pieces</h2>
+    <table>
+      <thead>
+        <tr><th>Piece</th><th>Status</th><th>Biggest gap (critic)</th><th>Last ship</th></tr>
+      </thead>
+      <tbody id="pieces">
+        <tr>
+          <td>A · Chase world density (both flanks + skyline)</td>
+          <td class="status-open">OPEN</td>
+          <td>Baseline pending</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>B · Maglev junction dress (living-track beat)</td>
+          <td class="status-open">OPEN</td>
+          <td>Greybox boxes; clip quality only at junction</td>
+          <td>v408 greybox</td>
+        </tr>
+        <tr>
+          <td>C · Wet road / neon asphalt (Heat night)</td>
+          <td class="status-open">OPEN</td>
+          <td>Baseline pending</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>D · Combat readability (MG / hits / specials)</td>
+          <td class="status-open">OPEN</td>
+          <td>MG rods thin; durability melts</td>
+          <td>v400–v404</td>
+        </tr>
+        <tr>
+          <td>E · Hero car silhouette + kit readability</td>
+          <td class="status-open">OPEN</td>
+          <td>Baseline pending</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>F · Atmosphere (rain / haze / grade)</td>
+          <td class="status-open">OPEN</td>
+          <td>Baseline pending</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Reference pack (bar)</h2>
+    <div class="grid" id="refs">
+      <div class="card"><div class="cap">Refs loading into <code>gauntlet/refs/</code>…</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Our shots (evolving)</h2>
+    <div class="grid" id="shots">
+      <div class="card"><div class="cap">Round 0 baseline capture in progress…</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Lead log</h2>
+    <div class="log" id="log">2026-08-30 — Lead agent started Gauntlet Loop on branch cursor/gauntlet-aaa-loop-b53d.
+Serve up on :8765. Assembling reference pack + baseline chase/combat stills.
+Pieces A–F opened. No ship claims until a critic A/B wins.
+</div>
+  </section>
+</main>
+<script>
+  // Lightweight live refresh of manifest if present
+  async function refresh() {
+    try {
+      const r = await fetch('state.json?t=' + Date.now());
+      if (!r.ok) return;
+      const s = await r.json();
+      if (s.build) document.getElementById('build').textContent = s.build;
+      if (s.round) document.getElementById('round').textContent = s.round;
+      if (s.log) document.getElementById('log').textContent = s.log;
+      if (s.piecesHtml) document.getElementById('pieces').innerHTML = s.piecesHtml;
+      if (s.refsHtml) document.getElementById('refs').innerHTML = s.refsHtml;
+      if (s.shotsHtml) document.getElementById('shots').innerHTML = s.shotsHtml;
+    } catch (e) {}
+  }
+  refresh();
+  setInterval(refresh, 4000);
+</script>
+</body>
+</html>
