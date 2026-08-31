@@ -600,24 +600,24 @@
     this.rainStop();
 
     var S = this._wxEnsureShared();
-    // PERF budgets (v381 floor fix; v391: cards 19 FOV tax)
-    var rainN = 22;
-    var mistN = 2;
+    // PERF budgets — v420 Gauntlet: city rain must READ like Heat night (was 22 = invisible)
+    var rainN = 96;
+    var mistN = 4;
     var emberN = 0;
-    var rainOp = 0.18;
-    var rainCol = 0xb0c8e0;
-    var wind = 3.2;
-    var fallMin = 26;
-    var fallSpan = 28;
-    var spread = 30;
-    var mistOp = 0.12;
-    var mistCol = 0xc0d0e0;
+    var rainOp = 0.32;
+    var rainCol = 0xc8dcff;
+    var wind = 4.0;
+    var fallMin = 32;
+    var fallSpan = 36;
+    var spread = 36;
+    var mistOp = 0.16;
+    var mistCol = 0xd0e0f0;
 
     if (t === 'industrial') {
-      rainN = 72;
-      mistN = 2;
+      rainN = 88;
+      mistN = 3;
       emberN = 8;
-      rainOp = 0.18;
+      rainOp = 0.22;
       rainCol = 0xa8a090;
       wind = 2.4;
       fallMin = 24;
@@ -626,10 +626,10 @@
       mistOp = 0.12;
       mistCol = 0xc8b090;
     } else if (t === 'coastal') {
-      rainN = 52;
+      rainN = 70;
       mistN = 6;
       emberN = 0;
-      rainOp = 0.12;
+      rainOp = 0.18;
       rainCol = 0xc0d8f0;
       wind = 4.5;
       fallMin = 14;
@@ -642,7 +642,7 @@
     if (rainN > 120) rainN = 120;
     if (rainN < 20) rainN = 20;
 
-    var splashN = t === 'coastal' ? 14 : t === 'industrial' ? 16 : 12;
+    var splashN = t === 'coastal' ? 18 : t === 'industrial' ? 16 : 24;
     if (splashN > 20) splashN = 20;
     if (splashN < 8) splashN = 8;
 

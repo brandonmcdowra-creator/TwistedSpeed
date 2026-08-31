@@ -4873,9 +4873,12 @@
         particles.ensureRain(camera.position);
         particles.updateRain(dt, camera.position);
       }
-      // Road wetness bias while raining (subtle — no rainbow wash)
-      if (particles.getWetBias && world && world.group) {
+      // Road wetness bias while raining — boost MeshBasic sheen (PBR path rarely hits scenery)
+      if (particles.getWetBias && world) {
         var wet = particles.getWetBias();
+        if (world._wetSheenMat) {
+          world._wetSheenMat.opacity = 0.48 + wet * 0.35;
+        }
         if (wet > 0.01 && !state._wetRoadApplied) {
           state._wetRoadApplied = true;
           world.group.traverse(function (c) {

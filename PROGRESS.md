@@ -1,14 +1,11 @@
 # Twisted Speed — Progress
 
-**Build:** web **v419**  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=419`  
-**Gauntlet:** Heat still wins overall A/B · Gate C CLOSED  
+**Build:** web **v420** (Heat-chase rain · palms · wet)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=420`  
+**Gauntlet:** chasing Heat A/B win · Gate C CLOSED  
 
-## Critic scoreboard
-| R | Maglev | MG | Heat A/B |
-|---|--------|-----|----------|
-| 4 | PASS | FAIL (stale cache) | Heat |
-| 5 | PASS | PARTIAL (flash+chip) | Heat |
-| →419 | — | banner draw-order fix | — |
-
-Next density/atmosphere still the Heat A/B gap. Maglev signal bug closed.
+## Scoreboard
+| R | Maglev | MG | Heat chase A/B |
+|---|--------|-----|----------------|
+| 5 | PASS | PARTIAL→v419 | Heat |
+| →420 | — | — | rain+palms+wet — R6 critic next |

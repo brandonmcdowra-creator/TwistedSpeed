@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-31 — Web v420: Heat-chase rain + palms + wet punch
+
+Gauntlet Heat A/B still losing on atmosphere/density.
+
+- City rain 22→96 drops, higher opacity + more splashes
+- Palm silhouettes both flanks (Heat signature, MeshBasic)
+- Denser storefront frontage (step 7m)
+- Wet sheen opacity 0.48 + live boost from rain wetBias
+- Neon bloom 0.24
+
+Hard-refresh via `python3 serve.py` → `?v=420`. Neon↔REACH once.
+
+---
+
 ## 2026-08-31 — Web v419: ◆ MG ◆ banner same-frame as J hold
 
 R5 (clean v418): maglev PASS; MG chip+flash PASS; banner missed because `firingMg` was set *after* the banner draw.

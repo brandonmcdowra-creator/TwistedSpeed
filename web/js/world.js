@@ -392,6 +392,7 @@
       this._buildLamps();
       this._buildGates();
       this._buildFlankHaze();
+      this._buildPalms();
     }
     // Final safety net: hide anything that still occupies open asphalt
     this._assertDrivelineClear();
@@ -801,14 +802,15 @@
     }
 
     var wetSheen = new THREE.MeshBasicMaterial({
-      // v414 Gauntlet C: stronger Heat-night wet read (still MeshBasic fake)
-      color: 0xa8d4f0,
+      // v414/v420: Heat-night wet read — punchier for rain A/B
+      color: 0xb8e0ff,
       transparent: true,
-      opacity: 0.38,
+      opacity: 0.48,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
     });
+    this._wetSheenMat = wetSheen;
     var sheenGeo = this._ribbonGeo(rh * 0.92, 0.04, 0.055);
     if (sheenGeo) {
       var sheenMesh = new THREE.Mesh(sheenGeo, wetSheen);
@@ -1528,9 +1530,9 @@
   World.prototype._buildFrontage = function () {
     var pathLen = this.path.length || 2000;
     // Denser shops — still MeshBasic only (cheap at night)
-    var step = 10;
+    var step = 7;
     var n = Math.floor(pathLen / step);
-    n = Math.max(24, Math.min(n, 90));
+    n = Math.max(36, Math.min(n, 120));
 
     var wallMat = new THREE.MeshBasicMaterial({ color: 0x1e1c2a });
     var glassMats = [
@@ -2824,6 +2826,49 @@
           this.group.add(cabin);
           this.buildings.push(cabin);
         }
+      }
+    }
+  };
+
+  /**
+   * v420: palm / tree silhouettes both flanks — Heat night street signature (MeshBasic).
+   */
+  World.prototype._buildPalms = function () {
+    if (this.theme === 'coast') return; // REACH has its own coast dress
+    var trunkMat = new THREE.MeshBasicMaterial({ color: 0x2a2218 });
+    var frondMat = new THREE.MeshBasicMaterial({
+      color: 0x1a3028, transparent: true, opacity: 0.85, side: THREE.DoubleSide,
+    });
+    var trunkGeo = new THREE.CylinderGeometry(0.18, 0.28, 7.5, 5);
+    var frondGeo = new THREE.ConeGeometry(2.4, 3.2, 5);
+    var pathLen = this.path.length || 2000;
+    var n = Math.max(16, Math.min(36, Math.floor(pathLen / 70)));
+    for (var i = 0; i < n; i++) {
+      var t = 0.04 + (i / n) * 0.9;
+      var f = this._frame(t);
+      for (var s = -1; s <= 1; s += 2) {
+        if ((i + (s < 0 ? 1 : 0)) % 2 === 0 && i % 3 !== 0) continue; // stagger density
+        var lat = this._lat(EDGE.furniture + 1.2 + (i % 3) * 0.4, 0.5);
+        var trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.copy(f.p).addScaledVector(f.side, s * lat);
+        trunk.position.y = f.p.y + 3.75;
+        trunk.userData.lod = 'detail';
+        trunk.userData.ignoreIntrusion = true;
+        trunk.userData.qualityExtra = true;
+        this.group.add(trunk);
+        this.buildings.push(trunk);
+        var frond = new THREE.Mesh(frondGeo, frondMat);
+        frond.position.copy(trunk.position);
+        frond.position.y += 4.2;
+        frond.rotation.y = f.yaw + i * 0.4;
+        frond.userData.lod = 'detail';
+        frond.userData.ignoreIntrusion = true;
+        frond.userData.qualityExtra = true;
+        this.group.add(frond);
+        this.buildings.push(frond);
+        if (!this._qualityExtras) this._qualityExtras = [];
+        this._qualityExtras.push(trunk);
+        this._qualityExtras.push(frond);
       }
     }
   };
