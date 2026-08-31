@@ -729,7 +729,7 @@
   /** v424: soft radial pool textures — high-res smooth falloff, subtle grain only */
   World.prototype._poolTexForColor = function (hex) {
     if (!this._poolTexCache) this._poolTexCache = {};
-    var key = (hex >>> 0).toString(16) + '_v424';
+    var key = (hex >>> 0).toString(16) + '_v425';
     if (this._poolTexCache[key]) return this._poolTexCache[key];
     var S = 256;
     var c = document.createElement('canvas');
@@ -744,8 +744,8 @@
     halo.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.38)');
     halo.addColorStop(0.35, 'rgba(' + r + ',' + g + ',' + b + ',0.14)');
     halo.addColorStop(0.62, 'rgba(' + r + ',' + g + ',' + b + ',0.04)');
-    halo.addColorStop(0.85, 'rgba(' + r + ',' + g + ',' + b + ',0.01)');
-    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    halo.addColorStop(0.85, 'rgba(28,36,48,0.12)');
+    halo.addColorStop(1, 'rgba(18,22,32,0)');
     ctx.fillStyle = halo;
     ctx.fillRect(0, 0, S, S);
     // Hot core (bright white hotspot — exponential falloff)
@@ -899,10 +899,10 @@
     var segCount = closed ? pts.length : Math.max(0, pts.length - 1);
     var tex = this._roadTextures();
 
-    // v421: dark asphalt ribbon — NOT self-lit; speculars are separate localized quads
+    // v425: lift albedo so grain reads between pools (R10: road was black void)
     var roadMat = new THREE.MeshBasicMaterial({
       map: tex.albedo,
-      color: 0x687888,
+      color: 0x8898a8,
       side: THREE.DoubleSide,
     });
     var roadGeo = this._ribbonGeo(rh, 0.02, 0.07);
@@ -978,6 +978,32 @@
     this._headlightGlint.renderOrder = 4;
     this.group.add(this._headlightGlint);
     this._roadGlints.push(this._headlightGlint);
+
+    // v425: micro-sparkle flecks on asphalt (wet grain catch-lights between pools)
+    var sparkleMat = new THREE.MeshBasicMaterial({
+      color: 0xd0e4ff, transparent: true, opacity: 0.22,
+      depthWrite: false, depthTest: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    });
+    var sparkleGeo = new THREE.PlaneGeometry(0.35, 0.35);
+    var sparkleN = Math.min(140, Math.floor(segCount * 1.2));
+    for (var si = 0; si < sparkleN; si++) {
+      var st = (si + 0.17) / sparkleN;
+      if (!closed) st = Math.min(0.99, st);
+      var sf = this._frame(st);
+      var spark = new THREE.Mesh(sparkleGeo, sparkleMat);
+      spark.rotation.x = -Math.PI / 2;
+      spark.position.copy(sf.p).addScaledVector(sf.side, ((si % 7) - 3) * (rh * 0.18));
+      spark.position.y = sf.p.y + 0.11;
+      spark.rotation.z = -sf.yaw;
+      spark.userData.isRoadSurface = true;
+      spark.userData.baseOp = 0.14 + (si % 5) * 0.04;
+      spark.userData.poolKind = 'sparkle';
+      spark.renderOrder = 4;
+      spark.frustumCulled = true;
+      this.group.add(spark);
+      this._roadGlints.push(spark);
+    }
 
     var lineY = new THREE.MeshBasicMaterial({ color: 0xffe066, side: THREE.DoubleSide });
     var edgeCyan = new THREE.MeshBasicMaterial({
@@ -1152,7 +1178,9 @@
         var g = this._roadGlints[i];
         if (!g.material || g === this._headlightGlint) continue;
         var base = g.userData.baseOp != null ? g.userData.baseOp : 0.35;
-        var kindBoost = g.userData.poolKind === 'lamp' ? 1.18 : (g.userData.poolKind === 'gate' ? 1.12 : 1.0);
+        var kindBoost = g.userData.poolKind === 'lamp' ? 1.18
+          : (g.userData.poolKind === 'gate' ? 1.12
+          : (g.userData.poolKind === 'sparkle' ? 1.35 : 1.0));
         g.material.opacity = base * wetK * shimmer * kindBoost * (0.96 + (i % 5) * 0.02);
       }
     }

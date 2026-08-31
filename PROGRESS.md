@@ -12,4 +12,4 @@
 | 7 | — | — | Heat — matte road, speculars too weak |
 | 8 | — | — | Heat — tiled specular grid (70%) |
 | 9 | — | — | **Approaches Heat** — pools work, edges hard (40%) |
-| →423 | — | — | per-lamp radial pools shipped — R10 soft gradients next |
+| →424 | — | — | soft gradients + rain — R10 critic next |
