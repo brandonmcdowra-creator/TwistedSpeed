@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-31 — Web v416: STOP/GO maglev boards + fat MG + flank haze
+
+R2 critic (Heat wins): maglev not one-glance, MG invisible, flanks void.
+
+- Maglev: huge STOP/GO canvas boards facing traffic + raising gate bars
+- MG: dual fat rods (r≈1.2), 0.9s life, chase screen yellow muzzle flash
+- Flank haze cards both sides (qualityExtra)
+
+Hard-refresh `?v=416` · Neon↔REACH once.
+
+---
+
 ## 2026-08-31 — Web v415: Gauntlet density + maglev signal punch
 
 R1 critic (Heat wins): density void + maglev not one-glance / not prison-freight.

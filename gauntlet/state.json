@@ -1,11 +1,8 @@
 {
-  "build": "v415",
-  "round": "4 \u00b7 density+signals shipped \u2014 R2 critic next",
-  "started": "2026-08-30",
-  "branch": "cursor/gauntlet-aaa-loop-b53d",
-  "bar": "Blind A/B vs NFS Heat night-rain stills",
-  "log": "R0 Heat wins (wet/MG). R1 Heat wins (density void; maglev FAIL).\nv415: both-flank street life, denser lamps, 3x maglev signals+pulse, bloom 0.18.\n",
-  "piecesHtml": "<tr><td>A Density</td><td class=\"status-crit\">CRITIC</td><td>R1 void \u2192 v415 street life</td><td>v415</td></tr><tr><td>B Maglev</td><td class=\"status-crit\">CRITIC</td><td>Signals punched</td><td>v415</td></tr><tr><td>C Wet</td><td class=\"status-pass\">SHIPPED</td><td>v414 sheen</td><td>v414</td></tr><tr><td>D MG</td><td class=\"status-pass\">SHIPPED</td><td>v414 rods</td><td>v414</td></tr><tr><td>E Hero</td><td class=\"status-open\">OPEN</td><td>\u2014</td><td>\u2014</td></tr><tr><td>F Atmosphere</td><td class=\"status-open\">OPEN</td><td>Rain/haze</td><td>\u2014</td></tr>",
+  "build": "v416",
+  "round": "5 \u00b7 R2\u2192v416 shipped \u2014 R3 critic next",
+  "log": "R2 Heat wins. Maglev FAIL, MG FAIL, density weak.\nv416: STOP/GO boards + gate bars, fat dual MG + screen flash, flank haze.\n",
+  "piecesHtml": "<tr><td>A Density</td><td class=\"status-crit\">CRITIC</td><td>haze+street life</td><td>v416</td></tr><tr><td>B Maglev</td><td class=\"status-crit\">CRITIC</td><td>STOP/GO boards</td><td>v416</td></tr><tr><td>C Wet</td><td class=\"status-pass\">SHIPPED</td><td>v414</td><td>v414</td></tr><tr><td>D MG</td><td class=\"status-crit\">CRITIC</td><td>fat rods+flash</td><td>v416</td></tr>",
   "refsHtml": "<div class=\"card\"><img src=\"refs/heat-feature-sm.jpg\" /><div class=\"cap\">Heat bar</div></div>",
-  "shotsHtml": "<div class=\"card\"><img src=\"shots/r1-chase-open.png\" /><div class=\"cap\">R1 \u2014 Heat wins</div></div><div class=\"card\"><img src=\"shots/r1-maglev-wait.png\" /><div class=\"cap\">R1 maglev FAIL place</div></div>"
+  "shotsHtml": "<div class=\"card\"><img src=\"shots/r2-chase-open.png\" /><div class=\"cap\">R2 Heat wins</div></div>"
 }

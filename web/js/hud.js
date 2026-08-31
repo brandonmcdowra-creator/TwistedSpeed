@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 415', w / 2, h * 0.395);
+    ctx.fillText('BUILD 416', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -645,6 +645,16 @@
       g.addColorStop(0.55, 'rgba(255,20,40,' + (fa * 0.15) + ')');
       g.addColorStop(1, 'rgba(180,0,30,' + fa + ')');
       ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // v416: MG screen kick — yellow muzzle bloom so fire is unmistakable in chase
+    if (state.muzzleFlash > 0) {
+      var ma = Math.min(0.55, state.muzzleFlash * 0.7);
+      var mg = ctx.createRadialGradient(w * 0.5, h * 0.62, 20, w * 0.5, h * 0.55, w * 0.45);
+      mg.addColorStop(0, 'rgba(255,240,160,' + ma + ')');
+      mg.addColorStop(0.35, 'rgba(255,180,60,' + (ma * 0.35) + ')');
+      mg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = mg;
       ctx.fillRect(0, 0, w, h);
     }
     // v401: hit chevron — large, HUD-safe frame (clear armor / minimap / weapon bar)

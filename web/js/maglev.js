@@ -275,6 +275,52 @@
       }
 
       scene.add(group);
+      // v416: huge STOP/GO boards facing traffic + gate bars
+      var signGeo = new THREE.PlaneGeometry(14, 8);
+      function makeSign(label, col) {
+        var c = document.createElement('canvas');
+        c.width = 512; c.height = 256;
+        var cx = c.getContext('2d');
+        cx.fillStyle = '#' + ('000000' + col.toString(16)).slice(-6);
+        cx.fillRect(0, 0, 512, 256);
+        cx.fillStyle = '#0a0a0c';
+        cx.fillRect(16, 16, 480, 224);
+        cx.fillStyle = '#' + ('000000' + col.toString(16)).slice(-6);
+        cx.font = 'bold 120px sans-serif';
+        cx.textAlign = 'center';
+        cx.textBaseline = 'middle';
+        cx.fillText(label, 256, 128);
+        var tex = new THREE.CanvasTexture(c);
+        tex.needsUpdate = true;
+        var mat = new THREE.MeshBasicMaterial({
+          map: tex, transparent: true, side: THREE.DoubleSide, fog: false, depthWrite: false,
+        });
+        return { mesh: new THREE.Mesh(signGeo, mat), canvas: c, ctx: cx, tex: tex, col: col, label: label };
+      }
+      var stopSign = makeSign('STOP', 0xff2d55);
+      var goSign = makeSign('GO', 0x39ff14);
+      stopSign.mesh.position.copy(pt).addScaledVector(tan, -18);
+      stopSign.mesh.position.y = pt.y + 8;
+      stopSign.mesh.rotation.y = roadYaw;
+      goSign.mesh.position.copy(pt).addScaledVector(tan, -18);
+      goSign.mesh.position.y = pt.y + 8;
+      goSign.mesh.rotation.y = roadYaw;
+      goSign.mesh.visible = false;
+      group.add(stopSign.mesh);
+      group.add(goSign.mesh);
+      // Physical gate bars across road (raise on gap)
+      var barMat = new THREE.MeshBasicMaterial({ color: 0xff2d55 });
+      var barL = new THREE.Mesh(new THREE.BoxGeometry(22, 0.55, 0.55), barMat);
+      var barR = new THREE.Mesh(new THREE.BoxGeometry(22, 0.55, 0.55), barMat.clone());
+      barL.position.copy(pt).addScaledVector(tan, -2);
+      barL.position.y = pt.y + 1.2;
+      barL.rotation.y = roadYaw;
+      barR.position.copy(pt).addScaledVector(tan, 2);
+      barR.position.y = pt.y + 1.2;
+      barR.rotation.y = roadYaw;
+      group.add(barL);
+      group.add(barR);
+
       return {
         group: group,
         cars: cars,
@@ -285,6 +331,9 @@
         t: t,
         phase: 0,
         lamps: [pole(-1), pole(1)],
+        stopSign: stopSign,
+        goSign: goSign,
+        bars: [barL, barR],
         synced: false,
         mode: 'run',
         modeT: 0,
@@ -360,8 +409,26 @@
         ml.deck.material.color.setHex(blocked ? 0xff2d55 : 0x39ff14);
         ml.deck.material.opacity = blocked ? 0.72 : 0.5;
       }
-
       var atXing = Math.abs(prog - ml.t) < 0.05;
+      // STOP/GO boards + gate bars (v416 one-glance)
+      if (ml.stopSign && ml.goSign) {
+        var showStop = blocked || ml.mode === 'wall';
+        if (approaching || atXing || ml.mode === 'wall' || ml.mode === 'gap') {
+          ml.stopSign.mesh.visible = !!showStop;
+          ml.goSign.mesh.visible = !showStop;
+        } else {
+          ml.stopSign.mesh.visible = false;
+          ml.goSign.mesh.visible = false;
+        }
+      }
+      if (ml.bars) {
+        var barY = blocked ? ml.pt.y + 1.4 : ml.pt.y + 7.5;
+        for (i = 0; i < ml.bars.length; i++) {
+          if (!ml.bars[i]) continue;
+          ml.bars[i].position.y += (barY - ml.bars[i].position.y) * Math.min(1, dt * 6);
+          ml.bars[i].material.color.setHex(blocked ? 0xff2d55 : 0x39ff14);
+        }
+      }
 
       function hitBody(body, isPlayer) {
         if (!body || !body.pos || body.dead) return;

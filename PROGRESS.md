@@ -1,18 +1,16 @@
 # Twisted Speed — Progress
 
-**Build:** web **v415** (Gauntlet · density + maglev signals)  
+**Build:** web **v416** (STOP/GO boards · fat MG · flank haze)  
 **Date:** 2026-08-31  
-**Serve:** `web/` → hard-refresh `?v=415` · Neon↔REACH once  
-**Primary runtime:** **web** · Gauntlet Loop · Gate C **CLOSED**  
+**Serve:** `?v=416` hard-refresh · Neon↔REACH once  
+**Gauntlet:** Heat still wins R0–R2 · Gate C CLOSED  
 **Live:** http://127.0.0.1:8766/gauntlet/progress.html  
 
 ## Critics
-| Round | Winner | Biggest gap |
-|-------|--------|-------------|
-| R0 | Heat | Wet road + mute MG |
-| R1 | Heat | Density void; maglev FAIL place / weak signals |
+| R | Winner | → ship |
+|---|--------|--------|
+| 0 | Heat | wet/MG → v414 |
+| 1 | Heat | density/signals → v415 |
+| 2 | Heat | STOP/GO + fat MG + haze → **v416** |
 
-## Ships
-v412 maglev dress · v413 flanks · v414 wet+MG · **v415** street density + signal punch  
-
-Next: R2 critic A/B on v415; then rain/haze (F) or hero paint (E).
+Next: R3 critic on v416.

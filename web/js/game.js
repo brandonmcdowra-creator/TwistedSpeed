@@ -2554,16 +2554,16 @@
     var hood = state.camMode === 'hood';
     // Chase: van body occludes ahead-of-bumper tracers — spawn high + wide (v400)
     // Hood: spawn further ahead/higher so tracers sit in FOV (body is hidden) (v302)
-    var fwdOff = hood ? 4.2 : 2.2;
-    var yOff = hood ? 1.45 : 2.9;
-    // Chase length ~8 / radius ~0.30 via scale on base geo r=0.15 h=3
-    var tracerLen = hood ? 4.5 : (W.mgLabel === 'PISTOL' ? 8.0 : 11.0);
-    var radScale = hood ? 1.6 : 2.6; // chase effective r ≈ 0.73
+    var fwdOff = hood ? 4.2 : 2.4;
+    var yOff = hood ? 1.45 : 3.1;
+    // v416: fat dual rods + longer life so chase can see them
+    var tracerLen = hood ? 5.0 : 14.0;
+    var radScale = hood ? 2.0 : 4.2;
     function spawnMgRound(sideOff) {
       if (state.projectiles.length > 28) return;
       var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff);
       origin.y += yOff;
-      var col = W.mgLabel === 'PISTOL' ? 0xffcc66 : 0xffe66d;
+      var col = W.mgLabel === 'PISTOL' ? 0xffcc66 : 0xfff2a0;
       var mesh = makeTracer(col, tracerLen);
       mesh.scale.x = mesh.scale.z = radScale;
       mesh.position.copy(origin);
@@ -2572,39 +2572,32 @@
       state.projectiles.push({
         type: 'mg', mesh: mesh, pos: origin.clone(),
         vel: tmpV.clone().multiplyScalar(cfg.combat.mgSpeed * (W.mgLabel === 'PISTOL' ? 0.92 : 1)),
-        life: hood ? 0.7 : 0.65, dmg: dmg, fromPlayer: true, trail: false,
+        life: hood ? 0.85 : 0.9, dmg: dmg, fromPlayer: true, trail: false,
       });
     }
-    if (hasBuff('guns')) {
-      spawnMgRound(hood ? -0.35 : -1.05);
-      spawnMgRound(hood ? 0.35 : 1.05);
-    } else if (hood) {
-      var sideOffH = (W.mgLabel === 'PISTOL') ? 0 : (Math.random() > 0.5 ? 1 : -1) * 0.22;
-      spawnMgRound(sideOffH);
+    // Always dual stream in chase so rods clear the silhouette
+    if (hasBuff('guns') || !hood) {
+      spawnMgRound(hood ? -0.35 : -1.2);
+      spawnMgRound(hood ? 0.35 : 1.2);
     } else {
-      // Alternate flanks so streaks clear the van silhouette from chase cam
-      var sideOffC = (W.mgLabel === 'PISTOL') ? ((Math.random() > 0.5 ? 1 : -1) * 0.85)
-        : (Math.random() > 0.5 ? 1 : -1) * 1.05;
-      spawnMgRound(sideOffC);
+      spawnMgRound((Math.random() > 0.5 ? 1 : -1) * 0.22);
     }
     p._muzzleFxT = (p._muzzleFxT || 0);
     if (particles && p._muzzleFxT <= 0) {
-      p._muzzleFxT = hood ? 0.03 : 0.04;
-      // Match tracer flank so muzzle isn't buried in the body
-      var mSide = hood ? 0 : ((Math.random() > 0.5 ? 1 : -1) * 1.0);
+      p._muzzleFxT = hood ? 0.03 : 0.035;
+      var mSide = hood ? 0 : ((Math.random() > 0.5 ? 1 : -1) * 1.1);
       var mOrigin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, mSide);
       mOrigin.y += yOff;
       particles.muzzle(mOrigin, tmpV);
       if (particles.spawn) {
         particles.spawn('muzzle', mOrigin, {
-          count: hood ? 3 : 3, speed: hood ? 14 : 12, life: hood ? 0.1 : 0.09,
-          scale: hood ? 0.9 : 1.05, dir: tmpV, gravity: 0,
+          count: hood ? 4 : 8, speed: 16, life: 0.14,
+          scale: hood ? 1.1 : 1.6, dir: tmpV, gravity: 0,
         });
         particles.spawn('spark', mOrigin, {
-          count: hood ? 6 : 5, speed: 12, life: hood ? 0.12 : 0.11, gravity: 2,
+          count: hood ? 8 : 12, speed: 18, life: 0.16, gravity: 2,
         });
       }
-      // Flash existing gun mesh if present
       if (p.mesh && p.mesh.userData) {
         var guns = p.mesh.userData.guns || p.mesh.userData.gunMeshes;
         if (guns && guns.length) {
@@ -2617,13 +2610,11 @@
         }
       }
     }
-    // Screen muzzle flash — hood full; chase smaller (van occludes world flash) (v400)
-    if (hood) {
-      p._hoodMuzzleT = 0.08;
-      state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + 0.18);
-    } else {
-      p._chaseMuzzleT = 0.07;
-    }
+    // Screen flash in chase too (R2: world tracers invisible — HUD must kick)
+    state.muzzleFlash = Math.min(1, (state.muzzleFlash || 0) + (hood ? 0.35 : 0.55));
+    state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + (hood ? 0.12 : 0.22));
+    if (hood) p._hoodMuzzleT = 0.08;
+    else p._chaseMuzzleT = 0.1;
     if (GAME.sfx) GAME.sfx.mg();
   }
 
@@ -2821,6 +2812,7 @@
   function updateRace(dt) {
     state.raceTime += dt;
     if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 2.8);
+    if (state.muzzleFlash > 0) state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 5.5);
     if (state.hitDirT > 0) state.hitDirT = Math.max(0, state.hitDirT - dt);
     if (state._startBannerT > 0) state._startBannerT = Math.max(0, state._startBannerT - dt);
     // Re-unlock + engine if AudioContext still suspended / silent after START (v311/v357)

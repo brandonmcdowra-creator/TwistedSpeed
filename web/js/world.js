@@ -2827,6 +2827,38 @@
     }
   };
 
+  /**
+   * v416: soft haze cards on both flanks — kill black void without new lights.
+   */
+  World.prototype._buildFlankHaze = function () {
+    if (this.theme === 'coast') return;
+    var hazeMat = new THREE.MeshBasicMaterial({
+      color: 0x1a2438, transparent: true, opacity: 0.38,
+      depthWrite: false, side: THREE.DoubleSide, fog: true,
+    });
+    var hazeGeo = new THREE.PlaneGeometry(48, 28);
+    var n = 14;
+    for (var i = 0; i < n; i++) {
+      var t = 0.05 + (i / n) * 0.9;
+      var f = this._frame(t);
+      for (var s = -1; s <= 1; s += 2) {
+        var haze = new THREE.Mesh(hazeGeo, hazeMat);
+        var lat = this._lat(EDGE.tower + 14 + (i % 3) * 3, 3);
+        haze.position.copy(f.p).addScaledVector(f.side, s * lat);
+        haze.position.y = f.p.y + 10;
+        haze.lookAt(f.p.x, haze.position.y, f.p.z);
+        haze.userData.lod = 'far';
+        haze.userData.ignoreIntrusion = true;
+        haze.userData.qualityExtra = true;
+        haze.frustumCulled = true;
+        this.group.add(haze);
+        this.buildings.push(haze);
+        if (!this._qualityExtras) this._qualityExtras = [];
+        this._qualityExtras.push(haze);
+      }
+    }
+  };
+
   // ─── Lamps (outside curb) — dense poles, few real lights ─────────────
 
   World.prototype._buildLamps = function () {
