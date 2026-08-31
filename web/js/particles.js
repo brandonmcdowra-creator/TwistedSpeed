@@ -600,17 +600,17 @@
     this.rainStop();
 
     var S = this._wxEnsureShared();
-    // PERF budgets — v421 Gauntlet: denser diagonal rain streaks (R6 gap)
-    var rainN = 112;
-    var mistN = 5;
+    // PERF budgets — v422 Gauntlet: denser diagonal rain + road splatter read
+    var rainN = 132;
+    var mistN = 6;
     var emberN = 0;
-    var rainOp = 0.38;
+    var rainOp = 0.42;
     var rainCol = 0xc8dcff;
     var wind = 4.0;
     var fallMin = 32;
     var fallSpan = 36;
     var spread = 36;
-    var mistOp = 0.16;
+    var mistOp = 0.22;
     var mistCol = 0xd0e0f0;
 
     if (t === 'industrial') {
@@ -844,8 +844,8 @@
       py = cy + pos[iy];
       pz = cz + pos[iz];
       dummy.position.set(px, py, pz);
-      // Lean into wind — v421 stronger diagonal streak
-      dummy.rotation.set(0, 0, 0.34);
+      // Lean into wind — v422 stronger diagonal streak
+      dummy.rotation.set(0, 0, 0.42);
       dummy.scale.set(1, len[i], 1);
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-08-31 — Web v422: specular mask ribbon + bright lamp pools (R8 gap)
+
+R7 critic: road still matte — no visible lamp pools or specular depth (85% gap).
+
+- Tiled specular mask ribbon (additive pools/streaks on dark asphalt)
+- Brighter localized glints (depthTest off, opacity 0.45–0.58)
+- Lamp bright pools on road center + warm streaks per pole
+- START/FINISH gate neon ground pools
+- Headlight sweep glint ahead on path (`updateRoadWet` + pathT)
+- Higher-contrast asphalt micro-grain texture
+- Low road-hugging mist + denser diagonal rain (132 drops)
+
+Hard-refresh via `python3 serve.py` → `?v=422`.
+
+---
+
 ## 2026-08-31 — Web v421: dark wet asphalt + localized specular (R6 gap)
 
 R6 critic: road was uniform emissive panel — Heat wins on wet asphalt (95% gap).

@@ -1,7 +1,7 @@
 # Twisted Speed — Progress
 
-**Build:** web **v421** (dark wet asphalt · localized specular)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=421`  
+**Build:** web **v422** (specular mask · lamp pools · headlight sweep)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=422`  
 **Gauntlet:** chasing Heat A/B win · Gate C CLOSED  
 
 ## Scoreboard
@@ -10,4 +10,4 @@
 | 5 | PASS | PARTIAL→v419 | Heat |
 | 6 | — | — | Heat — road emissive panel |
 | 7 | — | — | Heat — matte road, speculars too weak |
-| →421 | — | — | dark asphalt shipped — R8 specular punch next |
+| →422 | — | — | specular mask + lamp pools — R8 critic next |

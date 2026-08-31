@@ -4873,16 +4873,16 @@
         particles.ensureRain(camera.position);
         particles.updateRain(dt, camera.position);
       }
-      // Road wetness bias while raining — v421: boost localized glints, not panel glow
-      if (particles.getWetBias && world) {
-        var wet = particles.getWetBias();
+      // Road wetness + specular pulse — v422: always tick (not only when raining)
+      if (world) {
+        var wetRoad = (particles.getWetBias && particles.getWetBias()) || 0;
         if (world._wetSheenMat) {
-          world._wetSheenMat.opacity = 0.08 + wet * 0.12;
+          world._wetSheenMat.opacity = 0.08 + wetRoad * 0.12;
         }
         if (world.updateRoadWet) {
-          world.updateRoadWet(wet, camera.position, state.time || 0);
+          world.updateRoadWet(wetRoad, camera.position, state.time || 0, p.progress);
         }
-        if (wet > 0.01 && !state._wetRoadApplied) {
+        if (wetRoad > 0.01 && !state._wetRoadApplied) {
           state._wetRoadApplied = true;
           world.group.traverse(function (c) {
             if (!c.isMesh || !c.material) return;

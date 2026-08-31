@@ -645,17 +645,26 @@
     g.addColorStop(1, 'rgba(32, 40, 52, 0.45)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, S, S);
-    // Aggregate grit — mostly dark with rare wet flecks
-    for (var i = 0; i < 5200; i++) {
-      var v = 18 + ((i * 17) % 42);
-      var cool = (i % 4 === 0) ? 12 : 0;
-      var bright = (i % 97 === 0);
+    // Aggregate grit — v422: higher contrast micro-grain (breaks smooth polygon read)
+    for (var i = 0; i < 6800; i++) {
+      var v = 14 + ((i * 17) % 38);
+      var cool = (i % 4 === 0) ? 10 : 0;
+      var bright = (i % 73 === 0);
       if (bright) {
-        ctx.fillStyle = 'rgba(160, 185, 210, ' + (0.12 + (i % 5) * 0.06) + ')';
+        ctx.fillStyle = 'rgba(200, 215, 235, ' + (0.18 + (i % 5) * 0.08) + ')';
       } else {
-        ctx.fillStyle = 'rgba(' + (v + 6) + ',' + (v + 10) + ',' + (v + 16 + cool) + ',0.42)';
+        ctx.fillStyle = 'rgba(' + (v + 4) + ',' + (v + 8) + ',' + (v + 14 + cool) + ',0.55)';
       }
       ctx.fillRect((i * 47) % S, (i * 91) % S, 1 + (i % 2), 1 + (i % 3));
+    }
+    // Crack / tar-patch variation
+    ctx.strokeStyle = 'rgba(40, 48, 58, 0.35)';
+    ctx.lineWidth = 1;
+    for (var c = 0; c < 18; c++) {
+      ctx.beginPath();
+      ctx.moveTo((c * 43) % S, (c * 67) % S);
+      ctx.lineTo((c * 43 + 22) % S, (c * 67 + 31) % S);
+      ctx.stroke();
     }
     // Longitudinal wear — whisper only (was washing whole ribbon bright)
     ctx.strokeStyle = 'rgba(80, 95, 115, 0.08)';
@@ -672,6 +681,49 @@
     albedo.needsUpdate = true;
     this._roadTex = { albedo: albedo };
     return this._roadTex;
+  };
+
+  /** v422: tiled specular mask — white pools/streaks on black (additive ribbon reads as wet reflections) */
+  World.prototype._roadSpecularTexture = function () {
+    if (this._roadSpecTex) return this._roadSpecTex;
+    var S = 512;
+    var c = document.createElement('canvas');
+    c.width = c.height = S;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, S, S);
+    // Longitudinal lamp streaks
+    for (var i = 0; i < 28; i++) {
+      var x = (i * 67 + 11) % S;
+      var y = (i * 113) % S;
+      var g = ctx.createLinearGradient(x - 10, y - 55, x + 10, y + 55);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.3, 'rgba(255,255,255,0.06)');
+      g.addColorStop(0.5, 'rgba(255,255,255,0.28)');
+      g.addColorStop(0.7, 'rgba(255,255,255,0.06)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 14, y - 60, 28, 120);
+    }
+    // Radial puddle pools (lamp / neon hotspots)
+    for (var j = 0; j < 40; j++) {
+      var px = (j * 79 + 23) % S;
+      var py = (j * 149) % S;
+      var rad = 10 + (j % 6) * 5;
+      var pg = ctx.createRadialGradient(px, py, 0, px, py, rad);
+      pg.addColorStop(0, 'rgba(255,255,255,0.72)');
+      pg.addColorStop(0.35, 'rgba(255,255,255,0.22)');
+      pg.addColorStop(0.7, 'rgba(255,255,255,0.06)');
+      pg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = pg;
+      ctx.fillRect(px - rad, py - rad, rad * 2, rad * 2);
+    }
+    var spec = new THREE.CanvasTexture(c);
+    spec.wrapS = spec.wrapT = THREE.RepeatWrapping;
+    spec.repeat.set(3.2, 11);
+    spec.needsUpdate = true;
+    this._roadSpecTex = spec;
+    return spec;
   };
 
   /**
@@ -824,42 +876,82 @@
       this.group.add(sheenMesh);
     }
 
-    // Localized specular streaks — fake wet neon / lamp pools on dark asphalt
+    // v422: specular mask ribbon — tiled pools/streaks on dark asphalt (Heat wet read)
+    var specTex = this._roadSpecularTexture();
+    var specMat = new THREE.MeshBasicMaterial({
+      map: specTex,
+      color: 0xe0f0ff,
+      transparent: true,
+      opacity: 0.44,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    this._roadSpecMat = specMat;
+    var specGeo = this._ribbonGeo(rh * 0.97, 0.085, 0.07);
+    if (specGeo) {
+      var specMesh = new THREE.Mesh(specGeo, specMat);
+      specMesh.userData.isRoadSurface = true;
+      specMesh.frustumCulled = false;
+      specMesh.renderOrder = 2;
+      this.group.add(specMesh);
+    }
+
+    // Localized specular streaks — v422: brighter, depthTest off so they always read
     this._roadGlints = [];
     var glintWarm = new THREE.MeshBasicMaterial({
-      color: 0xffb870, transparent: true, opacity: 0.26,
-      depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      color: 0xfff4e0, transparent: true, opacity: 0.55,
+      depthWrite: false, depthTest: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     });
     var glintCyan = new THREE.MeshBasicMaterial({
-      color: 0x40e8ff, transparent: true, opacity: 0.22,
-      depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      color: 0x90f8ff, transparent: true, opacity: 0.5,
+      depthWrite: false, depthTest: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     });
     var glintMagenta = new THREE.MeshBasicMaterial({
-      color: 0xff3d6a, transparent: true, opacity: 0.18,
-      depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      color: 0xff6090, transparent: true, opacity: 0.45,
+      depthWrite: false, depthTest: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     });
-    var streakGeo = new THREE.PlaneGeometry(2.4, 11);
-    var puddleGeo = new THREE.PlaneGeometry(5.5, 7);
-    var glintN = Math.min(48, Math.floor(segCount / 5));
+    var streakGeo = new THREE.PlaneGeometry(2.8, 14);
+    var puddleGeo = new THREE.PlaneGeometry(6.5, 8);
+    var glintN = Math.min(56, Math.floor(segCount / 4));
     for (var gi = 0; gi < glintN; gi++) {
       var gt = (gi + 0.22) / glintN;
       if (!closed) gt = Math.min(0.98, gt);
       var gf = this._frame(gt);
       var gMat = gi % 3 === 0 ? glintWarm : (gi % 3 === 1 ? glintCyan : glintMagenta);
-      var gGeo = gi % 5 === 0 ? puddleGeo : streakGeo;
+      var gGeo = gi % 4 === 0 ? puddleGeo : streakGeo;
       var glint = new THREE.Mesh(gGeo, gMat);
       glint.rotation.x = -Math.PI / 2;
-      var latOff = ((gi % 5) - 2) * (rh * 0.22);
+      var latOff = ((gi % 5) - 2) * (rh * 0.2);
       glint.position.copy(gf.p).addScaledVector(gf.side, latOff);
-      glint.position.y = gf.p.y + 0.065;
+      glint.position.y = gf.p.y + 0.095;
       glint.rotation.z = -gf.yaw + (gi % 7) * 0.04;
       glint.userData.isRoadSurface = true;
       glint.userData.ignoreIntrusion = true;
       glint.userData.baseOp = gMat.opacity;
+      glint.renderOrder = 3;
       glint.frustumCulled = true;
       this.group.add(glint);
       this._roadGlints.push(glint);
     }
+
+    // Headlight sweep glint — positioned each frame in updateRoadWet
+    this._headlightGlint = new THREE.Mesh(
+      new THREE.PlaneGeometry(5, 20),
+      new THREE.MeshBasicMaterial({
+        color: 0xf0f8ff, transparent: true, opacity: 0.42,
+        depthWrite: false, depthTest: false,
+        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      })
+    );
+    this._headlightGlint.rotation.x = -Math.PI / 2;
+    this._headlightGlint.userData.baseOp = 0.42;
+    this._headlightGlint.renderOrder = 4;
+    this.group.add(this._headlightGlint);
+    this._roadGlints.push(this._headlightGlint);
 
     var lineY = new THREE.MeshBasicMaterial({ color: 0xffe066, side: THREE.DoubleSide });
     var edgeCyan = new THREE.MeshBasicMaterial({
@@ -1020,18 +1112,34 @@
   };
 
   /**
-   * v421: pulse localized road speculars when wet — dark base + bright pools (Heat read).
+   * v422: pulse localized road speculars + headlight sweep (Heat wet asphalt read).
    */
-  World.prototype.updateRoadWet = function (wet, camPos, time) {
-    if (!this._roadGlints || !this._roadGlints.length) return;
+  World.prototype.updateRoadWet = function (wet, camPos, time, pathT) {
     var t = time || 0;
-    var wetK = 0.35 + (wet || 0) * 0.85;
-    var shimmer = 0.88 + Math.sin(t * 3.4) * 0.12;
-    for (var i = 0; i < this._roadGlints.length; i++) {
-      var g = this._roadGlints[i];
-      if (!g.material) continue;
-      var base = g.userData.baseOp != null ? g.userData.baseOp : 0.2;
-      g.material.opacity = base * wetK * shimmer * (0.92 + (i % 5) * 0.04);
+    var wetK = 0.78 + (wet || 0) * 0.55;
+    var shimmer = 0.9 + Math.sin(t * 3.8) * 0.1;
+    if (this._roadSpecMat) {
+      this._roadSpecMat.opacity = (0.34 + (wet || 0) * 0.22) * shimmer;
+    }
+    if (this._roadGlints && this._roadGlints.length) {
+      for (var i = 0; i < this._roadGlints.length; i++) {
+        var g = this._roadGlints[i];
+        if (!g.material || g === this._headlightGlint) continue;
+        var base = g.userData.baseOp != null ? g.userData.baseOp : 0.35;
+        g.material.opacity = base * wetK * shimmer * (0.94 + (i % 5) * 0.03);
+      }
+    }
+    // Headlight cone sweep ahead on path
+    if (this._headlightGlint && pathT != null && this.path && this.path.curve) {
+      var ht = pathT + 0.018;
+      if (ht > 0.995) ht -= 0.99;
+      var hf = this._frame(ht);
+      this._headlightGlint.position.copy(hf.p);
+      this._headlightGlint.position.y = hf.p.y + 0.1;
+      this._headlightGlint.rotation.z = -hf.yaw;
+      var hBase = this._headlightGlint.userData.baseOp || 0.42;
+      this._headlightGlint.material.opacity = hBase * wetK * (0.85 + Math.sin(t * 5.2) * 0.15);
+      this._headlightGlint.visible = true;
     }
   };
 
@@ -2895,6 +3003,7 @@
    */
   World.prototype._buildFlankHaze = function () {
     if (this.theme === 'coast') return;
+    var rh = this.roadHalf;
     var hazeMat = new THREE.MeshBasicMaterial({
       color: 0x1a2438, transparent: true, opacity: 0.38,
       depthWrite: false, side: THREE.DoubleSide, fog: true,
@@ -2919,6 +3028,27 @@
         if (!this._qualityExtras) this._qualityExtras = [];
         this._qualityExtras.push(haze);
       }
+    }
+    // v422: low road-hugging mist — humid night depth between cam and neon walls
+    var roadMistMat = new THREE.MeshBasicMaterial({
+      color: 0x8898b0, transparent: true, opacity: 0.14,
+      depthWrite: false, side: THREE.DoubleSide, fog: true,
+    });
+    var roadMistGeo = new THREE.PlaneGeometry(rh * 3.2, 3.5);
+    for (var ri = 0; ri < 10; ri++) {
+      var rt = 0.04 + (ri / 10) * 0.92;
+      var rf = this._frame(rt);
+      var mist = new THREE.Mesh(roadMistGeo, roadMistMat);
+      mist.position.copy(rf.p);
+      mist.position.y = rf.p.y + 1.6;
+      mist.rotation.y = rf.yaw;
+      mist.userData.lod = 'detail';
+      mist.userData.qualityExtra = true;
+      mist.frustumCulled = true;
+      this.group.add(mist);
+      this.buildings.push(mist);
+      if (!this._qualityExtras) this._qualityExtras = [];
+      this._qualityExtras.push(mist);
     }
   };
 
@@ -2996,25 +3126,36 @@
       this.group.add(pool);
       this.buildings.push(pool);
 
-      // v421: warm lamp streak ON asphalt (localized specular, not ribbon glow)
-      var roadStreakMat = new THREE.MeshBasicMaterial({
-        color: 0xffc880,
+      // v422: bright lamp pool ON road center + warm streak (Heat specular hotspots)
+      var roadPoolMat = new THREE.MeshBasicMaterial({
+        color: 0xfff8f0,
         transparent: true,
-        opacity: 0.24,
+        opacity: 0.58,
         depthWrite: false,
+        depthTest: false,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       });
-      var roadStreak = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 9), roadStreakMat);
+      var roadPool = new THREE.Mesh(new THREE.CircleGeometry(3.8, 14), roadPoolMat);
+      roadPool.rotation.x = -Math.PI / 2;
+      roadPool.position.copy(p);
+      roadPool.position.y = p.y + 0.1;
+      roadPool.userData.isRoadSurface = true;
+      roadPool.userData.baseOp = 0.58;
+      roadPool.renderOrder = 3;
+      this.group.add(roadPool);
+      if (!this._roadGlints) this._roadGlints = [];
+      this._roadGlints.push(roadPool);
+
+      var roadStreak = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 18), roadPoolMat.clone());
       roadStreak.rotation.x = -Math.PI / 2;
-      roadStreak.position.copy(p).addScaledVector(side, s * (rh * 0.15));
-      roadStreak.position.y = p.y + 0.07;
+      roadStreak.position.copy(p);
+      roadStreak.position.y = p.y + 0.098;
       roadStreak.rotation.z = -Math.atan2(tan.x, tan.z);
       roadStreak.userData.isRoadSurface = true;
-      roadStreak.userData.baseOp = 0.24;
-      roadStreak.userData.lod = 'detail';
+      roadStreak.userData.baseOp = 0.48;
+      roadStreak.renderOrder = 3;
       this.group.add(roadStreak);
-      if (!this._roadGlints) this._roadGlints = [];
       this._roadGlints.push(roadStreak);
 
       this.lamps.push({
@@ -3150,6 +3291,24 @@
       threshGlow.rotation.y = yaw;
       threshGlow.userData.isRoadSurface = true;
       tagGate(threshGlow);
+
+      // v422: neon ground pool on asphalt under gate (START cyan / FINISH magenta reflection)
+      var gatePoolMat = new THREE.MeshBasicMaterial({
+        color: col, transparent: true, opacity: 0.52,
+        depthWrite: false, depthTest: false,
+        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      });
+      var gatePool = new THREE.Mesh(new THREE.PlaneGeometry(rh * 1.7, 16), gatePoolMat);
+      gatePool.rotation.x = -Math.PI / 2;
+      gatePool.position.copy(p);
+      gatePool.position.y = p.y + 0.102;
+      gatePool.rotation.z = -yaw;
+      gatePool.userData.isRoadSurface = true;
+      gatePool.userData.baseOp = 0.52;
+      gatePool.renderOrder = 3;
+      tagGate(gatePool);
+      if (!self._roadGlints) self._roadGlints = [];
+      self._roadGlints.push(gatePool);
 
       // Crisp banner
       var canvas = document.createElement('canvas');

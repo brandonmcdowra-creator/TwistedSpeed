@@ -1,5 +1,5 @@
 {
-  "build": "v421",
-  "round": "R7 closed — Heat still wins on specular depth; R8 builder next",
-  "log": "R6: Heat wins — emissive road panel (95% gap).\nv421 shipped: dark asphalt, localized streaks, lamp pools.\nR7: Heat still wins — road reads matte not wet (85% gap). Speculars too subtle / no lighting interaction.\nNext: brighter lamp pools, specular mask, texture grain, denser rain.\n"
+  "build": "v422",
+  "round": "R8 specular punch ship — critic next",
+  "log": "R7: Heat wins — matte road, speculars invisible (85% gap).\nv422: specular mask ribbon, bright lamp pools, gate pools, headlight sweep, road mist, denser rain.\nGoal: flip wet-road A/B vs Heat night-rain stills.\n"
 }
