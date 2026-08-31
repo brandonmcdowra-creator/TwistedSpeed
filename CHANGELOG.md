@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-31 — Web v417: fix mirrored STOP/GO + unmistakable MG
+
+R3: boards mirrored; MG invisible (capture also on stale ?v=415).
+
+- Maglev boards face oncoming traffic (`roadYaw + PI`)
+- MG tracers = bright boxes, depthTest:false, dual fat streams
+- HUD yellow muzzle bloom + sticky `◆ MG ◆` while firing
+
+Hard-refresh `?v=417` (must say BUILD 417).
+
+---
+
 ## 2026-08-31 — Web v416: STOP/GO maglev boards + fat MG + flank haze
 
 R2 critic (Heat wins): maglev not one-glance, MG invisible, flanks void.

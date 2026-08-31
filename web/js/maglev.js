@@ -301,10 +301,11 @@
       var goSign = makeSign('GO', 0x39ff14);
       stopSign.mesh.position.copy(pt).addScaledVector(tan, -18);
       stopSign.mesh.position.y = pt.y + 8;
-      stopSign.mesh.rotation.y = roadYaw;
+      // Face ONCOMING traffic (player looks +tan; plane front is +Z → need +PI)
+      stopSign.mesh.rotation.y = roadYaw + Math.PI;
       goSign.mesh.position.copy(pt).addScaledVector(tan, -18);
       goSign.mesh.position.y = pt.y + 8;
-      goSign.mesh.rotation.y = roadYaw;
+      goSign.mesh.rotation.y = roadYaw + Math.PI;
       goSign.mesh.visible = false;
       group.add(stopSign.mesh);
       group.add(goSign.mesh);

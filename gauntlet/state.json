@@ -1,8 +1,5 @@
 {
-  "build": "v416",
-  "round": "5 \u00b7 R2\u2192v416 shipped \u2014 R3 critic next",
-  "log": "R2 Heat wins. Maglev FAIL, MG FAIL, density weak.\nv416: STOP/GO boards + gate bars, fat dual MG + screen flash, flank haze.\n",
-  "piecesHtml": "<tr><td>A Density</td><td class=\"status-crit\">CRITIC</td><td>haze+street life</td><td>v416</td></tr><tr><td>B Maglev</td><td class=\"status-crit\">CRITIC</td><td>STOP/GO boards</td><td>v416</td></tr><tr><td>C Wet</td><td class=\"status-pass\">SHIPPED</td><td>v414</td><td>v414</td></tr><tr><td>D MG</td><td class=\"status-crit\">CRITIC</td><td>fat rods+flash</td><td>v416</td></tr>",
-  "refsHtml": "<div class=\"card\"><img src=\"refs/heat-feature-sm.jpg\" /><div class=\"cap\">Heat bar</div></div>",
-  "shotsHtml": "<div class=\"card\"><img src=\"shots/r2-chase-open.png\" /><div class=\"cap\">R2 Heat wins</div></div>"
+  "build": "v417",
+  "round": "6 \u00b7 R3 bugs fixed \u2014 R4 critic must use ?v=417",
+  "log": "R3 Heat wins. Bugs: mirrored STOP/GO, MG mute (stale 415 tab possible).\nv417: board facing +PI, box tracers depthTest:false, HUD MG banner.\n"
 }

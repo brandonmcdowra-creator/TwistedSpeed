@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 416', w / 2, h * 0.395);
+    ctx.fillText('BUILD 417', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -649,13 +649,21 @@
     }
     // v416: MG screen kick — yellow muzzle bloom so fire is unmistakable in chase
     if (state.muzzleFlash > 0) {
-      var ma = Math.min(0.55, state.muzzleFlash * 0.7);
-      var mg = ctx.createRadialGradient(w * 0.5, h * 0.62, 20, w * 0.5, h * 0.55, w * 0.45);
-      mg.addColorStop(0, 'rgba(255,240,160,' + ma + ')');
-      mg.addColorStop(0.35, 'rgba(255,180,60,' + (ma * 0.35) + ')');
+      var ma = Math.min(0.7, state.muzzleFlash * 0.85);
+      var mg = ctx.createRadialGradient(w * 0.5, h * 0.62, 20, w * 0.5, h * 0.55, w * 0.5);
+      mg.addColorStop(0, 'rgba(255,245,180,' + ma + ')');
+      mg.addColorStop(0.35, 'rgba(255,180,60,' + (ma * 0.4) + ')');
       mg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = mg;
       ctx.fillRect(0, 0, w, h);
+    }
+    if (state.firingMg > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 230, 100, 0.92)';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('◆ MG ◆', w * 0.5, h * 0.78);
+      ctx.restore();
     }
     // v401: hit chevron — large, HUD-safe frame (clear armor / minimap / weapon bar)
     if (state.hitDirT > 0) {

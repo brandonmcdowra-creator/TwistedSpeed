@@ -1,16 +1,11 @@
 # Twisted Speed — Progress
 
-**Build:** web **v416** (STOP/GO boards · fat MG · flank haze)  
+**Build:** web **v417** (STOP/GO facing fix · unmistakable MG)  
 **Date:** 2026-08-31  
-**Serve:** `?v=416` hard-refresh · Neon↔REACH once  
-**Gauntlet:** Heat still wins R0–R2 · Gate C CLOSED  
-**Live:** http://127.0.0.1:8766/gauntlet/progress.html  
+**Serve:** hard-refresh `?v=417` — title must say **BUILD 417**  
+**Gauntlet:** Heat wins R0–R3 · Gate C CLOSED  
 
-## Critics
-| R | Winner | → ship |
-|---|--------|--------|
-| 0 | Heat | wet/MG → v414 |
-| 1 | Heat | density/signals → v415 |
-| 2 | Heat | STOP/GO + fat MG + haze → **v416** |
+## R3 → v417
+Mirrored freight boards fixed. MG: depthTest-off boxes + HUD ◆ MG ◆ banner.
 
-Next: R3 critic on v416.
+Next: R4 critic must confirm BUILD 417 in the URL bar before judging.

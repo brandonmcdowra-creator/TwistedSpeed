@@ -2384,15 +2384,17 @@
 
   function ensureCombatPool() {
     if (_combatPool.tracerGeo) return;
-    // v414 Gauntlet D: chase-readable rods (was still mute in r0 critic)
-    _combatPool.tracerGeo = new THREE.CylinderGeometry(0.28, 0.22, TRACER_BASE_LEN, 6);
+    // v414 Gauntlet D / v417: bright unfogged rods
+    _combatPool.tracerGeo = new THREE.BoxGeometry(0.55, 0.55, TRACER_BASE_LEN);
     _combatPool.tracerMatY = new THREE.MeshBasicMaterial({
-      color: 0xfff0a0, transparent: true, opacity: 1,
+      color: 0xfff6c0, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+      depthTest: false, // draw over car body in chase
     });
     _combatPool.tracerMatP = new THREE.MeshBasicMaterial({
-      color: 0xffaa55, transparent: true, opacity: 1,
+      color: 0xffaa44, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+      depthTest: false,
     });
     _combatPool.rocketBodyGeo = new THREE.CylinderGeometry(0.16, 0.2, 1.35, 6);
     _combatPool.rocketNoseGeo = new THREE.ConeGeometry(0.16, 0.48, 6);
@@ -2418,9 +2420,10 @@
    */
   function aimMgTracer(mesh, pos, dir) {
     ensureCombatPool();
+    // BoxGeometry long axis is +Z — lookAt aims -Z, so rotateY(PI) after
     _combatPool.lookTmp.copy(pos).add(dir);
     mesh.lookAt(_combatPool.lookTmp);
-    mesh.rotateX(-Math.PI / 2);
+    mesh.rotateY(Math.PI);
   }
 
   function makeTracer(color, length) {
@@ -2435,7 +2438,8 @@
     // Pistol = warmer, MG = yellow — shared mats, just swap ref
     mesh.material = (color === 0xffcc66) ? _combatPool.tracerMatP : _combatPool.tracerMatY;
     var len = length || TRACER_BASE_LEN;
-    mesh.scale.set(1, len / TRACER_BASE_LEN, 1);
+    // v417: BoxGeometry long axis = Z
+    mesh.scale.set(1, 1, len / TRACER_BASE_LEN);
     mesh.userData.pooled = 'tracer';
     return mesh;
   }
@@ -2610,8 +2614,9 @@
         }
       }
     }
-    // Screen flash in chase too (R2: world tracers invisible — HUD must kick)
-    state.muzzleFlash = Math.min(1, (state.muzzleFlash || 0) + (hood ? 0.35 : 0.55));
+    // Screen flash + sticky FIRING flag for HUD (R3: must be unmistakable)
+    state.muzzleFlash = 1;
+    state.firingMg = 0.2;
     state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + (hood ? 0.12 : 0.22));
     if (hood) p._hoodMuzzleT = 0.08;
     else p._chaseMuzzleT = 0.1;
@@ -2812,7 +2817,8 @@
   function updateRace(dt) {
     state.raceTime += dt;
     if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 2.8);
-    if (state.muzzleFlash > 0) state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 5.5);
+    if (state.muzzleFlash > 0) state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 4.0);
+    if (state.firingMg > 0) state.firingMg = Math.max(0, state.firingMg - dt);
     if (state.hitDirT > 0) state.hitDirT = Math.max(0, state.hitDirT - dt);
     if (state._startBannerT > 0) state._startBannerT = Math.max(0, state._startBannerT - dt);
     // Re-unlock + engine if AudioContext still suspended / silent after START (v311/v357)

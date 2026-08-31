@@ -391,6 +391,7 @@
       this._buildHorizonSkyline();
       this._buildLamps();
       this._buildGates();
+      this._buildFlankHaze();
     }
     // Final safety net: hide anything that still occupies open asphalt
     this._assertDrivelineClear();
