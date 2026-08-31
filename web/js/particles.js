@@ -199,10 +199,56 @@
   };
 
   Particles.prototype.muzzle = function (pos, dir) {
-    // v400: readable 1-frame flash in chase (was count:1 / scale:0.55 — mute at speed)
+    // v428: tight localized flash — not screen-filling billboard
     if (this.items.length > 120) return;
-    this.spawn('muzzle', pos, { count: 2, speed: 10, life: 0.09, scale: 0.85, dir: dir, gravity: 0 });
-    this.spawn('spark', pos, { count: 2, speed: 12, life: 0.11, scale: 0.35, dir: dir, gravity: 2 });
+    this.spawn('muzzle', pos, { count: 2, speed: 8, life: 0.07, scale: 0.55, dir: dir, gravity: 0 });
+    this.spawn('spark', pos, { count: 2, speed: 10, life: 0.09, scale: 0.25, dir: dir, gravity: 2 });
+  };
+
+  /** TM-style 4-petal cross muzzle burst — additive planes, camera-facing */
+  Particles.prototype.muzzleBurst = function (pos, dir, hood) {
+    if (this.items.length > 130) return;
+    var cam = this._cam || (GAME.camera);
+    if (!cam) { this.muzzle(pos, dir); return; }
+    var sc = hood ? 0.55 : 0.85;
+    var petals = 4;
+    var tmpR = new THREE.Vector3();
+    var tmpU = new THREE.Vector3();
+    var tmpF = dir.clone().normalize();
+    tmpR.crossVectors(tmpF, cam.up).normalize();
+    if (tmpR.lengthSq() < 0.01) tmpR.set(1, 0, 0);
+    tmpU.crossVectors(tmpR, tmpF).normalize();
+    var mat = this.mats.muzzle;
+    for (var pi = 0; pi < petals; pi++) {
+      var mesh = this._alloc('muzzle');
+      mesh.geometry = this.geo;
+      mesh.material = mat;
+      mesh.userData.ownedMat = false;
+      mesh.position.copy(pos);
+      mesh.scale.set(hood ? 0.9 : 1.4, hood ? 0.18 : 0.28, 1);
+      var ang = (pi / petals) * Math.PI;
+      var ax = tmpR.clone().multiplyScalar(Math.cos(ang)).addScaledVector(tmpU, Math.sin(ang));
+      mesh.lookAt(pos.clone().add(ax));
+      var s0 = mesh.scale.x;
+      this.items.push({
+        mesh: mesh, vel: tmpF.clone().multiplyScalar(2),
+        life: hood ? 0.06 : 0.08, maxLife: hood ? 0.06 : 0.08,
+        drag: 0.85, gravity: 0, kind: 'muzzle', billboard: false,
+        baseScale: s0, noPool: false, softFade: true,
+      });
+    }
+    // hot core
+    var core = this._alloc('muzzle');
+    core.geometry = this.sphereGeo;
+    core.material = this.mats.fireCore;
+    core.position.copy(pos);
+    core.scale.setScalar(sc * 0.5);
+    this.items.push({
+      mesh: core, vel: new THREE.Vector3(), life: 0.05, maxLife: 0.05,
+      drag: 1, gravity: 0, kind: 'muzzle', billboard: true, baseScale: sc * 0.5,
+      noPool: false, softFade: true,
+    });
+    this.burstLight(pos, 0xffaa44, hood ? 4 : 7, 0.08);
   };
 
   Particles.prototype._ensureBoomMats = function () {

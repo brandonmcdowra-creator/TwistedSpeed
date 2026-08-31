@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 427', w / 2, h * 0.395);
+    ctx.fillText('BUILD 428', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -671,15 +671,24 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
-    // v416: MG screen kick — yellow muzzle bloom so fire is unmistakable in chase
+    // v428: MG screen kick — tighter TM cross-bloom (was full-screen wash)
     if (state.muzzleFlash > 0 || holdingJEarly) {
-      var ma = Math.min(0.75, Math.max(state.muzzleFlash || 0.9, holdingJEarly ? 0.9 : 0) * 0.9);
-      var mg = ctx.createRadialGradient(w * 0.5, h * 0.62, 20, w * 0.5, h * 0.55, w * 0.5);
-      mg.addColorStop(0, 'rgba(255,245,180,' + ma + ')');
-      mg.addColorStop(0.35, 'rgba(255,180,60,' + (ma * 0.4) + ')');
+      var ma = Math.min(0.42, Math.max(state.muzzleFlash || 0.7, holdingJEarly ? 0.7 : 0) * 0.65);
+      var mx = w * 0.5, my = h * 0.58;
+      var mg = ctx.createRadialGradient(mx, my, 4, mx, my, w * 0.14);
+      mg.addColorStop(0, 'rgba(255,255,220,' + ma + ')');
+      mg.addColorStop(0.3, 'rgba(255,170,50,' + (ma * 0.35) + ')');
       mg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = mg;
-      ctx.fillRect(0, 0, w, h);
+      ctx.fillRect(mx - w * 0.14, my - w * 0.12, w * 0.28, w * 0.24);
+      // 4-petal TM cross
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.globalAlpha = ma * 0.85;
+      ctx.fillStyle = 'rgba(255,255,200,0.9)';
+      ctx.fillRect(-w * 0.055, -3, w * 0.11, 6);
+      ctx.fillRect(-3, -w * 0.045, 6, w * 0.09);
+      ctx.restore();
     }
     if (state.firingMg > 0 || holdingJEarly) {
       ctx.save();
@@ -792,16 +801,25 @@
       ctx.fillStyle = mg;
       ctx.fillRect(mx - w * 0.22, my - w * 0.18, w * 0.44, w * 0.36);
     }
-    // Chase MG muzzle — smaller HUD burst; van occludes world flash at gun (v400)
+    // Chase MG muzzle — v428 TM 4-petal cross (localized, not full-frame)
     if (state.camMode !== 'hood' && p._chaseMuzzleT > 0) {
       var cm = Math.min(1, p._chaseMuzzleT / 0.07);
-      var cx = w * 0.5, cy = h * 0.62;
-      var cg = ctx.createRadialGradient(cx, cy, 2, cx, cy, w * 0.12);
-      cg.addColorStop(0, 'rgba(255,246,180,' + (0.55 * cm) + ')');
-      cg.addColorStop(0.4, 'rgba(255,180,40,' + (0.28 * cm) + ')');
+      var cx = w * 0.5, cy = h * 0.58;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.globalAlpha = 0.5 * cm;
+      ctx.fillStyle = 'rgba(255,255,210,0.85)';
+      ctx.fillRect(-w * 0.04, -2, w * 0.08, 4);
+      ctx.fillRect(-2, -w * 0.035, 4, w * 0.07);
+      var cg = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
+      cg.addColorStop(0, 'rgba(255,255,200,' + (0.7 * cm) + ')');
+      cg.addColorStop(0.5, 'rgba(255,160,40,' + (0.3 * cm) + ')');
       cg.addColorStop(1, 'rgba(255,100,0,0)');
       ctx.fillStyle = cg;
-      ctx.fillRect(cx - w * 0.12, cy - w * 0.1, w * 0.24, w * 0.2);
+      ctx.beginPath();
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     // Armor + run scrap — high contrast for first-minute read (v303)

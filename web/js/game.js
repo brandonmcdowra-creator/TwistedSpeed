@@ -2384,15 +2384,15 @@
 
   function ensureCombatPool() {
     if (_combatPool.tracerGeo) return;
-    // v427 Gauntlet TM: fat bright rods — must read like TM chain-gun at chase speed
-    _combatPool.tracerGeo = new THREE.BoxGeometry(0.8, 0.8, TRACER_BASE_LEN);
+    // v428 Gauntlet TM: thin orange tracers — TM 2012 chain-gun read at chase speed
+    _combatPool.tracerGeo = new THREE.BoxGeometry(0.14, 0.14, TRACER_BASE_LEN);
     _combatPool.tracerMatY = new THREE.MeshBasicMaterial({
-      color: 0xfffff0, transparent: true, opacity: 1,
+      color: 0xffaa33, transparent: true, opacity: 0.95,
       depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
       depthTest: false,
     });
     _combatPool.tracerMatP = new THREE.MeshBasicMaterial({
-      color: 0xffcc55, transparent: true, opacity: 1,
+      color: 0xff8833, transparent: true, opacity: 0.95,
       depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
       depthTest: false,
     });
@@ -2560,9 +2560,9 @@
     // Hood: spawn further ahead/higher so tracers sit in FOV (body is hidden) (v302)
     var fwdOff = hood ? 4.2 : 2.4;
     var yOff = hood ? 1.45 : 3.1;
-    // v427: TM-scale rods — long, thick, dual stream in chase
-    var tracerLen = hood ? 6.0 : 18.0;
-    var radScale = hood ? 2.2 : 5.5;
+    // v428: TM thin tracers — long orange lines, not screen-filling rods
+    var tracerLen = hood ? 5.5 : 14.0;
+    var radScale = hood ? 1.6 : 2.4;
     function spawnMgRound(sideOff) {
       if (state.projectiles.length > 28) return;
       var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff);
@@ -2593,14 +2593,15 @@
       var mSide = hood ? 0 : ((Math.random() > 0.5 ? 1 : -1) * 1.1);
       var mOrigin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, mSide);
       mOrigin.y += yOff;
-      particles.muzzle(mOrigin, tmpV);
+      if (particles.muzzleBurst) particles.muzzleBurst(mOrigin, tmpV, hood);
+      else particles.muzzle(mOrigin, tmpV);
       if (particles.spawn) {
         particles.spawn('muzzle', mOrigin, {
-          count: hood ? 6 : 14, speed: 18, life: 0.16,
-          scale: hood ? 1.3 : 2.0, dir: tmpV, gravity: 0,
+          count: hood ? 4 : 6, speed: 14, life: 0.12,
+          scale: hood ? 0.9 : 1.1, dir: tmpV, gravity: 0,
         });
         particles.spawn('spark', mOrigin, {
-          count: hood ? 10 : 18, speed: 20, life: 0.18, gravity: 2,
+          count: hood ? 6 : 10, speed: 16, life: 0.14, gravity: 2,
         });
       }
       if (p.mesh && p.mesh.userData) {
@@ -3859,11 +3860,16 @@
       // Reuse lookTmp — never clone every frame
       if (pr.type === 'mg') {
         aimMgTracer(pr.mesh, pr.pos, pr.vel);
-        // v427: hot trail streaks along MG path (TM chain-gun read)
-        if (pr.trail && particles && particles.spawn && Math.random() < 0.55) {
+        // v428: smoke ribbon along MG path (TM white trail read)
+        if (pr.trail && particles && particles.spawn && Math.random() < 0.48) {
           particles.spawn('spark', pr.pos.clone(), {
-            count: 2, speed: 4, life: 0.12, scale: 0.35, gravity: 0,
+            count: 1, speed: 2, life: 0.14, scale: 0.22, gravity: 0,
           });
+          if (Math.random() < 0.35) {
+            particles.spawn('muzzle', pr.pos.clone(), {
+              count: 1, speed: 1, life: 0.1, scale: 0.18, gravity: 0,
+            });
+          }
         }
       } else if (pr.type === 'rocket' || pr.type === 'bone') {
         _combatPool.lookTmp.copy(pr.pos).add(pr.vel);
@@ -3922,9 +3928,10 @@
                 particles.hitTrail(pr.pos, 'spark');
                 if (particles.spawn) {
                   particles.spawn('spark', pr.pos.clone(), {
-                    count: 6, speed: 14, life: 0.24, scale: 0.45, gravity: 8,
+                    count: 8, speed: 16, life: 0.22, scale: 0.5, gravity: 8,
                   });
                 }
+                if (particles.burstLight) particles.burstLight(pr.pos, 0xff6622, 5, 0.1);
               }
             }
             if ((pr.type === 'rocket' || pr.type === 'bone') && GAME.sfx) GAME.sfx.explode();

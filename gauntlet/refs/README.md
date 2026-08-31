@@ -6,7 +6,10 @@ Local stills for blind A/B critics (comparison only — not game assets).
 - `heat-feature.jpg` / `heat-feature-sm.jpg` — NFS Heat wet neon chase (official-style promo)
 - `heat-chase-0*-sm.jpg` — 4K Heat screenshot downs (Palm City night)
 
-## Twisted Metal combat
-- `tm-combat-01-sm.jpg` … `tm-combat-04-sm.jpg` — IGDB Twisted Metal (2012) combat stills
+## Twisted Metal combat (2012 PS3)
+- `tm-combat-01-sm.jpg` — Twin turret vs helicopters, tracers + muzzle flash (VGB 2011)
+- `tm-combat-02-sm.jpg` — Sweet Tooth muscle car firing, orange tracers + explosion (GameHope)
+- `tm-combat-03-sm.jpg` — Chase-cam combat at speed, motion blur + targeting (VGB 2011)
+- `tm-combat-04-sm.jpg` — Urban helicopter combat, explosions + HUD (GameHope)
 
-Full 4K dumps are gitignored (`heat-imgur-*`, full `heat-chase-0[1-5].jpg`).
+Full-res originals: `tm-combat-0[1-4].jpg`. Sources: videogamesblogger.com, gamehope.com.
