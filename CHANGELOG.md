@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-31 — Web v428–v429: TM combat refs + MG polish (Gauntlet R14)
+
+R13 critic invalidated — TM refs were dev-build top-down, not TM 2012.
+
+- **Ref pack fixed:** tm-combat-01..04 from verified TM 2012 PS3 stills (VGB/GameHope)
+- **v428:** Thin orange tracers (0.14 box), TM 4-petal muzzle burst, tighter HUD bloom, hit light flash
+- **v429:** Chase speed radial streaks when mph > 88 (motion-blur read)
+- **R14 verdict:** TM still wins (~32% gap); hit feedback + readability ours
+
+Hard-refresh via `python3 serve.py` → `?v=429`.
+
+---
+
 ## 2026-08-31 — Web v427: TM combat readability (Gauntlet Piece D)
 
 R12 won Heat chase A/B. TM combat bar next — MG was PARTIAL since R5.

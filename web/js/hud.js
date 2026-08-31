@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 428', w / 2, h * 0.395);
+    ctx.fillText('BUILD 429', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -656,7 +656,26 @@
       ctx.restore();
     }
 
-    // v418/v419: resolve J-hold UP FRONT so banner/flash same-frame (R5: chip worked, ◆ MG ◆ missed — draw order)
+    // v429: chase speed streaks — TM motion-blur read at high mph
+    if (state.camMode !== 'hood' && p.speed > 88) {
+      var sb = Math.min(1, (p.speed - 88) / 55);
+      ctx.save();
+      ctx.globalAlpha = 0.06 + sb * 0.14;
+      ctx.strokeStyle = 'rgba(255,200,120,0.55)';
+      ctx.lineWidth = 1.5;
+      var cx = w * 0.5, cy = h * 0.55;
+      for (var si = 0; si < 10; si++) {
+        var ang = (si / 10) * Math.PI * 2 + (state.time || 0) * 0.4;
+        var r0 = 40 + si * 6;
+        var r1 = r0 + 60 + sb * 80;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0 * 0.55);
+        ctx.lineTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1 * 0.55);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     var holdingJEarly = (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
     if (holdingJEarly) {
       state.firingMg = Math.max(state.firingMg || 0, 0.2);
