@@ -4873,9 +4873,10 @@
         particles.ensureRain(camera.position);
         particles.updateRain(dt, camera.position);
       }
-      // Road wetness + specular pulse — v422: always tick (not only when raining)
+      // Road wetness + specular pulse — v424: always tick (not only when raining)
       if (world) {
         var wetRoad = (particles.getWetBias && particles.getWetBias()) || 0;
+        state.wetBias = wetRoad;
         if (world._wetSheenMat) {
           world._wetSheenMat.opacity = 0.08 + wetRoad * 0.12;
         }

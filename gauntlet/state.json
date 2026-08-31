@@ -1,5 +1,5 @@
 {
-  "build": "v423",
-  "round": "R9 per-lamp radial pools — critic next",
-  "log": "R8: Heat wins — tiled specular grid (70% gap). Speculars now visible.\nv423: removed global tile; per-lamp/neon radial pools with color tint + noise.\nGoal: flip wet-road A/B vs Heat.\n"
+  "build": "v424",
+  "round": "R10 soft gradients ship — critic next",
+  "log": "R9: approaches Heat (40% wet road gap). Hard pool edges.\nv424: 256px blur-soft pools, lamp halos, brighter hotspots, 148 rain streaks, HUD windshield rain.\nGoal: flip wet-road A/B vs Heat.\n"
 }

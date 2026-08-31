@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-31 — Web v424: soft pool gradients + rain motion streaks (R10 gap)
+
+R9 critic: pools work but hard dithered edges (40% wet road gap).
+
+- 256px soft radial pool textures with blur pass + hot core punch
+- Brighter lamp pools (0.78) + wide halo layer per pole
+- Neon/gate pool opacity boost; lamp kind boost in updateRoadWet
+- Rain: 148 drops, 2.75-length streaks, stronger diagonal lean
+- HUD windshield rain streaks when wetBias active
+
+Hard-refresh via `python3 serve.py` → `?v=424`.
+
+---
+
 ## 2026-08-31 — Web v423: per-lamp radial pools, remove tiled grid (R9 gap)
 
 R8 critic: speculars visible but uniform tiled grid (70% gap). Heat uses unique per-light pools.

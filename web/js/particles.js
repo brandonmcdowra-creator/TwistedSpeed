@@ -509,8 +509,8 @@
 
   Particles.prototype._wxEnsureShared = function () {
     if (this._wxShared) return this._wxShared;
-    // Thin rain needle — v421 longer streak for Heat diagonal read
-    var rainGeo = new THREE.BoxGeometry(0.012, 1.85, 0.012);
+    // Thin rain needle — v424 longer streak for motion-blur read
+    var rainGeo = new THREE.BoxGeometry(0.01, 2.75, 0.01);
     var rainMat = new THREE.MeshBasicMaterial({
       color: 0xb0c8e0,
       transparent: true,
@@ -600,11 +600,11 @@
     this.rainStop();
 
     var S = this._wxEnsureShared();
-    // PERF budgets — v422 Gauntlet: denser diagonal rain + road splatter read
-    var rainN = 132;
-    var mistN = 6;
+    // PERF budgets — v424 Gauntlet: dense diagonal rain + motion streaks
+    var rainN = 148;
+    var mistN = 7;
     var emberN = 0;
-    var rainOp = 0.42;
+    var rainOp = 0.46;
     var rainCol = 0xc8dcff;
     var wind = 4.0;
     var fallMin = 32;
@@ -639,7 +639,7 @@
       mistCol = 0xa8c8e8;
     }
 
-    if (rainN > 120) rainN = 120;
+    if (rainN > 150) rainN = 150;
     if (rainN < 20) rainN = 20;
 
     var splashN = t === 'coastal' ? 18 : t === 'industrial' ? 16 : 24;
@@ -806,7 +806,7 @@
     wx.wetBias = wetPeak * ramp;
 
     // Cap splash spawns per frame so heavy rain doesn't thrash the free list
-    var splashBudget = 6;
+    var splashBudget = 10;
     var sn = wx.splashN || 0;
     var sLife = wx.sLife;
     var sMax = wx.sMax;
@@ -823,7 +823,7 @@
       // Respawn when below camera (near ground relative to cam) or far off in XZ
       if (pos[iy] < -6) {
         // Ground splash at impact offset (sample — not every drop)
-        if (sn > 0 && splashBudget > 0 && Math.random() < 0.28) {
+        if (sn > 0 && splashBudget > 0 && Math.random() < 0.38) {
           var si = wx.splashCursor;
           wx.splashCursor = (si + 1) % sn;
           sOx[si] = pos[ix];
@@ -844,8 +844,8 @@
       py = cy + pos[iy];
       pz = cz + pos[iz];
       dummy.position.set(px, py, pz);
-      // Lean into wind — v422 stronger diagonal streak
-      dummy.rotation.set(0, 0, 0.42);
+      // Lean into wind — v424 diagonal motion streak
+      dummy.rotation.set(0, 0, 0.48);
       dummy.scale.set(1, len[i], 1);
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);

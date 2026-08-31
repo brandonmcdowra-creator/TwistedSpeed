@@ -726,12 +726,12 @@
     return spec;
   };
 
-  /** v423: per-color radial pool texture with noise breakup (unique lamp/neon hotspots) */
+  /** v424: soft radial pool textures — high-res smooth falloff, subtle grain only */
   World.prototype._poolTexForColor = function (hex) {
     if (!this._poolTexCache) this._poolTexCache = {};
-    var key = (hex >>> 0).toString(16);
+    var key = (hex >>> 0).toString(16) + '_v424';
     if (this._poolTexCache[key]) return this._poolTexCache[key];
-    var S = 128;
+    var S = 256;
     var c = document.createElement('canvas');
     c.width = c.height = S;
     var ctx = c.getContext('2d');
@@ -739,23 +739,43 @@
     var r = Math.round(col.r * 255);
     var g = Math.round(col.g * 255);
     var b = Math.round(col.b * 255);
-    var grad = ctx.createRadialGradient(S * 0.5, S * 0.5, 0, S * 0.5, S * 0.5, S * 0.48);
-    grad.addColorStop(0, 'rgba(255,255,255,0.92)');
-    grad.addColorStop(0.18, 'rgba(' + r + ',' + g + ',' + b + ',0.55)');
-    grad.addColorStop(0.42, 'rgba(' + r + ',' + g + ',' + b + ',0.18)');
-    grad.addColorStop(0.72, 'rgba(' + r + ',' + g + ',' + b + ',0.04)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
+    // Outer soft halo (wide diffuse scatter)
+    var halo = ctx.createRadialGradient(S * 0.5, S * 0.5, 0, S * 0.5, S * 0.5, S * 0.5);
+    halo.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.38)');
+    halo.addColorStop(0.35, 'rgba(' + r + ',' + g + ',' + b + ',0.14)');
+    halo.addColorStop(0.62, 'rgba(' + r + ',' + g + ',' + b + ',0.04)');
+    halo.addColorStop(0.85, 'rgba(' + r + ',' + g + ',' + b + ',0.01)');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
     ctx.fillRect(0, 0, S, S);
-    // Noise breakup — breaks perfect radial into textured pool
-    for (var n = 0; n < 620; n++) {
-      var nx = (n * 37) % S;
-      var ny = (n * 71) % S;
-      var na = 0.04 + (n % 7) * 0.02;
-      ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + na + ')';
-      ctx.fillRect(nx, ny, 1 + (n % 3), 1 + (n % 2));
-    }
+    // Hot core (bright white hotspot — exponential falloff)
+    var core = ctx.createRadialGradient(S * 0.5, S * 0.5, 0, S * 0.5, S * 0.5, S * 0.22);
+    core.addColorStop(0, 'rgba(255,255,255,0.95)');
+    core.addColorStop(0.12, 'rgba(255,255,255,0.72)');
+    core.addColorStop(0.28, 'rgba(' + r + ',' + g + ',' + b + ',0.48)');
+    core.addColorStop(0.55, 'rgba(' + r + ',' + g + ',' + b + ',0.08)');
+    core.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = core;
+    ctx.fillRect(0, 0, S, S);
+    // Soft blur pass — kills dithered hard edges (R9 gap)
+    var tmp = document.createElement('canvas');
+    tmp.width = tmp.height = S;
+    var tctx = tmp.getContext('2d');
+    tctx.drawImage(c, 0, 0);
+    ctx.clearRect(0, 0, S, S);
+    ctx.filter = 'blur(5px)';
+    ctx.drawImage(tmp, 0, 0);
+    ctx.filter = 'none';
+    // Re-punch hot center after blur
+    var punch = ctx.createRadialGradient(S * 0.5, S * 0.5, 0, S * 0.5, S * 0.5, S * 0.14);
+    punch.addColorStop(0, 'rgba(255,255,255,0.55)');
+    punch.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+    punch.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = punch;
+    ctx.fillRect(0, 0, S, S);
     var tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     tex.needsUpdate = true;
     this._poolTexCache[key] = tex;
     return tex;
@@ -925,7 +945,7 @@
       var col = accentCols[gi % accentCols.length];
       var gMat = new THREE.MeshBasicMaterial({
         map: this._poolTexForColor(col),
-        transparent: true, opacity: 0.34,
+        transparent: true, opacity: 0.42,
         depthWrite: false, depthTest: false,
         blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       });
@@ -936,24 +956,25 @@
       glint.position.y = gf.p.y + 0.1;
       glint.rotation.z = -gf.yaw;
       glint.userData.isRoadSurface = true;
-      glint.userData.baseOp = 0.34;
+      glint.userData.baseOp = 0.42;
       glint.renderOrder = 3;
       glint.frustumCulled = true;
       this.group.add(glint);
       this._roadGlints.push(glint);
     }
 
-    // Headlight sweep glint — positioned each frame in updateRoadWet
+    // Headlight sweep glint — v424 uses soft pool texture
     this._headlightGlint = new THREE.Mesh(
-      new THREE.PlaneGeometry(5, 20),
+      new THREE.PlaneGeometry(6, 22),
       new THREE.MeshBasicMaterial({
-        color: 0xf0f8ff, transparent: true, opacity: 0.42,
+        map: this._poolTexForColor(0xf0f8ff),
+        transparent: true, opacity: 0.48,
         depthWrite: false, depthTest: false,
         blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       })
     );
     this._headlightGlint.rotation.x = -Math.PI / 2;
-    this._headlightGlint.userData.baseOp = 0.42;
+    this._headlightGlint.userData.baseOp = 0.48;
     this._headlightGlint.renderOrder = 4;
     this.group.add(this._headlightGlint);
     this._roadGlints.push(this._headlightGlint);
@@ -1117,12 +1138,12 @@
   };
 
   /**
-   * v422: pulse localized road speculars + headlight sweep (Heat wet asphalt read).
+   * v424: pulse localized road speculars + headlight sweep (Heat wet asphalt read).
    */
   World.prototype.updateRoadWet = function (wet, camPos, time, pathT) {
     var t = time || 0;
-    var wetK = 0.78 + (wet || 0) * 0.55;
-    var shimmer = 0.9 + Math.sin(t * 3.8) * 0.1;
+    var wetK = 0.88 + (wet || 0) * 0.45;
+    var shimmer = 0.92 + Math.sin(t * 3.8) * 0.08;
     if (this._roadSpecMat) {
       this._roadSpecMat.opacity = (0.34 + (wet || 0) * 0.22) * shimmer;
     }
@@ -1131,7 +1152,8 @@
         var g = this._roadGlints[i];
         if (!g.material || g === this._headlightGlint) continue;
         var base = g.userData.baseOp != null ? g.userData.baseOp : 0.35;
-        g.material.opacity = base * wetK * shimmer * (0.94 + (i % 5) * 0.03);
+        var kindBoost = g.userData.poolKind === 'lamp' ? 1.18 : (g.userData.poolKind === 'gate' ? 1.12 : 1.0);
+        g.material.opacity = base * wetK * shimmer * kindBoost * (0.96 + (i % 5) * 0.02);
       }
     }
     // Headlight cone sweep ahead on path
@@ -1731,7 +1753,7 @@
       if (ui % 2 === 0) {
         var neonPoolMat = new THREE.MeshBasicMaterial({
           map: this._poolTexForColor(neonCols[ni]),
-          transparent: true, opacity: 0.3,
+          transparent: true, opacity: 0.42,
           depthWrite: false, depthTest: false,
           blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         });
@@ -1742,7 +1764,8 @@
         neonPool.position.y = f.p.y + 0.102;
         neonPool.rotation.z = -f.yaw;
         neonPool.userData.isRoadSurface = true;
-        neonPool.userData.baseOp = 0.3;
+        neonPool.userData.baseOp = 0.42;
+        neonPool.userData.poolKind = 'neon';
         neonPool.renderOrder = 3;
         neonPool.userData.qualityExtra = true;
         this.group.add(neonPool);
@@ -3154,27 +3177,48 @@
       this.group.add(pool);
       this.buildings.push(pool);
 
-      // v423: radial lamp pool ON road center (unique hotspot per pole, not tiled grid)
+      // v424: soft radial lamp pool ON road center — bright hotspot + wide halo layer
       var lampPoolMat = new THREE.MeshBasicMaterial({
         map: this._poolTexForColor(0xffc880),
         transparent: true,
-        opacity: 0.62,
+        opacity: 0.78,
         depthWrite: false,
         depthTest: false,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       });
-      var roadPool = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), lampPoolMat);
+      var roadPool = new THREE.Mesh(new THREE.PlaneGeometry(9, 12), lampPoolMat);
       roadPool.rotation.x = -Math.PI / 2;
       roadPool.position.copy(p);
-      roadPool.position.y = p.y + 0.105;
+      roadPool.position.y = p.y + 0.108;
       roadPool.rotation.z = -Math.atan2(tan.x, tan.z);
       roadPool.userData.isRoadSurface = true;
-      roadPool.userData.baseOp = 0.62;
+      roadPool.userData.baseOp = 0.78;
+      roadPool.userData.poolKind = 'lamp';
       roadPool.renderOrder = 3;
       this.group.add(roadPool);
       if (!this._roadGlints) this._roadGlints = [];
       this._roadGlints.push(roadPool);
+
+      var lampHalo = new THREE.Mesh(
+        new THREE.PlaneGeometry(14, 16),
+        new THREE.MeshBasicMaterial({
+          map: this._poolTexForColor(0xffa040),
+          transparent: true, opacity: 0.32,
+          depthWrite: false, depthTest: false,
+          blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        })
+      );
+      lampHalo.rotation.x = -Math.PI / 2;
+      lampHalo.position.copy(p);
+      lampHalo.position.y = p.y + 0.106;
+      lampHalo.rotation.z = -Math.atan2(tan.x, tan.z);
+      lampHalo.userData.isRoadSurface = true;
+      lampHalo.userData.baseOp = 0.32;
+      lampHalo.userData.poolKind = 'lamp';
+      lampHalo.renderOrder = 2;
+      this.group.add(lampHalo);
+      this._roadGlints.push(lampHalo);
 
       this.lamps.push({
         group: pole,
@@ -3313,7 +3357,7 @@
       // v423: neon radial ground pool under gate
       var gatePoolMat = new THREE.MeshBasicMaterial({
         map: self._poolTexForColor(col),
-        transparent: true, opacity: 0.55,
+        transparent: true, opacity: 0.62,
         depthWrite: false, depthTest: false,
         blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       });
@@ -3323,7 +3367,8 @@
       gatePool.position.y = p.y + 0.102;
       gatePool.rotation.z = -yaw;
       gatePool.userData.isRoadSurface = true;
-      gatePool.userData.baseOp = 0.55;
+      gatePool.userData.baseOp = 0.62;
+      gatePool.userData.poolKind = 'gate';
       gatePool.renderOrder = 3;
       tagGate(gatePool);
       if (!self._roadGlints) self._roadGlints = [];

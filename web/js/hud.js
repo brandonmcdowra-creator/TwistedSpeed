@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 423', w / 2, h * 0.395);
+    ctx.fillText('BUILD 424', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -637,6 +637,24 @@
     var ctx = this.ctx, w = this.w, h = this.h;
     var p = state.player;
     if (!p) return;
+
+    // v424: windshield rain streaks when wet (Heat chase-cam atmosphere)
+    if (state.wetBias > 0.12) {
+      var wb = state.wetBias;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(220,235,255,' + (0.08 + wb * 0.14) + ')';
+      ctx.lineWidth = 1.2;
+      var t = (state.time || 0) * 1.8;
+      for (var ri = 0; ri < 14; ri++) {
+        var rx = ((ri * 137 + Math.floor(t * 3) * 17) % 1000) / 1000 * w;
+        var ry = ((ri * 211 + Math.floor(t * 5) * 23) % 1000) / 1000 * h;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx - 18 - ri * 2, ry + 42 + ri * 3);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     // v418/v419: resolve J-hold UP FRONT so banner/flash same-frame (R5: chip worked, ◆ MG ◆ missed — draw order)
     var holdingJEarly = (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
