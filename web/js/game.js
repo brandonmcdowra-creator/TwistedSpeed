@@ -2326,18 +2326,13 @@
       var boomPos = r.pos.clone();
       boomPos.y += 0.7;
       if (particles) {
-        if (particles.explosion) particles.explosion(boomPos, true);
-        if (particles.smokeStack) particles.smokeStack(boomPos, true);
+        if (particles.killNova) particles.killNova(boomPos);
+        else {
+          if (particles.explosion) particles.explosion(boomPos, true);
+          if (particles.smokeStack) particles.smokeStack(boomPos, true);
+        }
         if (particles.spawn) {
-          particles.spawn('fire', boomPos, { count: 28, speed: 16, life: 0.65, gravity: 2 });
-          particles.spawn('spark', boomPos.clone().setY(boomPos.y + 0.3), {
-            count: 22, speed: 18, life: 0.42, gravity: 3,
-          });
-          particles.spawn('smoke', boomPos.clone().setY(boomPos.y + 0.8), {
-            count: 16, speed: 5, life: 1.8, scale: 2.8, gravity: -0.35,
-          });
-          particles.spawn('smokeDark', boomPos, { count: 8, speed: 3, life: 2.0, scale: 2.2, gravity: -0.15 });
-          particles.spawn('pink', boomPos, { count: 12, speed: 12, life: 0.32, gravity: 1 });
+          particles.spawn('pink', boomPos, { count: 10, speed: 12, life: 0.32, gravity: 1 });
         }
       }
       if (GAME.sfx) {

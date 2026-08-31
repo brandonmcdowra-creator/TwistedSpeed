@@ -323,6 +323,85 @@
     return this._boomMats;
   };
 
+  /** v432: opaque soot + gh-02 scale fireball for kill eliminations */
+  Particles.prototype._ensureSootMats = function () {
+    if (this._sootMats) return this._sootMats;
+    this._sootMats = {
+      soot: new THREE.MeshBasicMaterial({
+        map: this.softSmokeTex, color: 0x14100c, transparent: true, opacity: 0.9,
+        depthWrite: false, blending: THREE.NormalBlending, side: THREE.DoubleSide,
+      }),
+      sootMid: new THREE.MeshBasicMaterial({
+        map: this.softSmokeTex, color: 0x2a2018, transparent: true, opacity: 0.78,
+        depthWrite: false, blending: THREE.NormalBlending, side: THREE.DoubleSide,
+      }),
+      nova: new THREE.MeshBasicMaterial({
+        map: this.softFireTex, color: 0xffffcc, transparent: true, opacity: 0.96,
+        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      }),
+      novaOuter: new THREE.MeshBasicMaterial({
+        map: this.softFireTex, color: 0xff7722, transparent: true, opacity: 0.72,
+        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      }),
+    };
+    return this._sootMats;
+  };
+
+  Particles.prototype.killNova = function (pos) {
+    if (this.items.length > 115) return;
+    var S = this._ensureSootMats();
+    var B = this._ensureBoomMats();
+    var fi;
+    for (fi = 0; fi < 4; fi++) {
+      var mat = fi === 0 ? S.nova : (fi === 1 ? S.novaOuter : B.fire);
+      var ball = new THREE.Mesh(this.geo, mat);
+      ball.position.copy(pos);
+      ball.position.y += 0.45 + fi * 0.35;
+      var fsc = 4.2 - fi * 0.85;
+      ball.scale.setScalar(fsc);
+      this.scene.add(ball);
+      this.items.push({
+        mesh: ball, vel: new THREE.Vector3(0, 0.55 + fi * 0.15, 0),
+        life: 0.7 - fi * 0.08, maxLife: 0.7 - fi * 0.08,
+        drag: 1, gravity: 0, kind: 'fireCore', noPool: true,
+        baseScale: fsc, grow: 0.45, billboard: true, softFade: true,
+      });
+    }
+    var ring = new THREE.Mesh(B.ringGeo, B.ring);
+    ring.position.copy(pos);
+    ring.position.y = 0.1;
+    ring.rotation.x = -Math.PI / 2;
+    ring.scale.setScalar(2.2);
+    this.scene.add(ring);
+    this.items.push({
+      mesh: ring, vel: new THREE.Vector3(), life: 0.45, maxLife: 0.45,
+      drag: 1, gravity: 0, kind: 'ring', noPool: true, expand: 22,
+    });
+    var si;
+    for (si = 0; si < 9; si++) {
+      var sm = new THREE.Mesh(this.geo, si < 3 ? S.soot : S.sootMid);
+      sm.position.copy(pos);
+      sm.position.y += 0.15 + si * 0.6;
+      var sc = 3.4 + si * 0.75;
+      sm.scale.set(sc * 1.7, sc * 1.2, 1);
+      this.scene.add(sm);
+      this.items.push({
+        mesh: sm,
+        vel: new THREE.Vector3((Math.random() - 0.5) * 2.2, 3.2 + si * 0.55, (Math.random() - 0.5) * 2.2),
+        life: 2.5 + si * 0.22, maxLife: 2.5 + si * 0.22,
+        drag: 0.97, gravity: -0.04,
+        kind: 'soot', billboard: true, softFade: true,
+        baseScale: sc, noPool: true, grow: 0.3,
+      });
+    }
+    this.spawn('spark', pos, { count: 12, speed: 18, life: 0.42, scale: 0.45, gravity: 7 });
+    this.spawn('smokeDark', pos.clone().setY(pos.y + 1.2), {
+      count: 6, speed: 4, life: 2.2, scale: 3.2, gravity: -0.2,
+    });
+    this.burstLight(pos, 0xff6622, 24, 0.55);
+    this._cullIfHeavy();
+  };
+
   Particles.prototype.explosion = function (pos, big) {
     // Shared mats + few meshes — was allocating 15+ materials per rocket hit
     if (this.items.length > 150) {
@@ -431,6 +510,9 @@
         } else if (p.kind === 'mgRibbon') {
           var ribW = 0.2 * (0.4 + 0.6 * fade);
           p.mesh.scale.set(ribW, (p.baseScale || 2.4) * (0.45 + 0.55 * fade), 1);
+        } else if (p.kind === 'soot') {
+          var sootSc = base * (1 + age * 0.35) * (0.5 + 0.5 * fade);
+          p.mesh.scale.set(sootSc * 1.65, sootSc * 1.15, 1);
         } else {
           p.mesh.scale.setScalar(sc);
         }
