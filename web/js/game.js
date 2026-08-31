@@ -4873,11 +4873,14 @@
         particles.ensureRain(camera.position);
         particles.updateRain(dt, camera.position);
       }
-      // Road wetness bias while raining — boost MeshBasic sheen (PBR path rarely hits scenery)
+      // Road wetness bias while raining — v421: boost localized glints, not panel glow
       if (particles.getWetBias && world) {
         var wet = particles.getWetBias();
         if (world._wetSheenMat) {
-          world._wetSheenMat.opacity = 0.48 + wet * 0.35;
+          world._wetSheenMat.opacity = 0.08 + wet * 0.12;
+        }
+        if (world.updateRoadWet) {
+          world.updateRoadWet(wet, camera.position, state.time || 0);
         }
         if (wet > 0.01 && !state._wetRoadApplied) {
           state._wetRoadApplied = true;

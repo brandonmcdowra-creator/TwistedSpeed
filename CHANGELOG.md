@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-31 — Web v421: dark wet asphalt + localized specular (R6 gap)
+
+R6 critic: road was uniform emissive panel — Heat wins on wet asphalt (95% gap).
+
+- Dark charcoal asphalt texture + muted albedo multiplier (not self-lit ribbon)
+- Wet glaze: normal blend dark tint (replaces additive cyan glow)
+- Localized specular streaks + lamp warm pools on asphalt (`updateRoadWet`)
+- Rain: 112 drops, longer diagonal streaks, opacity 0.38
+
+Hard-refresh via `python3 serve.py` → `?v=421`.
+
+---
+
 ## 2026-08-31 — Web v420: Heat-chase rain + palms + wet punch
 
 Gauntlet Heat A/B still losing on atmosphere/density.

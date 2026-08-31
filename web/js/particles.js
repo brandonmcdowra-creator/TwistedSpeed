@@ -509,8 +509,8 @@
 
   Particles.prototype._wxEnsureShared = function () {
     if (this._wxShared) return this._wxShared;
-    // Thin rain needle — shared geo/mat for InstancedMesh
-    var rainGeo = new THREE.BoxGeometry(0.014, 1.15, 0.014);
+    // Thin rain needle — v421 longer streak for Heat diagonal read
+    var rainGeo = new THREE.BoxGeometry(0.012, 1.85, 0.012);
     var rainMat = new THREE.MeshBasicMaterial({
       color: 0xb0c8e0,
       transparent: true,
@@ -600,11 +600,11 @@
     this.rainStop();
 
     var S = this._wxEnsureShared();
-    // PERF budgets — v420 Gauntlet: city rain must READ like Heat night (was 22 = invisible)
-    var rainN = 96;
-    var mistN = 4;
+    // PERF budgets — v421 Gauntlet: denser diagonal rain streaks (R6 gap)
+    var rainN = 112;
+    var mistN = 5;
     var emberN = 0;
-    var rainOp = 0.32;
+    var rainOp = 0.38;
     var rainCol = 0xc8dcff;
     var wind = 4.0;
     var fallMin = 32;
@@ -844,8 +844,8 @@
       py = cy + pos[iy];
       pz = cz + pos[iz];
       dummy.position.set(px, py, pz);
-      // Lean into wind so streaks read as rain not stars
-      dummy.rotation.set(0, 0, 0.18);
+      // Lean into wind — v421 stronger diagonal streak
+      dummy.rotation.set(0, 0, 0.34);
       dummy.scale.set(1, len[i], 1);
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);
