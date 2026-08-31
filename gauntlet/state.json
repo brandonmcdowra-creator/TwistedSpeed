@@ -1,5 +1,5 @@
 {
-  "build": "v431",
-  "round": "R16 TM critic — TM wins ~8%; v431 blur+smoke+body light; v432 gh-02",
-  "log": "R12: Heat chase WON.\nR16: TM wins ~8%. v431 postfx blur, smokeStack, body emissive.\n"
+  "build": "v432",
+  "round": "R17 COMPLETE — Heat + TM combat both WON",
+  "log": "R12: Heat WON.\nR17: TM combat WON. v432 killNova gh-02 soot.\nGauntlet Loop COMPLETE.\n"
 }
