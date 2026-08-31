@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-31 — Web v432: killNova gh-02 parity — Gauntlet COMPLETE
+
+TM combat bar WON at R17. Full Gauntlet Loop objective achieved.
+
+- `killNova()`: 4.2× fireball + 9-layer opaque soot column on rival elim
+- Replaces explosion+smokeStack stack on kills
+- Heat chase WON R12 · TM combat WON R17
+
+Hard-refresh via `python3 serve.py` → `?v=432`.
+
+---
+
 ## 2026-08-31 — Web v431: postfx blur + smoke stacks (Gauntlet R16)
 
 R15 gap ~18% → R16 ~8%.
