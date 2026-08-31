@@ -1,7 +1,7 @@
 # Twisted Speed — Progress
 
-**Build:** web **v424** (soft pool gradients · rain streaks)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=424`  
+**Build:** web **v426** (chase-cam asphalt · Fresnel pools)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=426`  
 **Gauntlet:** chasing Heat A/B win · Gate C CLOSED  
 
 ## Scoreboard
@@ -13,4 +13,5 @@
 | 8 | — | — | Heat — tiled specular grid (70%) |
 | 9 | — | — | **Approaches Heat** — pools work, edges hard (40%) |
 | 10 | — | — | Heat — pool edges 8% ✅, road material 75% ❌ |
-| →425 | — | — | asphalt grain + sparkles — R11 critic next |
+| 11 | — | — | Heat — features invisible at speed (68%) |
+| →426 | — | — | chase-cam scale + Fresnel — R12 critic next |

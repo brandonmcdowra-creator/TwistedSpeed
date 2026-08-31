@@ -4878,7 +4878,7 @@
         var wetRoad = (particles.getWetBias && particles.getWetBias()) || 0;
         state.wetBias = wetRoad;
         if (world._wetSheenMat) {
-          world._wetSheenMat.opacity = 0.08 + wetRoad * 0.12;
+          world._wetSheenMat.opacity = 0.14 + wetRoad * 0.18;
         }
         if (world.updateRoadWet) {
           world.updateRoadWet(wetRoad, camera.position, state.time || 0, p.progress);

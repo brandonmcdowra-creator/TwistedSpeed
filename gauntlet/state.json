@@ -1,5 +1,5 @@
 {
-  "build": "v425",
-  "round": "R10 closed — v425 asphalt grain ship; R11 critic next",
-  "log": "R10: Heat wins. Pool edges 8% gap (WIN). Road material 75% gap.\nv424: soft blurred pools, rain streaks, windshield HUD.\nv425: asphalt grain lift, pool falloff to asphalt tint, micro-sparkles.\n"
+  "build": "v426",
+  "round": "R11 closed — v426 chase-cam visibility ship; R12 critic next",
+  "log": "R11: Heat wins 68% gap — v425 micro-detail invisible at speed.\nv426: 2× grain contrast, macro sparkles, wet zones, Fresnel pools, brighter tint floor.\n"
 }

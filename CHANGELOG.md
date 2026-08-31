@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-31 — Web v426: chase-cam visible asphalt + Fresnel pools (R12 gap)
+
+R11 critic: v425 features below perceptual threshold at race speed (68% material gap).
+
+- Brighter asphalt albedo + 2× grain contrast for chase-cam read
+- Pool tint floor rgba(60,72,88) — fades to grey asphalt not black void
+- Macro sparkles 1.1m, macro wet/dry zone strips
+- Fresnel grazing-angle boost on all pools (distant road glow)
+- Pool alphaMap noise for texture-modulated falloff
+
+Hard-refresh via `python3 serve.py` → `?v=426`.
+
+---
+
 ## 2026-08-31 — Web v425: asphalt grain + micro-sparkle between pools (R11 gap)
 
 R10 critic: pool edges fixed (8% gap) but road between pools is black void (75% material gap).
