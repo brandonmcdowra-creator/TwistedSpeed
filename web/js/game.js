@@ -2384,15 +2384,15 @@
 
   function ensureCombatPool() {
     if (_combatPool.tracerGeo) return;
-    // v414 Gauntlet D / v417: bright unfogged rods
-    _combatPool.tracerGeo = new THREE.BoxGeometry(0.55, 0.55, TRACER_BASE_LEN);
+    // v427 Gauntlet TM: fat bright rods — must read like TM chain-gun at chase speed
+    _combatPool.tracerGeo = new THREE.BoxGeometry(0.8, 0.8, TRACER_BASE_LEN);
     _combatPool.tracerMatY = new THREE.MeshBasicMaterial({
-      color: 0xfff6c0, transparent: true, opacity: 1,
+      color: 0xfffff0, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
-      depthTest: false, // draw over car body in chase
+      depthTest: false,
     });
     _combatPool.tracerMatP = new THREE.MeshBasicMaterial({
-      color: 0xffaa44, transparent: true, opacity: 1,
+      color: 0xffcc55, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
       depthTest: false,
     });
@@ -2560,9 +2560,9 @@
     // Hood: spawn further ahead/higher so tracers sit in FOV (body is hidden) (v302)
     var fwdOff = hood ? 4.2 : 2.4;
     var yOff = hood ? 1.45 : 3.1;
-    // v416: fat dual rods + longer life so chase can see them
-    var tracerLen = hood ? 5.0 : 14.0;
-    var radScale = hood ? 2.0 : 4.2;
+    // v427: TM-scale rods — long, thick, dual stream in chase
+    var tracerLen = hood ? 6.0 : 18.0;
+    var radScale = hood ? 2.2 : 5.5;
     function spawnMgRound(sideOff) {
       if (state.projectiles.length > 28) return;
       var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff);
@@ -2577,7 +2577,7 @@
       state.projectiles.push({
         type: 'mg', mesh: mesh, pos: origin.clone(),
         vel: tmpV.clone().multiplyScalar(cfg.combat.mgSpeed * (W.mgLabel === 'PISTOL' ? 0.92 : 1)),
-        life: hood ? 0.85 : 0.9, dmg: dmg, fromPlayer: true, trail: false,
+        life: hood ? 0.9 : 1.05, dmg: dmg, fromPlayer: true, trail: true,
       });
     }
     // Always dual stream in chase so rods clear the silhouette
@@ -2596,11 +2596,11 @@
       particles.muzzle(mOrigin, tmpV);
       if (particles.spawn) {
         particles.spawn('muzzle', mOrigin, {
-          count: hood ? 4 : 8, speed: 16, life: 0.14,
-          scale: hood ? 1.1 : 1.6, dir: tmpV, gravity: 0,
+          count: hood ? 6 : 14, speed: 18, life: 0.16,
+          scale: hood ? 1.3 : 2.0, dir: tmpV, gravity: 0,
         });
         particles.spawn('spark', mOrigin, {
-          count: hood ? 8 : 12, speed: 18, life: 0.16, gravity: 2,
+          count: hood ? 10 : 18, speed: 20, life: 0.18, gravity: 2,
         });
       }
       if (p.mesh && p.mesh.userData) {
@@ -2617,8 +2617,9 @@
     }
     // Screen flash + sticky FIRING flag for HUD (R3: must be unmistakable)
     state.muzzleFlash = 1;
-    state.firingMg = 0.2;
-    state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + (hood ? 0.12 : 0.22));
+    state.firingMg = 0.25;
+    state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + (hood ? 0.14 : 0.28));
+    state.camShake = Math.max(state.camShake || 0, hood ? 0.05 : 0.08);
     if (hood) p._hoodMuzzleT = 0.08;
     else p._chaseMuzzleT = 0.1;
     if (GAME.sfx) GAME.sfx.mg();
@@ -3858,6 +3859,12 @@
       // Reuse lookTmp — never clone every frame
       if (pr.type === 'mg') {
         aimMgTracer(pr.mesh, pr.pos, pr.vel);
+        // v427: hot trail streaks along MG path (TM chain-gun read)
+        if (pr.trail && particles && particles.spawn && Math.random() < 0.55) {
+          particles.spawn('spark', pr.pos.clone(), {
+            count: 2, speed: 4, life: 0.12, scale: 0.35, gravity: 0,
+          });
+        }
       } else if (pr.type === 'rocket' || pr.type === 'bone') {
         _combatPool.lookTmp.copy(pr.pos).add(pr.vel);
         pr.mesh.lookAt(_combatPool.lookTmp);
@@ -3913,6 +3920,11 @@
                 // v400: MG hit spark must read in chase (hitTrail alone was too small)
                 if (particles.sparks) particles.sparks(pr.pos, pr.vel);
                 particles.hitTrail(pr.pos, 'spark');
+                if (particles.spawn) {
+                  particles.spawn('spark', pr.pos.clone(), {
+                    count: 6, speed: 14, life: 0.24, scale: 0.45, gravity: 8,
+                  });
+                }
               }
             }
             if ((pr.type === 'rocket' || pr.type === 'bone') && GAME.sfx) GAME.sfx.explode();
@@ -3920,7 +3932,7 @@
             state.camShake = Math.max(state.camShake || 0, (pr.type === 'rocket' || pr.type === 'bone') ? 0.22 : 0.07);
             if (pr.type === 'mg') {
               p._hitConfirmT = (p._hitConfirmT || 0);
-              if (p._hitConfirmT <= 0) p._hitConfirmT = 0.28;
+              if (p._hitConfirmT <= 0) p._hitConfirmT = 0.38;
               // slight cam nudge sells hits at speed
               state.camShake = Math.max(state.camShake || 0, 0.09);
             } else {

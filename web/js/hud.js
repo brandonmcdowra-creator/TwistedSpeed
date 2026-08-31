@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 426', w / 2, h * 0.395);
+    ctx.fillText('BUILD 427', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -730,20 +730,25 @@
       ctx.stroke();
       ctx.restore();
     }
-    // v404: MG hit confirm + rocket lock pip (chase-cam combat read)
+    // v427: MG hit confirm — TM-style impact read (crosshair + HIT banner)
     if (p._hitConfirmT > 0) {
-      var hc = Math.min(1, p._hitConfirmT / 0.28);
+      var hc = Math.min(1, p._hitConfirmT / 0.38);
       ctx.save();
-      ctx.globalAlpha = 0.35 + 0.65 * hc;
+      ctx.globalAlpha = 0.45 + 0.55 * hc;
       ctx.strokeStyle = '#ffe66d';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       var hx = w * 0.5, hy = h * 0.42;
       ctx.beginPath();
-      ctx.moveTo(hx - 14, hy); ctx.lineTo(hx - 4, hy);
-      ctx.moveTo(hx + 4, hy); ctx.lineTo(hx + 14, hy);
-      ctx.moveTo(hx, hy - 14); ctx.lineTo(hx, hy - 4);
-      ctx.moveTo(hx, hy + 4); ctx.lineTo(hx, hy + 14);
+      ctx.moveTo(hx - 22, hy); ctx.lineTo(hx - 6, hy);
+      ctx.moveTo(hx + 6, hy); ctx.lineTo(hx + 22, hy);
+      ctx.moveTo(hx, hy - 22); ctx.lineTo(hx, hy - 6);
+      ctx.moveTo(hx, hy + 6); ctx.lineTo(hx, hy + 22);
       ctx.stroke();
+      ctx.fillStyle = 'rgba(255,60,40,0.55)';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('◆ HIT ◆', hx, hy + 36);
       ctx.restore();
     }
     if (state._lockRival && state._lockRival.pos && GAME.camera) {

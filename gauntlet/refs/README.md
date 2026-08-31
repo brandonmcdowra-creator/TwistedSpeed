@@ -7,6 +7,6 @@ Local stills for blind A/B critics (comparison only — not game assets).
 - `heat-chase-0*-sm.jpg` — 4K Heat screenshot downs (Palm City night)
 
 ## Twisted Metal combat
-- Pending: capture gameplay combat stills into `tm-*-sm.jpg`
+- `tm-combat-01-sm.jpg` … `tm-combat-04-sm.jpg` — IGDB Twisted Metal (2012) combat stills
 
 Full 4K dumps are gitignored (`heat-imgur-*`, full `heat-chase-0[1-5].jpg`).

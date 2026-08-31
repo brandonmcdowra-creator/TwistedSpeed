@@ -331,7 +331,7 @@
 
   Particles.prototype.sparks = function (pos, dir) {
     if (this.items.length > 130) return;
-    this.spawn('spark', pos, { count: 3, speed: 11, life: 0.22, scale: 0.25, dir: dir, gravity: 10 });
+    this.spawn('spark', pos, { count: 6, speed: 14, life: 0.28, scale: 0.38, dir: dir, gravity: 10 });
   };
 
   /**

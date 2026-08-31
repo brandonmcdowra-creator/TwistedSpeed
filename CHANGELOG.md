@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-31 — Web v427: TM combat readability (Gauntlet Piece D)
+
+R12 won Heat chase A/B. TM combat bar next — MG was PARTIAL since R5.
+
+- MG tracers: 0.8 thick, 18m chase length, 5.5× radius, 1.05s life
+- Hot spark trails along MG path + bigger hit bursts
+- Muzzle particle density 2×, cam shake on fire
+- HUD `◆ HIT ◆` banner + larger crosshair on confirm
+- TM ref pack: tm-combat-01..04-sm.jpg
+
+Hard-refresh via `python3 serve.py` → `?v=427`.
+
+---
+
 ## 2026-08-31 — Web v426: chase-cam visible asphalt + Fresnel pools (R12 gap)
 
 R11 critic: v425 features below perceptual threshold at race speed (68% material gap).

@@ -14,4 +14,5 @@
 | 9 | — | — | **Approaches Heat** — pools work, edges hard (40%) |
 | 10 | — | — | Heat — pool edges 8% ✅, road material 75% ❌ |
 | 11 | — | — | Heat — features invisible at speed (68%) |
-| →426 | — | — | chase-cam scale + Fresnel — R12 critic next |
+| 12 | — | — | **Heat chase WINS** ✅ (12% specular gap) |
+| TM combat | — | PARTIAL MG (R5) | refs pending |
