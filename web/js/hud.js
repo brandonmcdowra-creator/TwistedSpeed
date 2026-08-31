@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 411', w / 2, h * 0.395);
+    ctx.fillText('BUILD 412', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -1005,7 +1005,7 @@
     ctx.fillStyle = '#f2e9e4';
     ctx.font = '9px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('FREEDOM', w / 2, 29);
+    ctx.fillText('FREEDOM', w / 2, 42);
     ctx.textAlign = 'left';
 
     // Active temporary race buffs (drive-through pickups — not garage upgrades)

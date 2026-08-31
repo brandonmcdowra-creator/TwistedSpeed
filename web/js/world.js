@@ -790,6 +790,9 @@
       map: tex.albedo,
       color: 0xdce6f5,
       side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     });
     var roadGeo = this._ribbonGeo(rh, 0.02, 0.07);
     if (roadGeo) {
@@ -799,6 +802,7 @@
       this.group.add(roadMesh);
     }
 
+    // v412: lift sheen + polygonOffset — was y=0.05 vs asphalt 0.02 (z-fight shimmer)
     var wetSheen = new THREE.MeshBasicMaterial({
       color: 0x88b8e0,
       transparent: true,
@@ -806,21 +810,34 @@
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
     });
-    var sheenGeo = this._ribbonGeo(rh * 0.85, 0.05, 0.07);
+    var sheenGeo = this._ribbonGeo(rh * 0.85, 0.12, 0.07);
     if (sheenGeo) {
       var sheenMesh = new THREE.Mesh(sheenGeo, wetSheen);
       sheenMesh.userData.isRoadSurface = true;
+      sheenMesh.renderOrder = 1;
       sheenMesh.frustumCulled = false;
       this.group.add(sheenMesh);
     }
 
-    var lineY = new THREE.MeshBasicMaterial({ color: 0xffe066, side: THREE.DoubleSide });
+    var lineY = new THREE.MeshBasicMaterial({
+      color: 0xffe066,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      polygonOffsetUnits: -3,
+    });
     var edgeCyan = new THREE.MeshBasicMaterial({
       color: 0x50f0ff,
       transparent: true,
       opacity: 0.95,
       side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      polygonOffsetUnits: -3,
     });
     var curbMat = new THREE.MeshBasicMaterial({ color: 0xb8c0d0 });
     var curbGeo = new THREE.BoxGeometry(0.58, 0.4, 1);
@@ -849,7 +866,7 @@
         var side = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
         var cx = a.x + side.x * latSign * edgeOff;
         var cz = a.z + side.z * latSign * edgeOff;
-        var y = a.y + 0.07;
+        var y = a.y + 0.18; // v412: clear of asphalt/sheen z-fight
         var li = i * 2;
         pos[li * 3] = cx - side.x * edgeHalf;
         pos[li * 3 + 1] = y;
@@ -898,7 +915,7 @@
         for (var yl = -1; yl <= 1; yl += 2) {
           var yline = new THREE.Mesh(ylineGeo, lineY);
           yline.position.copy(mid).addScaledVector(sideN, yl * 0.14);
-          yline.position.y = mid.y + 0.08;
+          yline.position.y = mid.y + 0.18;
           yline.rotation.order = 'YXZ';
           yline.rotation.y = yaw;
           yline.rotation.x = -pitch;
@@ -909,7 +926,7 @@
         for (var lane = -1; lane <= 1; lane += 2) {
           var dash = new THREE.Mesh(dashGeo, lineW);
           dash.position.copy(mid).addScaledVector(sideN, lane * (rh * 0.38));
-          dash.position.y = mid.y + 0.08;
+          dash.position.y = mid.y + 0.18;
           dash.rotation.order = 'YXZ';
           dash.rotation.y = yaw;
           dash.rotation.x = -pitch;
@@ -923,7 +940,7 @@
       if (i % 10 === 0) {
         var chev = new THREE.Mesh(chevGeo, lineY);
         chev.position.copy(mid);
-        chev.position.y = mid.y + 0.08;
+        chev.position.y = mid.y + 0.18;
         chev.rotation.order = 'YXZ';
         chev.rotation.y = yaw;
         chev.rotation.x = -pitch;
@@ -1237,8 +1254,8 @@
     function buildCanyonSpan(tA, tB, nSeg, dense) {
       var wallDepth = dense ? 4.5 : 3.5;
       var halfD = wallDepth * 0.5;
-      // v402: mid walls pushed out — chase +1.15 right offset was near-clipping giant faces
-      var openEdge = dense ? 2.2 : 3.6;
+      // v412: was 2.2/3.6 — glass face sat inside sidewalk (raisedOuter~15.5); cars clipped walls
+      var openEdge = dense ? 4.5 : 5.4;
       var span = Math.max(0.02, tB - tA);
       for (var side = 0; side < 2; side++) {
         var sideSign = side === 0 ? 1 : -1;

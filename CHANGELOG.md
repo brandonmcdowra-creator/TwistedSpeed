@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-31 — Web v412: debug glitch loop (both maps)
+
+Playtests on Neon Circuit + THE REACH showed wall clipping, asphalt shimmer, chassis sink, and FREEDOM HUD cut off at the top.
+
+- **Wall clip:** canyon glass sat inside the sidewalk band (`openEdge` 2.2 → face ~13.7 while raised went to ~15.5). Pushed `openEdge` to 4.5/5.4, tighter void tug (15/12.5), hard lateral rail after integrate, rival hard rail.
+- **Road z-fight:** wet sheen + lane paint lifted; polygonOffset on asphalt/sheen/lines.
+- **Ride height:** player + rivals `+0.38` (was `+0.2`).
+- **HUD:** FREEDOM drawn at y=42; BUILD 412 + cache bust `?v=412`.
+
+Hard-refresh `?v=412`.
+
+---
+
 ## 2026-08-22 — Session save (v411 frozen)
 
 Pickup written: `docs/NEXT-SESSION.md` + `PROGRESS.md`. Next: director play v411, then dress the maglev junction. Arcade zip on Desktop.
