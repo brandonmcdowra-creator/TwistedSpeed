@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-31 — Web v419: ◆ MG ◆ banner same-frame as J hold
+
+R5 (clean v418): maglev PASS; MG chip+flash PASS; banner missed because `firingMg` was set *after* the banner draw.
+
+- Resolve `input.key(j)` at top of `drawRace`
+- Draw `◆ MG ◆` at mid-screen with dark plate (above weapon bar)
+
+Hard-refresh `?v=419` via `python3 serve.py`.
+
+---
+
 ## 2026-08-31 — Web v418: no-cache serve + HUD-driven MG flash
 
 R4: maglev STOP/GO **PASS**; MG still FAIL — critic tab kept stale `?v=411` / cached index (title was stuck at v411).

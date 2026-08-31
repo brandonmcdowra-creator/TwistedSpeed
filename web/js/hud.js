@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 418', w / 2, h * 0.395);
+    ctx.fillText('BUILD 419', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -638,6 +638,12 @@
     var p = state.player;
     if (!p) return;
 
+    // v418/v419: resolve J-hold UP FRONT so banner/flash same-frame (R5: chip worked, ◆ MG ◆ missed — draw order)
+    var holdingJEarly = (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
+    if (holdingJEarly) {
+      state.firingMg = Math.max(state.firingMg || 0, 0.2);
+      state.muzzleFlash = Math.max(state.muzzleFlash || 0, 0.9);
+    }
     if (state.hitFlash > 0) {
       var fa = Math.min(0.45, state.hitFlash * 0.55);
       var g = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.15, w * 0.5, h * 0.5, w * 0.72);
@@ -648,8 +654,8 @@
       ctx.fillRect(0, 0, w, h);
     }
     // v416: MG screen kick — yellow muzzle bloom so fire is unmistakable in chase
-    if (state.muzzleFlash > 0) {
-      var ma = Math.min(0.7, state.muzzleFlash * 0.85);
+    if (state.muzzleFlash > 0 || holdingJEarly) {
+      var ma = Math.min(0.75, Math.max(state.muzzleFlash || 0.9, holdingJEarly ? 0.9 : 0) * 0.9);
       var mg = ctx.createRadialGradient(w * 0.5, h * 0.62, 20, w * 0.5, h * 0.55, w * 0.5);
       mg.addColorStop(0, 'rgba(255,245,180,' + ma + ')');
       mg.addColorStop(0.35, 'rgba(255,180,60,' + (ma * 0.4) + ')');
@@ -657,12 +663,15 @@
       ctx.fillStyle = mg;
       ctx.fillRect(0, 0, w, h);
     }
-    if (state.firingMg > 0) {
+    if (state.firingMg > 0 || holdingJEarly) {
       ctx.save();
-      ctx.fillStyle = 'rgba(255, 230, 100, 0.92)';
-      ctx.font = 'bold 22px sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(w * 0.5 - 70, h * 0.68 - 18, 140, 36);
+      ctx.fillStyle = '#ffe66d';
+      ctx.font = 'bold 26px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('◆ MG ◆', w * 0.5, h * 0.78);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('◆ MG ◆', w * 0.5, h * 0.68);
       ctx.restore();
     }
     // v401: hit chevron — large, HUD-safe frame (clear armor / minimap / weapon bar)

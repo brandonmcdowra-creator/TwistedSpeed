@@ -1,5 +1,5 @@
 {
-  "build": "v417",
-  "round": "6 \u00b7 R3 bugs fixed \u2014 R4 critic must use ?v=417",
-  "log": "R3 Heat wins. Bugs: mirrored STOP/GO, MG mute (stale 415 tab possible).\nv417: board facing +PI, box tracers depthTest:false, HUD MG banner.\n"
+  "build": "v419",
+  "round": "R5 partial MG \u2192 v419 banner fix",
+  "log": "R5 verified v418: maglev PASS; MG flash+chip YES, \u25c6 MG \u25c6 NO (draw order).\nv419: J-hold resolved at top of drawRace.\nHeat still wins density/atmosphere A/B.\n"
 }
