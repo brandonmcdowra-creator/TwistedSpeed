@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-31 — Web v431: postfx blur + smoke stacks (Gauntlet R16)
+
+R15 gap ~18% → R16 ~8%.
+
+- PostFX radial `motionBlur` on scene geometry (0.52 max at MG+speed)
+- `smokeStack()` 7-layer volumetric column on kill explosions
+- Car body emissive orange flash when firing MG (`_muzzleBodyT`)
+
+Hard-refresh via `python3 serve.py` → `?v=431`.
+
+---
+
 ## 2026-08-31 — Web v430: smoke ribbons + combat blur (Gauntlet R15)
 
 R14 gap ~32% → R15 ~18%.
