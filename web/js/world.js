@@ -645,25 +645,25 @@
     g.addColorStop(1, 'rgba(32, 40, 52, 0.45)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, S, S);
-    // Aggregate grit — v422: higher contrast micro-grain (breaks smooth polygon read)
-    for (var i = 0; i < 6800; i++) {
-      var v = 14 + ((i * 17) % 38);
-      var cool = (i % 4 === 0) ? 10 : 0;
-      var bright = (i % 73 === 0);
+    // Aggregate grit — v425: higher contrast so grain reads between soft pools
+    for (var i = 0; i < 8200; i++) {
+      var v = 16 + ((i * 17) % 48);
+      var cool = (i % 4 === 0) ? 14 : 0;
+      var bright = (i % 61 === 0);
       if (bright) {
-        ctx.fillStyle = 'rgba(200, 215, 235, ' + (0.18 + (i % 5) * 0.08) + ')';
+        ctx.fillStyle = 'rgba(210, 225, 240, ' + (0.22 + (i % 5) * 0.08) + ')';
       } else {
-        ctx.fillStyle = 'rgba(' + (v + 4) + ',' + (v + 8) + ',' + (v + 14 + cool) + ',0.55)';
+        ctx.fillStyle = 'rgba(' + (v + 4) + ',' + (v + 8) + ',' + (v + 14 + cool) + ',0.62)';
       }
       ctx.fillRect((i * 47) % S, (i * 91) % S, 1 + (i % 2), 1 + (i % 3));
     }
-    // Crack / tar-patch variation
-    ctx.strokeStyle = 'rgba(40, 48, 58, 0.35)';
+    // Tar seams + cracks (macro texture visible at chase distance)
+    ctx.strokeStyle = 'rgba(32, 40, 52, 0.45)';
     ctx.lineWidth = 1;
-    for (var c = 0; c < 18; c++) {
+    for (var c = 0; c < 24; c++) {
       ctx.beginPath();
       ctx.moveTo((c * 43) % S, (c * 67) % S);
-      ctx.lineTo((c * 43 + 22) % S, (c * 67 + 31) % S);
+      ctx.lineTo((c * 43 + 28) % S, (c * 67 + 35) % S);
       ctx.stroke();
     }
     // Longitudinal wear — whisper only (was washing whole ribbon bright)

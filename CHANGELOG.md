@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-31 — Web v425: asphalt grain + micro-sparkle between pools (R11 gap)
+
+R10 critic: pool edges fixed (8% gap) but road between pools is black void (75% material gap).
+
+- Lifted road albedo multiplier; higher-contrast grit + tar seams
+- Pool falloff tints to dark asphalt (not pure black void)
+- Micro-sparkle flecks on asphalt between pools
+- Pool texture cache v425
+
+Hard-refresh via `python3 serve.py` → `?v=425`.
+
+---
+
 ## 2026-08-31 — Web v424: soft pool gradients + rain motion streaks (R10 gap)
 
 R9 critic: pools work but hard dithered edges (40% wet road gap).

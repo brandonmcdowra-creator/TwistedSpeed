@@ -12,4 +12,5 @@
 | 7 | — | — | Heat — matte road, speculars too weak |
 | 8 | — | — | Heat — tiled specular grid (70%) |
 | 9 | — | — | **Approaches Heat** — pools work, edges hard (40%) |
-| →424 | — | — | soft gradients + rain — R10 critic next |
+| 10 | — | — | Heat — pool edges 8% ✅, road material 75% ❌ |
+| →425 | — | — | asphalt grain + sparkles — R11 critic next |
