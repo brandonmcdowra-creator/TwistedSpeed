@@ -2724,8 +2724,8 @@
    */
   World.prototype._buildStreetLife = function () {
     var pathLen = this.path.length || 2000;
-    // v376: sparser street dressing for FPS
-    var n = Math.max(10, Math.min(22, Math.floor(pathLen / 110)));
+    // v415 Gauntlet: denser both-flank street life (MeshBasic; critic density gap)
+    var n = Math.max(18, Math.min(40, Math.floor(pathLen / 55)));
     var potMat = new THREE.MeshBasicMaterial({ color: 0x2a2430 });
     var bushMat = new THREE.MeshBasicMaterial({ color: 0x1a4030 });
     var bollardMat = new THREE.MeshBasicMaterial({ color: 0xc8a040 });
@@ -2740,62 +2740,89 @@
     var bollardGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.85, 6);
     var carGeo = new THREE.BoxGeometry(1.7, 0.85, 3.6);
     var cabinGeo = new THREE.BoxGeometry(1.5, 0.55, 1.6);
+    var coneGeo = new THREE.ConeGeometry(0.28, 0.7, 6);
+    var coneMat = new THREE.MeshBasicMaterial({ color: 0xff6a20 });
+    var binGeo = new THREE.BoxGeometry(0.55, 0.9, 0.55);
+    var binMat = new THREE.MeshBasicMaterial({ color: 0x3a4550 });
 
     for (var i = 0; i < n; i++) {
-      var t = (0.04 + (i + 0.5) / n * 0.92) % 1;
+      var t = (0.03 + (i + 0.5) / n * 0.94) % 1;
       var f = this._frame(t);
-      var sideSign = i % 2 === 0 ? 1 : -1;
-      var kind = i % 5; // 0-1 planter, 2 bollard pair, 3-4 parked car
+      // Both flanks every prop (was one side) — Heat density gap
+      for (var ss = 0; ss < 2; ss++) {
+        var sideSign = ss === 0 ? 1 : -1;
+        var kind = (i + ss) % 6;
 
-      if (kind <= 1) {
-        var latP = this._lat(EDGE.furniture, 0.4);
-        var pot = new THREE.Mesh(potGeo, potMat);
-        pot.position.copy(f.p).addScaledVector(f.side, sideSign * latP);
-        pot.position.y = f.p.y + 0.28;
-        pot.userData.lod = 'detail';
-        this.group.add(pot);
-        this.buildings.push(pot);
-        var bush = new THREE.Mesh(bushGeo, bushMat);
-        bush.position.copy(pot.position);
-        bush.position.y += 0.55;
-        bush.userData.lod = 'detail';
-        this.group.add(bush);
-        this.buildings.push(bush);
-      } else if (kind === 2) {
-        var latB = this._lat(EDGE.furniture, 0.15);
-        var tanB = this.path.curve.getTangentAt(t).normalize();
-        for (var b = 0; b < 2; b++) {
-          var bol = new THREE.Mesh(bollardGeo, bollardMat);
-          bol.position.copy(f.p)
-            .addScaledVector(f.side, sideSign * latB)
-            .addScaledVector(tanB, (b - 0.5) * 1.4);
-          bol.position.y = f.p.y + 0.42;
-          bol.userData.lod = 'detail';
-          this.group.add(bol);
-          this.buildings.push(bol);
+        if (kind <= 1) {
+          var latP = this._lat(EDGE.furniture, 0.4);
+          var pot = new THREE.Mesh(potGeo, potMat);
+          pot.position.copy(f.p).addScaledVector(f.side, sideSign * latP);
+          pot.position.y = f.p.y + 0.28;
+          pot.userData.lod = 'detail';
+          pot.userData.qualityExtra = true;
+          this.group.add(pot);
+          this.buildings.push(pot);
+          var bush = new THREE.Mesh(bushGeo, bushMat);
+          bush.position.copy(pot.position);
+          bush.position.y += 0.55;
+          bush.userData.lod = 'detail';
+          bush.userData.qualityExtra = true;
+          this.group.add(bush);
+          this.buildings.push(bush);
+        } else if (kind === 2) {
+          var latB = this._lat(EDGE.furniture, 0.15);
+          var tanB = this.path.curve.getTangentAt(t).normalize();
+          for (var b = 0; b < 2; b++) {
+            var bol = new THREE.Mesh(bollardGeo, bollardMat);
+            bol.position.copy(f.p)
+              .addScaledVector(f.side, sideSign * latB)
+              .addScaledVector(tanB, (b - 0.5) * 1.4);
+            bol.position.y = f.p.y + 0.42;
+            bol.userData.lod = 'detail';
+            bol.userData.qualityExtra = true;
+            this.group.add(bol);
+            this.buildings.push(bol);
+          }
+        } else if (kind === 3) {
+          var latCone = this._lat(EDGE.furniture - 0.2, 0.2);
+          var cone = new THREE.Mesh(coneGeo, coneMat);
+          cone.position.copy(f.p).addScaledVector(f.side, sideSign * latCone);
+          cone.position.y = f.p.y + 0.35;
+          cone.userData.lod = 'detail';
+          cone.userData.qualityExtra = true;
+          this.group.add(cone);
+          this.buildings.push(cone);
+          var bin = new THREE.Mesh(binGeo, binMat);
+          bin.position.copy(cone.position).addScaledVector(f.side, sideSign * 0.9);
+          bin.position.y = f.p.y + 0.45;
+          bin.userData.lod = 'detail';
+          bin.userData.qualityExtra = true;
+          this.group.add(bin);
+          this.buildings.push(bin);
+        } else {
+          var latC = this._lat(EDGE.furniture + 0.6, 0.9);
+          var yaw = f.yaw + (sideSign > 0 ? -0.08 : 0.08);
+          var body = new THREE.Mesh(carGeo, carBodyMats[i % carBodyMats.length]);
+          body.position.copy(f.p).addScaledVector(f.side, sideSign * latC);
+          body.position.y = f.p.y + 0.45;
+          body.rotation.y = yaw;
+          body.userData.lod = 'building';
+          body.userData.qualityExtra = true;
+          this.group.add(body);
+          this.buildings.push(body);
+          var cabin = new THREE.Mesh(cabinGeo, carBodyMats[(i + 1) % carBodyMats.length]);
+          cabin.position.copy(body.position);
+          cabin.position.y += 0.55;
+          cabin.position.addScaledVector(
+            new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)),
+            -0.2
+          );
+          cabin.rotation.y = yaw;
+          cabin.userData.lod = 'building';
+          cabin.userData.qualityExtra = true;
+          this.group.add(cabin);
+          this.buildings.push(cabin);
         }
-      } else {
-        // Parked car silhouette — shoulder only, never on asphalt
-        var latC = this._lat(EDGE.furniture + 0.6, 0.9);
-        var yaw = f.yaw + (sideSign > 0 ? -0.08 : 0.08);
-        var body = new THREE.Mesh(carGeo, carBodyMats[i % carBodyMats.length]);
-        body.position.copy(f.p).addScaledVector(f.side, sideSign * latC);
-        body.position.y = f.p.y + 0.45;
-        body.rotation.y = yaw;
-        body.userData.lod = 'building';
-        this.group.add(body);
-        this.buildings.push(body);
-        var cabin = new THREE.Mesh(cabinGeo, carBodyMats[(i + 1) % carBodyMats.length]);
-        cabin.position.copy(body.position);
-        cabin.position.y += 0.55;
-        cabin.position.addScaledVector(
-          new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)),
-          -0.2
-        );
-        cabin.rotation.y = yaw;
-        cabin.userData.lod = 'building';
-        this.group.add(cabin);
-        this.buildings.push(cabin);
       }
     }
   };
@@ -2805,8 +2832,8 @@
   World.prototype._buildLamps = function () {
     var curve = this.path.curve;
     var pathLen = this.path.length || 2000;
-    // Visual density every ~40 m alternating sides; real PointLights still pooled
-    var n = Math.max(16, Math.min(40, Math.floor(pathLen / 42)));
+    // Visual density every ~28 m; real PointLights still pooled ≤3
+    var n = Math.max(24, Math.min(52, Math.floor(pathLen / 28)));
     var poleMat = M.pole || new THREE.MeshBasicMaterial({ color: 0x2a2834 });
     var headMat = new THREE.MeshBasicMaterial({ color: 0xffcc88 });
     var glowMat = new THREE.MeshBasicMaterial({
@@ -2826,8 +2853,8 @@
     });
     var poleGeo = new THREE.CylinderGeometry(0.08, 0.12, 6.5, 5);
     var headGeo = new THREE.BoxGeometry(0.5, 0.12, 0.35);
-    var glowGeo = new THREE.SphereGeometry(0.65, 6, 4);
-    var poolGeo = new THREE.CircleGeometry(3.2, 10);
+    var glowGeo = new THREE.SphereGeometry(0.85, 6, 4);
+    var poolGeo = new THREE.CircleGeometry(4.0, 10);
 
     // Pool of 3 reusable PointLights (nearest lamps only)
     this._lampLightPool = this._lampLightPool || [];

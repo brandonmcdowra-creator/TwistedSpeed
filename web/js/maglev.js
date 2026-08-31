@@ -197,8 +197,8 @@
       group.name = 'maglev';
 
       // Deck telegraph (color driven by update — keep big & readable)
-      var deckMat = new THREE.MeshBasicMaterial({ color: 0xffe66d, transparent: true, opacity: 0.4 });
-      var deck = new THREE.Mesh(new THREE.BoxGeometry(26, 0.08, 22), deckMat);
+      var deckMat = new THREE.MeshBasicMaterial({ color: 0xffe66d, transparent: true, opacity: 0.55 });
+      var deck = new THREE.Mesh(new THREE.BoxGeometry(28, 0.12, 26), deckMat);
       deck.position.copy(pt);
       deck.position.y = pt.y + 0.06;
       deck.rotation.y = roadYaw;
@@ -226,21 +226,48 @@
         var g = new THREE.Group();
         var geo = geos();
         var post = new THREE.Mesh(
-          new THREE.BoxGeometry(0.55, 9.2, 0.55),
+          new THREE.BoxGeometry(0.7, 11.5, 0.7),
           new THREE.MeshBasicMaterial({ color: 0x2a2430 })
         );
-        post.position.y = 4.6;
+        post.position.y = 5.75;
         g.add(post);
-        // Signal housing + arm (dress); sphere stays the state color
-        var housing = new THREE.Mesh(geo.housing, new THREE.MeshBasicMaterial({ color: 0x1a1820 }));
-        housing.position.y = 8.6;
+        // Warning stripe band on post (industrial read)
+        var stripe = new THREE.Mesh(
+          new THREE.BoxGeometry(0.78, 1.4, 0.78),
+          new THREE.MeshBasicMaterial({ color: 0xffc857 })
+        );
+        stripe.position.y = 3.2;
+        g.add(stripe);
+        var housing = new THREE.Mesh(
+          new THREE.BoxGeometry(2.4, 1.6, 2.4),
+          new THREE.MeshBasicMaterial({ color: 0x1a1820 })
+        );
+        housing.position.y = 10.4;
         g.add(housing);
-        var arm = new THREE.Mesh(geo.arm, new THREE.MeshBasicMaterial({ color: 0x3a3540 }));
-        arm.position.set(sign * 1.4, 8.4, 0);
+        var arm = new THREE.Mesh(
+          new THREE.BoxGeometry(0.35, 0.35, 4.2),
+          new THREE.MeshBasicMaterial({ color: 0x3a3540 })
+        );
+        arm.position.set(sign * 2.0, 10.2, 0);
         g.add(arm);
-        var lamp = new THREE.Mesh(new THREE.SphereGeometry(1.15, 10, 8), gapGlowMat.clone());
-        lamp.position.y = 9.2;
+        // v415: 3× readable signal (was r=1.15) + additive halo
+        var lamp = new THREE.Mesh(
+          new THREE.SphereGeometry(2.6, 12, 10),
+          gapGlowMat.clone()
+        );
+        lamp.position.y = 11.2;
+        lamp.material.fog = false;
         g.add(lamp);
+        var halo = new THREE.Mesh(
+          new THREE.SphereGeometry(4.2, 10, 8),
+          new THREE.MeshBasicMaterial({
+            color: 0xffe66d, transparent: true, opacity: 0.35,
+            depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+          })
+        );
+        halo.position.y = 11.2;
+        g.add(halo);
+        lamp.userData.halo = halo;
         g.position.copy(pt).addScaledVector(side, sign * 22);
         g.position.y = pt.y;
         group.add(g);
@@ -316,14 +343,22 @@
       }
 
       var lampCol = blocked ? 0xff2d55 : 0x39ff14;
+      var pulse = 1 + 0.12 * Math.sin((ml.modeT || 0) * 8);
+      ml.modeT = (ml.modeT || 0) + dt;
       for (i = 0; i < ml.lamps.length; i++) {
         if (ml.lamps[i] && ml.lamps[i].material) {
           ml.lamps[i].material.color.setHex(lampCol);
+          ml.lamps[i].material.opacity = blocked ? 1 : 0.95;
+          ml.lamps[i].scale.setScalar(pulse);
+          if (ml.lamps[i].userData && ml.lamps[i].userData.halo) {
+            ml.lamps[i].userData.halo.material.color.setHex(lampCol);
+            ml.lamps[i].userData.halo.scale.setScalar(pulse);
+          }
         }
       }
       if (ml.deck && ml.deck.material) {
         ml.deck.material.color.setHex(blocked ? 0xff2d55 : 0x39ff14);
-        ml.deck.material.opacity = blocked ? 0.5 : 0.35;
+        ml.deck.material.opacity = blocked ? 0.72 : 0.5;
       }
 
       var atXing = Math.abs(prog - ml.t) < 0.05;

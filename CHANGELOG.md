@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-31 — Web v415: Gauntlet density + maglev signal punch
+
+R1 critic (Heat wins): density void + maglev not one-glance / not prison-freight.
+
+- Street life both flanks denser (planters, bollards, cones, parked silhouettes)
+- More lamp poles + bigger fake glow pools (PointLight pool still ≤3)
+- Maglev signals ~3× radius + additive halo + pulse; thicker deck; post warning stripes
+- Neon bloom 0.10→0.18 on Neon Circuit
+
+Hard-refresh `?v=415` · Neon↔REACH once. Quality O still strips qualityExtra.
+
+---
+
 ## 2026-08-30 — Web v414: Gauntlet C+D — wet asphalt + MG rods
 
 Round 0 critic (Heat wins): biggest gaps were matte road and mute MG.

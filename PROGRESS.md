@@ -1,30 +1,18 @@
 # Twisted Speed — Progress
 
-**Build:** web **v413** (Gauntlet · maglev dress + flank density)  
-**Date:** 2026-08-30  
-**Serve:** `web/` → hard-refresh `?v=413` — title **BUILD 413** · Neon↔REACH once after scenery  
-**Primary runtime:** **web** · Gauntlet Loop  
-**Gate C:** CLOSED  
-**Live page:** http://127.0.0.1:8766/gauntlet/progress.html  
+**Build:** web **v415** (Gauntlet · density + maglev signals)  
+**Date:** 2026-08-31  
+**Serve:** `web/` → hard-refresh `?v=415` · Neon↔REACH once  
+**Primary runtime:** **web** · Gauntlet Loop · Gate C **CLOSED**  
+**Live:** http://127.0.0.1:8766/gauntlet/progress.html  
 
-## Gauntlet bar
-Blind A/B vs NFS Heat night-rain stills in `gauntlet/refs/heat-*-sm.jpg` (+ feature). TM combat refs still pending capture.
+## Critics
+| Round | Winner | Biggest gap |
+|-------|--------|-------------|
+| R0 | Heat | Wet road + mute MG |
+| R1 | Heat | Density void; maglev FAIL place / weak signals |
 
-## This block
-| Ver | Piece | Status |
-|-----|-------|--------|
-| v412 | B Maglev dress | Shipped — critic pending |
-| v413 | A Flank / skyline density | Shipped — critic pending |
-| — | C Wet road full course | OPEN |
-| — | D Combat readability | OPEN |
-| — | E Hero car | OPEN |
-| — | F Atmosphere | OPEN (junction haze only) |
+## Ships
+v412 maglev dress · v413 flanks · v414 wet+MG · **v415** street density + signal punch  
 
-## Don’t regress
-Maglev wait/gap · keepWorld · REACH · MeshBasic · ≤4 PointLights · lip-only steer · Parole Arch · saves
-
-```powershell
-cd web
-python -m http.server 8765
-# http://127.0.0.1:8765/?v=413
-```
+Next: R2 critic A/B on v415; then rain/haze (F) or hero paint (E).

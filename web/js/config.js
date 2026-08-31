@@ -455,7 +455,7 @@ GAME.config = {
       grade: {
         // Slightly brighter + more bloom so traps / neon read at speed
         exposure: 1.28, contrast: 1.18, saturation: 1.05,
-        bloomStrength: 0.1, bloomThreshold: 0.78, // v376 FPS
+        bloomStrength: 0.18, bloomThreshold: 0.74, // v415 Gauntlet neon pop (was 0.1 FPS cut)
         liftCyan: 0.01, liftAmber: 0.008, vignette: 0.32, chromatic: 0.0006,
       },
     },
