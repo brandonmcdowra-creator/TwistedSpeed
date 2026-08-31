@@ -1,5 +1,5 @@
 {
-  "build": "v430",
-  "round": "R15 TM critic — TM wins ~18% gap; smoke ribbons + combat blur shipped",
-  "log": "R12: Heat chase WON.\nR14: TM wins 32%.\nR15: TM wins ~18%. v430 ribbons/blur/booms.\n"
+  "build": "v431",
+  "round": "R16 TM critic — TM wins ~8%; v431 blur+smoke+body light; v432 gh-02",
+  "log": "R12: Heat chase WON.\nR16: TM wins ~8%. v431 postfx blur, smokeStack, body emissive.\n"
 }
