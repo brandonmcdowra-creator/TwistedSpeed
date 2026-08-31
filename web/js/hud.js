@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 429', w / 2, h * 0.395);
+    ctx.fillText('BUILD 430', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -656,22 +656,35 @@
       ctx.restore();
     }
 
-    // v429: chase speed streaks — TM motion-blur read at high mph
-    if (state.camMode !== 'hood' && p.speed > 88) {
-      var sb = Math.min(1, (p.speed - 88) / 55);
+    // v430: chase speed streaks + combat heat haze (TM motion-blur read)
+    var firingNow = (state.firingMg > 0) || (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
+    if (state.camMode !== 'hood' && p.speed > 80) {
+      var sb = Math.min(1, (p.speed - 80) / 50);
+      var combatBoost = firingNow ? 0.35 : 0;
       ctx.save();
-      ctx.globalAlpha = 0.06 + sb * 0.14;
-      ctx.strokeStyle = 'rgba(255,200,120,0.55)';
-      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.08 + sb * 0.18 + combatBoost;
+      ctx.strokeStyle = 'rgba(255,200,120,0.6)';
+      ctx.lineWidth = 1.5 + sb;
       var cx = w * 0.5, cy = h * 0.55;
-      for (var si = 0; si < 10; si++) {
-        var ang = (si / 10) * Math.PI * 2 + (state.time || 0) * 0.4;
-        var r0 = 40 + si * 6;
-        var r1 = r0 + 60 + sb * 80;
+      var nStreaks = firingNow ? 18 : 12;
+      for (var si = 0; si < nStreaks; si++) {
+        var ang = (si / nStreaks) * Math.PI * 2 + (state.time || 0) * 0.5;
+        var r0 = 30 + si * 8;
+        var r1 = r0 + 80 + sb * 110 + (firingNow ? 40 : 0);
         ctx.beginPath();
         ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0 * 0.55);
         ctx.lineTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1 * 0.55);
         ctx.stroke();
+      }
+      // Edge radial smear when firing at speed
+      if (firingNow && p.speed > 95) {
+        var hb = Math.min(1, (p.speed - 95) / 45);
+        var eg = ctx.createRadialGradient(cx, cy, w * 0.08, cx, cy, w * 0.62);
+        eg.addColorStop(0, 'rgba(0,0,0,0)');
+        eg.addColorStop(0.65, 'rgba(255,140,40,' + (0.04 * hb) + ')');
+        eg.addColorStop(1, 'rgba(20,10,5,' + (0.22 * hb) + ')');
+        ctx.fillStyle = eg;
+        ctx.fillRect(0, 0, w, h);
       }
       ctx.restore();
     }

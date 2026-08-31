@@ -2328,14 +2328,15 @@
       if (particles) {
         if (particles.explosion) particles.explosion(boomPos, true);
         if (particles.spawn) {
-          particles.spawn('fire', boomPos, { count: 22, speed: 14, life: 0.55, gravity: 2 });
+          particles.spawn('fire', boomPos, { count: 28, speed: 16, life: 0.65, gravity: 2 });
           particles.spawn('spark', boomPos.clone().setY(boomPos.y + 0.3), {
-            count: 18, speed: 16, life: 0.35, gravity: 3,
+            count: 22, speed: 18, life: 0.42, gravity: 3,
           });
-          particles.spawn('smoke', boomPos.clone().setY(boomPos.y + 0.5), {
-            count: 12, speed: 4, life: 1.4, scale: 1.6, gravity: -0.5,
+          particles.spawn('smoke', boomPos.clone().setY(boomPos.y + 0.8), {
+            count: 16, speed: 5, life: 1.8, scale: 2.8, gravity: -0.35,
           });
-          particles.spawn('pink', boomPos, { count: 10, speed: 11, life: 0.28, gravity: 1 });
+          particles.spawn('smokeDark', boomPos, { count: 8, speed: 3, life: 2.0, scale: 2.2, gravity: -0.15 });
+          particles.spawn('pink', boomPos, { count: 12, speed: 12, life: 0.32, gravity: 1 });
         }
       }
       if (GAME.sfx) {
@@ -3860,14 +3861,12 @@
       // Reuse lookTmp — never clone every frame
       if (pr.type === 'mg') {
         aimMgTracer(pr.mesh, pr.pos, pr.vel);
-        // v428: smoke ribbon along MG path (TM white trail read)
-        if (pr.trail && particles && particles.spawn && Math.random() < 0.48) {
-          particles.spawn('spark', pr.pos.clone(), {
-            count: 1, speed: 2, life: 0.14, scale: 0.22, gravity: 0,
-          });
-          if (Math.random() < 0.35) {
-            particles.spawn('muzzle', pr.pos.clone(), {
-              count: 1, speed: 1, life: 0.1, scale: 0.18, gravity: 0,
+        // v430: white smoke ribbons along MG path (TM chain-gun trail)
+        if (pr.trail && particles && Math.random() < 0.62) {
+          if (particles.mgRibbon) particles.mgRibbon(pr.pos, pr.vel);
+          else if (particles.spawn) {
+            particles.spawn('spark', pr.pos.clone(), {
+              count: 1, speed: 2, life: 0.14, scale: 0.22, gravity: 0,
             });
           }
         }
@@ -3925,13 +3924,14 @@
               else {
                 // v400: MG hit spark must read in chase (hitTrail alone was too small)
                 if (particles.sparks) particles.sparks(pr.pos, pr.vel);
-                particles.hitTrail(pr.pos, 'spark');
+                if (particles.hitBurst) particles.hitBurst(pr.pos);
+                else particles.hitTrail(pr.pos, 'spark');
                 if (particles.spawn) {
                   particles.spawn('spark', pr.pos.clone(), {
                     count: 8, speed: 16, life: 0.22, scale: 0.5, gravity: 8,
                   });
                 }
-                if (particles.burstLight) particles.burstLight(pr.pos, 0xff6622, 5, 0.1);
+                if (particles.burstLight) particles.burstLight(pr.pos, 0xff6622, 6, 0.12);
               }
             }
             if ((pr.type === 'rocket' || pr.type === 'bone') && GAME.sfx) GAME.sfx.explode();
@@ -5067,7 +5067,8 @@
       // 62° idle → ~74° at max + nitro event kick (Wave 4)
       targetFov = 62 + speedNormCam * 12
         + (p.nitroActive ? 7 : 0) + (p.drifting ? 5 : 0)
-        + (state._nitroFovKick || 0);
+        + (state._nitroFovKick || 0)
+        + ((state.firingMg > 0 && p.speed > 75) ? (3 + speedNormCam * 5) : 0);
       // Drift camera: offset toward outside of slide
       if (p.drifting && Math.abs(p.slip || 0) > 2) {
         camPos.addScaledVector(tmpV2, Math.sign(p.slip) * 0.85);
