@@ -10,4 +10,5 @@
 | 5 | PASS | PARTIAL→v419 | Heat |
 | 6 | — | — | Heat — road emissive panel |
 | 7 | — | — | Heat — matte road, speculars too weak |
-| →422 | — | — | specular mask + lamp pools — R8 critic next |
+| 8 | — | — | Heat — tiled specular grid (70%) |
+| →423 | — | — | per-lamp radial pools — R9 critic next |
