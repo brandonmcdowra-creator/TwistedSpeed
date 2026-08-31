@@ -1,5 +1,5 @@
 {
-  "build": "v422",
-  "round": "R8 specular punch ship — critic next",
-  "log": "R7: Heat wins — matte road, speculars invisible (85% gap).\nv422: specular mask ribbon, bright lamp pools, gate pools, headlight sweep, road mist, denser rain.\nGoal: flip wet-road A/B vs Heat night-rain stills.\n"
+  "build": "v423",
+  "round": "R9 per-lamp radial pools — critic next",
+  "log": "R8: Heat wins — tiled specular grid (70% gap). Speculars now visible.\nv423: removed global tile; per-lamp/neon radial pools with color tint + noise.\nGoal: flip wet-road A/B vs Heat.\n"
 }

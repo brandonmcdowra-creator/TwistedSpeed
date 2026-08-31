@@ -726,6 +726,41 @@
     return spec;
   };
 
+  /** v423: per-color radial pool texture with noise breakup (unique lamp/neon hotspots) */
+  World.prototype._poolTexForColor = function (hex) {
+    if (!this._poolTexCache) this._poolTexCache = {};
+    var key = (hex >>> 0).toString(16);
+    if (this._poolTexCache[key]) return this._poolTexCache[key];
+    var S = 128;
+    var c = document.createElement('canvas');
+    c.width = c.height = S;
+    var ctx = c.getContext('2d');
+    var col = new THREE.Color(hex);
+    var r = Math.round(col.r * 255);
+    var g = Math.round(col.g * 255);
+    var b = Math.round(col.b * 255);
+    var grad = ctx.createRadialGradient(S * 0.5, S * 0.5, 0, S * 0.5, S * 0.5, S * 0.48);
+    grad.addColorStop(0, 'rgba(255,255,255,0.92)');
+    grad.addColorStop(0.18, 'rgba(' + r + ',' + g + ',' + b + ',0.55)');
+    grad.addColorStop(0.42, 'rgba(' + r + ',' + g + ',' + b + ',0.18)');
+    grad.addColorStop(0.72, 'rgba(' + r + ',' + g + ',' + b + ',0.04)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, S, S);
+    // Noise breakup — breaks perfect radial into textured pool
+    for (var n = 0; n < 620; n++) {
+      var nx = (n * 37) % S;
+      var ny = (n * 71) % S;
+      var na = 0.04 + (n % 7) * 0.02;
+      ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + na + ')';
+      ctx.fillRect(nx, ny, 1 + (n % 3), 1 + (n % 2));
+    }
+    var tex = new THREE.CanvasTexture(c);
+    tex.needsUpdate = true;
+    this._poolTexCache[key] = tex;
+    return tex;
+  };
+
   /**
    * Path-following strip (left/right rails). One continuous asphalt surface —
    * no box seams / pitch cracks on hills (Wave 1B).
@@ -876,62 +911,32 @@
       this.group.add(sheenMesh);
     }
 
-    // v422: specular mask ribbon — tiled pools/streaks on dark asphalt (Heat wet read)
-    var specTex = this._roadSpecularTexture();
-    var specMat = new THREE.MeshBasicMaterial({
-      map: specTex,
-      color: 0xe0f0ff,
-      transparent: true,
-      opacity: 0.44,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-    });
-    this._roadSpecMat = specMat;
-    var specGeo = this._ribbonGeo(rh * 0.97, 0.085, 0.07);
-    if (specGeo) {
-      var specMesh = new THREE.Mesh(specGeo, specMat);
-      specMesh.userData.isRoadSurface = true;
-      specMesh.frustumCulled = false;
-      specMesh.renderOrder = 2;
-      this.group.add(specMesh);
-    }
+    // v423: NO global tiled specular ribbon — per-lamp/neon radial pools only
 
-    // Localized specular streaks — v422: brighter, depthTest off so they always read
+    // Sparse colored accent pools only (no repeating grid)
     this._roadGlints = [];
-    var glintWarm = new THREE.MeshBasicMaterial({
-      color: 0xfff4e0, transparent: true, opacity: 0.55,
-      depthWrite: false, depthTest: false,
-      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-    });
-    var glintCyan = new THREE.MeshBasicMaterial({
-      color: 0x90f8ff, transparent: true, opacity: 0.5,
-      depthWrite: false, depthTest: false,
-      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-    });
-    var glintMagenta = new THREE.MeshBasicMaterial({
-      color: 0xff6090, transparent: true, opacity: 0.45,
-      depthWrite: false, depthTest: false,
-      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-    });
-    var streakGeo = new THREE.PlaneGeometry(2.8, 14);
-    var puddleGeo = new THREE.PlaneGeometry(6.5, 8);
-    var glintN = Math.min(56, Math.floor(segCount / 4));
-    for (var gi = 0; gi < glintN; gi++) {
-      var gt = (gi + 0.22) / glintN;
-      if (!closed) gt = Math.min(0.98, gt);
+    var accentCols = [0x00e5ff, 0xff2d55, 0xff9f1c, 0xa78bfa];
+    var accentGeo = new THREE.PlaneGeometry(5.5, 8);
+    var accentN = Math.min(18, Math.floor(segCount / 14));
+    for (var gi = 0; gi < accentN; gi++) {
+      var gt = (gi + 0.31) / accentN;
+      if (!closed) gt = Math.min(0.97, gt);
       var gf = this._frame(gt);
-      var gMat = gi % 3 === 0 ? glintWarm : (gi % 3 === 1 ? glintCyan : glintMagenta);
-      var gGeo = gi % 4 === 0 ? puddleGeo : streakGeo;
-      var glint = new THREE.Mesh(gGeo, gMat);
+      var col = accentCols[gi % accentCols.length];
+      var gMat = new THREE.MeshBasicMaterial({
+        map: this._poolTexForColor(col),
+        transparent: true, opacity: 0.34,
+        depthWrite: false, depthTest: false,
+        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      });
+      var glint = new THREE.Mesh(accentGeo, gMat);
       glint.rotation.x = -Math.PI / 2;
-      var latOff = ((gi % 5) - 2) * (rh * 0.2);
+      var latOff = ((gi % 3) - 1) * (rh * 0.28);
       glint.position.copy(gf.p).addScaledVector(gf.side, latOff);
-      glint.position.y = gf.p.y + 0.095;
-      glint.rotation.z = -gf.yaw + (gi % 7) * 0.04;
+      glint.position.y = gf.p.y + 0.1;
+      glint.rotation.z = -gf.yaw;
       glint.userData.isRoadSurface = true;
-      glint.userData.ignoreIntrusion = true;
-      glint.userData.baseOp = gMat.opacity;
+      glint.userData.baseOp = 0.34;
       glint.renderOrder = 3;
       glint.frustumCulled = true;
       this.group.add(glint);
@@ -1721,6 +1726,29 @@
           door.position.set(unitW * 0.28, 1.0, -halfD - 0.06);
           g.add(door);
         }
+
+      // v423: neon-colored radial pool on asphalt under storefront sign
+      if (ui % 2 === 0) {
+        var neonPoolMat = new THREE.MeshBasicMaterial({
+          map: this._poolTexForColor(neonCols[ni]),
+          transparent: true, opacity: 0.3,
+          depthWrite: false, depthTest: false,
+          blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        });
+        var neonPool = new THREE.Mesh(new THREE.PlaneGeometry(5, 7), neonPoolMat);
+        neonPool.rotation.x = -Math.PI / 2;
+        neonPool.position.copy(f.p);
+        neonPool.position.addScaledVector(f.side, sideSign * (this.roadHalf * 0.22));
+        neonPool.position.y = f.p.y + 0.102;
+        neonPool.rotation.z = -f.yaw;
+        neonPool.userData.isRoadSurface = true;
+        neonPool.userData.baseOp = 0.3;
+        neonPool.renderOrder = 3;
+        neonPool.userData.qualityExtra = true;
+        this.group.add(neonPool);
+        if (!this._roadGlints) this._roadGlints = [];
+        this._roadGlints.push(neonPool);
+      }
 
         var neon = new THREE.Mesh(neonGeo, neonMats[ni]);
         neon.scale.x = unitW * 0.9;
@@ -3126,37 +3154,27 @@
       this.group.add(pool);
       this.buildings.push(pool);
 
-      // v422: bright lamp pool ON road center + warm streak (Heat specular hotspots)
-      var roadPoolMat = new THREE.MeshBasicMaterial({
-        color: 0xfff8f0,
+      // v423: radial lamp pool ON road center (unique hotspot per pole, not tiled grid)
+      var lampPoolMat = new THREE.MeshBasicMaterial({
+        map: this._poolTexForColor(0xffc880),
         transparent: true,
-        opacity: 0.58,
+        opacity: 0.62,
         depthWrite: false,
         depthTest: false,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       });
-      var roadPool = new THREE.Mesh(new THREE.CircleGeometry(3.8, 14), roadPoolMat);
+      var roadPool = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), lampPoolMat);
       roadPool.rotation.x = -Math.PI / 2;
       roadPool.position.copy(p);
-      roadPool.position.y = p.y + 0.1;
+      roadPool.position.y = p.y + 0.105;
+      roadPool.rotation.z = -Math.atan2(tan.x, tan.z);
       roadPool.userData.isRoadSurface = true;
-      roadPool.userData.baseOp = 0.58;
+      roadPool.userData.baseOp = 0.62;
       roadPool.renderOrder = 3;
       this.group.add(roadPool);
       if (!this._roadGlints) this._roadGlints = [];
       this._roadGlints.push(roadPool);
-
-      var roadStreak = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 18), roadPoolMat.clone());
-      roadStreak.rotation.x = -Math.PI / 2;
-      roadStreak.position.copy(p);
-      roadStreak.position.y = p.y + 0.098;
-      roadStreak.rotation.z = -Math.atan2(tan.x, tan.z);
-      roadStreak.userData.isRoadSurface = true;
-      roadStreak.userData.baseOp = 0.48;
-      roadStreak.renderOrder = 3;
-      this.group.add(roadStreak);
-      this._roadGlints.push(roadStreak);
 
       this.lamps.push({
         group: pole,
@@ -3292,19 +3310,20 @@
       threshGlow.userData.isRoadSurface = true;
       tagGate(threshGlow);
 
-      // v422: neon ground pool on asphalt under gate (START cyan / FINISH magenta reflection)
+      // v423: neon radial ground pool under gate
       var gatePoolMat = new THREE.MeshBasicMaterial({
-        color: col, transparent: true, opacity: 0.52,
+        map: self._poolTexForColor(col),
+        transparent: true, opacity: 0.55,
         depthWrite: false, depthTest: false,
         blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       });
-      var gatePool = new THREE.Mesh(new THREE.PlaneGeometry(rh * 1.7, 16), gatePoolMat);
+      var gatePool = new THREE.Mesh(new THREE.PlaneGeometry(rh * 2.2, 14), gatePoolMat);
       gatePool.rotation.x = -Math.PI / 2;
       gatePool.position.copy(p);
       gatePool.position.y = p.y + 0.102;
       gatePool.rotation.z = -yaw;
       gatePool.userData.isRoadSurface = true;
-      gatePool.userData.baseOp = 0.52;
+      gatePool.userData.baseOp = 0.55;
       gatePool.renderOrder = 3;
       tagGate(gatePool);
       if (!self._roadGlints) self._roadGlints = [];

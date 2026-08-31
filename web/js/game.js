@@ -4892,8 +4892,8 @@
                 m.userData._baseRough = m.roughness;
                 m.userData._baseEnv = m.envMapIntensity;
               }
-              m.roughness = Math.max(0.08, m.userData._baseRough * (1 - wet * 0.35));
-              m.envMapIntensity = m.userData._baseEnv * (1 + wet * 0.4);
+              m.roughness = Math.max(0.08, m.userData._baseRough * (1 - wetRoad * 0.35));
+              m.envMapIntensity = m.userData._baseEnv * (1 + wetRoad * 0.4);
             }
           });
         }

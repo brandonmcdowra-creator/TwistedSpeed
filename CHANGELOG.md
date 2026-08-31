@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-08-31 — Web v423: per-lamp radial pools, remove tiled grid (R9 gap)
+
+R8 critic: speculars visible but uniform tiled grid (70% gap). Heat uses unique per-light pools.
+
+- Removed global specular mask ribbon (tiled carpet)
+- `_poolTexForColor()` radial gradients with noise breakup
+- Per-lamp warm radial pools on road center (8×10 planes)
+- Neon-tinted storefront pools on asphalt (cyan/pink/amber per sign)
+- Gate pools use colored radial textures
+- Sparse accent pools only (18 max, no grid)
+
+Hard-refresh via `python3 serve.py` → `?v=423`.
+
+---
+
 ## 2026-08-31 — Web v422: specular mask ribbon + bright lamp pools (R8 gap)
 
 R7 critic: road still matte — no visible lamp pools or specular depth (85% gap).

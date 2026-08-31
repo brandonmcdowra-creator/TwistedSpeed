@@ -1,7 +1,7 @@
 # Twisted Speed — Progress
 
-**Build:** web **v422** (specular mask · lamp pools · headlight sweep)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=422`  
+**Build:** web **v423** (per-lamp radial pools · no tiled grid)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=423`  
 **Gauntlet:** chasing Heat A/B win · Gate C CLOSED  
 
 ## Scoreboard
