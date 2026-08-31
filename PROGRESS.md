@@ -9,4 +9,5 @@
 |---|--------|-----|----------------|
 | 5 | PASS | PARTIAL→v419 | Heat |
 | 6 | — | — | Heat — road emissive panel |
-| →421 | — | — | dark asphalt + speculars — R7 critic next |
+| 7 | — | — | Heat — matte road, speculars too weak |
+| →421 | — | — | dark asphalt shipped — R8 specular punch next |
