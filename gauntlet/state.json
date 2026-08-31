@@ -1,5 +1,5 @@
 {
-  "build": "v429",
-  "round": "R14 TM critic done — TM wins, gap 32%; v429 speed-blur; R15 next",
-  "log": "R12: Heat chase WON.\nR13: INVALID refs.\nR14: TM wins (32% gap). Real refs curated.\nv428: thin orange tracers, 4-petal muzzle.\nv429: chase speed-blur streaks.\n"
+  "build": "v430",
+  "round": "R15 TM critic — TM wins ~18% gap; smoke ribbons + combat blur shipped",
+  "log": "R12: Heat chase WON.\nR14: TM wins 32%.\nR15: TM wins ~18%. v430 ribbons/blur/booms.\n"
 }

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-31 — Web v430: smoke ribbons + combat blur (Gauntlet R15)
+
+R14 gap ~32% → R15 ~18%.
+
+- `mgRibbon()` white smoke trails along MG tracer path
+- `hitBurst()` orange puff on MG impact (between spark and kill boom)
+- Kill explosions 2.5× core scale + dense smoke/dark smoke columns
+- Chase FOV punch when firing MG above 75 mph
+- HUD radial streaks + edge heat haze when MG+speed>95
+
+Hard-refresh via `python3 serve.py` → `?v=430`.
+
+---
+
 ## 2026-08-31 — Web v428–v429: TM combat refs + MG polish (Gauntlet R14)
 
 R13 critic invalidated — TM refs were dev-build top-down, not TM 2012.
