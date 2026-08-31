@@ -366,6 +366,35 @@
       });
       this.spawn('smokeDark', pos, { count: 4, speed: 3, life: 1.6, scale: 1.8, gravity: -0.1 });
       this.burstLight(pos, 0xff6622, 16, 0.38);
+      if (this.smokeStack) this.smokeStack(pos, true);
+    }
+    this._cullIfHeavy();
+  };
+
+  /** TM volumetric smoke column — stacked billboards rising from blast */
+  Particles.prototype.smokeStack = function (pos, big) {
+    if (this.items.length > 130) return;
+    var layers = big ? 7 : 4;
+    for (var li = 0; li < layers; li++) {
+      var mesh = this._alloc('smokeDark');
+      mesh.geometry = this.geo;
+      mesh.material = this.mats.smokeDark;
+      mesh.userData.ownedMat = false;
+      mesh.userData.kind = 'smokeDark';
+      var yOff = li * (big ? 0.75 : 0.55);
+      mesh.position.copy(pos);
+      mesh.position.y += 0.35 + yOff;
+      var sc = (big ? 2.8 : 1.6) + li * (big ? 0.55 : 0.35);
+      mesh.scale.set(sc * 1.4, sc, 1);
+      this.items.push({
+        mesh: mesh,
+        vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, 2.5 + li * 0.8, (Math.random() - 0.5) * 1.5),
+        life: (big ? 2.2 : 1.4) + li * 0.25,
+        maxLife: (big ? 2.2 : 1.4) + li * 0.25,
+        drag: 0.98, gravity: -0.08,
+        kind: 'smoke', billboard: true, softFade: false,
+        baseScale: sc, noPool: false, expand: big ? 1.8 : 1.1,
+      });
     }
     this._cullIfHeavy();
   };

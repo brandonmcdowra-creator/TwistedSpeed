@@ -2327,6 +2327,7 @@
       boomPos.y += 0.7;
       if (particles) {
         if (particles.explosion) particles.explosion(boomPos, true);
+        if (particles.smokeStack) particles.smokeStack(boomPos, true);
         if (particles.spawn) {
           particles.spawn('fire', boomPos, { count: 28, speed: 16, life: 0.65, gravity: 2 });
           particles.spawn('spark', boomPos.clone().setY(boomPos.y + 0.3), {
@@ -2616,6 +2617,7 @@
           p._gunFlashT = 0.06;
         }
       }
+      p._muzzleBodyT = hood ? 0.1 : 0.14;
     }
     // Screen flash + sticky FIRING flag for HUD (R3: must be unmistakable)
     state.muzzleFlash = 1;
@@ -3681,8 +3683,34 @@
       if (p.mgHeat < 0.25) p._overheatToastArmed = false;
     }
     if (p._gunFlashT > 0) p._gunFlashT -= dt;
+    if (p._muzzleBodyT > 0) p._muzzleBodyT -= dt;
     if (p._hoodMuzzleT > 0) p._hoodMuzzleT -= dt;
     if (p._chaseMuzzleT > 0) p._chaseMuzzleT -= dt;
+    // v431: muzzle flash lights car body orange (TM secondary illumination)
+    if (p.mesh) {
+      var bodyFlash = Math.max((p._muzzleBodyT || 0) / 0.14, (state.firingMg || 0) * 0.55);
+      if (bodyFlash > 0.03) {
+        p.mesh.traverse(function (c) {
+          if (!c.isMesh || !c.material || !c.material.emissive) return;
+          if (c.userData && (c.userData._isGun || c.userData.gun)) return;
+          if (c.material.emissiveIntensity > 2.8) return;
+          if (!c.material.userData) c.material.userData = {};
+          if (c.material.userData._muzBaseEI == null) {
+            c.material.userData._muzBaseEI = c.material.emissiveIntensity || 0;
+            c.material.userData._muzBaseHex = c.material.emissive.getHex();
+          }
+          c.material.emissive.setHex(0xff7722);
+          c.material.emissiveIntensity = c.material.userData._muzBaseEI + bodyFlash * 2.4;
+        });
+      } else if (p._muzzleBodyT <= 0 && (state.firingMg || 0) <= 0) {
+        p.mesh.traverse(function (c) {
+          if (!c.isMesh || !c.material || !c.material.emissive || !c.material.userData) return;
+          if (c.material.userData._muzBaseEI == null) return;
+          c.material.emissive.setHex(c.material.userData._muzBaseHex);
+          c.material.emissiveIntensity = c.material.userData._muzBaseEI;
+        });
+      }
+    }
     if (p._engineDipT > 0) {
       p._engineDipT -= dt;
       p.speed *= (1 - 0.35 * Math.min(1, p._engineDipT * 8));
@@ -5915,6 +5943,21 @@
       } else if (!state._frozen && state.mode === 'freedom') {
         updateMenuCamera(t);
       }
+    }
+
+    // v431: scene radial motion blur during chase combat at speed
+    if (postfx && postfx.setMotionBlur) {
+      var mb = 0;
+      if (state.mode === 'race' && state.player && state.camMode !== 'hood') {
+        var pMb = state.player;
+        var maxSp = cfg.drive.maxSpeed * ((pMb.mul && pMb.mul.speed) || 1);
+        var sn = Math.abs(pMb.speed || 0) / Math.max(1, maxSp);
+        mb = Math.max(0, (sn - 0.28) * 0.44);
+        if (state.firingMg > 0) mb += 0.1 + sn * 0.24;
+        if ((state.camShake || 0) > 0.12) mb += 0.05;
+        mb = Math.min(0.52, mb);
+      }
+      postfx.setMotionBlur(mb);
     }
 
     postfx.render(scene, camera, t);
