@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-31 — Web v418: no-cache serve + HUD-driven MG flash
+
+R4: maglev STOP/GO **PASS**; MG still FAIL — critic tab kept stale `?v=411` / cached index (title was stuck at v411).
+
+- `serve.py` is the play server (Cache-Control: no-store on html/js)
+- `<title>` bumped with build (was frozen at v411)
+- HUD lights J-chip + muzzle bloom whenever `input.key('j')` is held (independent of fireMg gates)
+
+Hard-refresh `http://127.0.0.1:8765/?v=418` — title **BUILD 418**. Confirm URL + title match.
+
+---
+
 ## 2026-08-31 — Web v417: fix mirrored STOP/GO + unmistakable MG
 
 R3: boards mirrored; MG invisible (capture also on stale ?v=415).

@@ -2569,7 +2569,8 @@
       origin.y += yOff;
       var col = W.mgLabel === 'PISTOL' ? 0xffcc66 : 0xfff2a0;
       var mesh = makeTracer(col, tracerLen);
-      mesh.scale.x = mesh.scale.z = radScale;
+      mesh.scale.x = radScale;
+      mesh.scale.y = radScale;
       mesh.position.copy(origin);
       aimMgTracer(mesh, origin, tmpV);
       scene.add(mesh);

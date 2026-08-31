@@ -1,0 +1,105 @@
+═══════════════════════════════════════════════════════════════════════
+TWISTED SPEED GAUNTLET R4 — HARSH CRITIC REPORT
+═══════════════════════════════════════════════════════════════════════
+
+⚠️  CRITICAL VERSION ISSUE:
+Despite multiple hard-refresh attempts (Ctrl+Shift+R), the browser URL 
+remained stuck on v=411 due to server/browser cache. BUILD 417 was 
+confirmed during loading screens, but URL bar never updated to ?v=417.
+Testing proceeded with BUILD 417 assets loaded.
+
+═══════════════════════════════════════════════════════════════════════
+TASK 1-2: MAGLEV TEXT VERIFICATION (22-30%)
+═══════════════════════════════════════════════════════════════════════
+
+✅ STOP SIGN (25%): r4-maglev-stop.png
+   • Text: CLEARLY READABLE "STOP" in white on pink/magenta frame
+   • Orientation: CORRECT — not mirrored
+   • PASS
+
+✅ GO SIGN (28%): r4-maglev-go.png  
+   • Text: CLEARLY READABLE "GO" in white on green/cyan frame
+   • Orientation: CORRECT — not mirrored
+   • PASS
+
+VERDICT: Both bugs from R3 ARE FIXED. Text is legible and correctly 
+oriented. This is a genuine improvement.
+
+═══════════════════════════════════════════════════════════════════════
+TASK 2c: COMBAT MG FEEDBACK
+═══════════════════════════════════════════════════════════════════════
+
+❌ r4-combat-mg.png captured while holding J key:
+   • NO yellow screen flash visible
+   • NO ◆ MG ◆ text overlay visible
+   • NO bright tracer boxes visible
+   • Only indicator: "J MG" label slightly darker in bottom UI
+
+VERDICT: FAIL — MG feedback is essentially invisible. The second bug 
+from R3 remains UNFIXED. Combat feels dead and unresponsive.
+
+═══════════════════════════════════════════════════════════════════════
+TASK 3: CHASE FLANKS (First 15s)
+═══════════════════════════════════════════════════════════════════════
+
+✓ r4-chase-open.png captured at 37%:
+   • Dark buildings with colored neon horizontal panels (cyan, orange, 
+     purple, yellow)
+   • Low-poly aesthetic, stark contrast
+   • Distant skyscrapers with vertical neon accents
+
+═══════════════════════════════════════════════════════════════════════
+TASK 4: HEAT BAR A/B COMPARISON
+═══════════════════════════════════════════════════════════════════════
+
+🔥 HEAT REFERENCE (heat-feature-sm.jpg):
+   • NFS Heat-style FLAMING SKULL icon with sharp neon glow
+   • Crisp vector graphics, vibrant pink/magenta
+   • Professional polish, instantly recognizable as "Heat"
+   • Number "0" displayed inside skull
+   • Clean typographic hierarchy
+
+❄️  TWISTED SPEED (v411/417):
+   • NO dedicated Heat bar visible in UI
+   • Only bars present: ARMOR (pink), NITRO (cyan), WARDEN (empty)
+   • WARDEN bar appears to be placeholder for Heat feature
+   • Currently: dark/empty rectangular bar, no icon, no visual identity
+   • Typography is basic sans-serif on flat black boxes
+
+═══════════════════════════════════════════════════════════════════════
+A/B VERDICT: WINNER = HEAT (by a MASSIVE margin)
+═══════════════════════════════════════════════════════════════════════
+
+BIGGEST GAPS:
+1. ICON DESIGN — Heat has iconic flaming skull. Twisted Speed has... 
+   nothing. Not even a label. The "WARDEN" bar is invisible.
+
+2. VISUAL HIERARCHY — Heat's bar is impossible to miss. Twisted Speed's
+   bar is so dark it blends into the void.
+
+3. BRAND IDENTITY — Heat's skull instantly communicates danger/wanted
+   level. Twisted Speed has zero symbolic language.
+
+4. POLISH — Heat's neon glow, crisp vectors, and smooth gradients vs.
+   Twisted Speed's flat rectangles and amateur-hour layout.
+
+The gap isn't just "big" — it's EMBARRASSING. Heat looks like a AAA 
+2019 title. Twisted Speed looks like a 2003 Flash game. If the goal is
+to evoke Heat's aesthetic, this is a complete failure.
+
+═══════════════════════════════════════════════════════════════════════
+SUMMARY: 1/2 BUGS FIXED, 1/2 REMAIN
+═══════════════════════════════════════════════════════════════════════
+
+✅ MAGLEV TEXT: FIXED — readable, not mirrored
+❌ MG FEEDBACK: BROKEN — no visible combat response
+⚠️  HEAT BAR: ABSENT — feature not implemented or invisible
+🏆 A/B WINNER: HEAT (landslide victory)
+
+HARSH BUT HONEST: Half credit for the maglev fix. Zero credit for 
+combat. The Heat comparison reveals this game is light-years behind 
+its inspiration. 
+
+Build 417 fixed text rendering but left combat feeling like a ghost 
+and UI design stuck in the stone age.
+

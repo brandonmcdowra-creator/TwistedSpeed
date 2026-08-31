@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 417', w / 2, h * 0.395);
+    ctx.fillText('BUILD 418', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -857,8 +857,16 @@
       return cd > 0 ? '#6a6070' : null;
     }
     // MG overheat: red lockout on the J chip (toast only fires once at onset) (v316)
+    // v418: light chip while J held — HUD feedback even if fireMg is gated / agent focus flaky
+    var holdingJ = (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
+    if (holdingJ && W.mg && !(p.mgOverT > 0)) {
+      state.firingMg = Math.max(state.firingMg || 0, 0.15);
+      state.muzzleFlash = Math.max(state.muzzleFlash || 0, 0.9);
+      ctx.fillStyle = 'rgba(255,230,80,0.6)';
+      ctx.fillRect(w / 2 - 172, h - 52, 78, 34);
+    }
     if (W.mg && (p.mgOverT > 0)) ctx.fillStyle = '#ff2d55';
-    else ctx.fillStyle = wepCol(W.mg, p.mgCd) || '#ffe66d';
+    else ctx.fillStyle = wepCol(W.mg, p.mgCd) || (holdingJ ? '#ffffff' : '#ffe66d');
     ctx.fillText('J ' + (W.mg ? ((p.mgOverT > 0) ? 'OVERHEAT' : (W.mgLabel || 'GUNS')) : '—'), w / 2 - 160, h - 32);
     ctx.fillStyle = wepCol(W.rocket, p.rocketCd) || '#ff8a4a';
     ctx.fillText('K ' + (W.rocket ? (W.rocketLabel || 'ROCKET') : '—'), w / 2 - 72, h - 32);
