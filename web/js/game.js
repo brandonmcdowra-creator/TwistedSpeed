@@ -3516,10 +3516,10 @@
       var nearAfter = world.nearest(p.pos, p.progress != null ? p.progress : progHint);
       if (nearAfter && isFinite(nearAfter.lateralDist) && nearAfter.tangent) {
         var latA = nearAfter.lateralDist;
-        var maxBodyLat = rh + curbW + Math.min(walkW * 0.72, 2.4);
-        // Keep ~1.2 m clear of canyon glass face (roadHalf + openEdge dense)
+        // Stay on asphalt+curb — sidewalk beside canyon still looked like wall embedding (v412)
+        var maxBodyLat = rh + curbW + 0.45;
         var wallFace = rh + 4.5;
-        maxBodyLat = Math.min(maxBodyLat, wallFace - 1.15);
+        maxBodyLat = Math.min(maxBodyLat, wallFace - 3.2);
         if (Math.abs(latA) > maxBodyLat) {
           var sideA = new THREE.Vector3(-nearAfter.tangent.z, 0, nearAfter.tangent.x);
           var overA = Math.abs(latA) - maxBodyLat;
@@ -3569,7 +3569,7 @@
             if (span > 1) gradeY = (yFar.y - yNear.y) / span;
           }
         }
-        groundY = yBlend + 0.38; // v412: wheels clear asphalt (was 0.2 — chassis sink)
+        groundY = yBlend + 0.72; // v412: wheels above asphalt/sheen (0.2/0.38/0.58 still read sunk)
       }
     }
     // Rate-limit grade so pitch/ride don't jump on control-point kinks
@@ -3596,8 +3596,17 @@
     if (!isFinite(groundY)) groundY = p.pos.y;
     // Double-smooth: target then body (v393: softer on steep grade to kill facet)
     if (p._groundYSm == null || !isFinite(p._groundYSm)) p._groundYSm = groundY;
+    // v412: coast hills left chassis buried (~8m under ribbon) when damp lagged
+    var yGapPre = groundY - p.pos.y;
+    if (!nearFolded && Math.abs(yGapPre) > 1.15) {
+      p._groundYSm = groundY;
+      p.pos.y += Math.sign(yGapPre) * Math.min(Math.abs(yGapPre), 36 * dt);
+    }
     p._groundYSm = U.damp(p._groundYSm, groundY, 18 + Math.min(8, Math.abs(gradeY) * 32), dt);
     var yDamp = 14 + Math.min(10, Math.abs(gradeY) * 36);
+    if (!nearFolded && Math.abs(groundY - p.pos.y) > 0.55) {
+      yDamp += 22;
+    }
     p.pos.y = U.damp(p.pos.y, p._groundYSm, yDamp, dt);
     if (!isFinite(p.pos.y)) p.pos.y = groundY;
     if (!isFinite(p.pos.x)) p.pos.x = near.point.x;
@@ -4460,7 +4469,7 @@
         r.speed *= 0.98;
       }
       // Hard rail — rivals never tunnel into canyon (v412)
-      var maxRivalLat = D.roadHalf + 2.8;
+      var maxRivalLat = D.roadHalf + 1.1;
       if (rn.lateralDist != null && Math.abs(rn.lateralDist) > maxRivalLat) {
         var sideHr = new THREE.Vector3(-rn.tangent.z, 0, rn.tangent.x);
         var overR = Math.abs(rn.lateralDist) - maxRivalLat;
@@ -4471,7 +4480,7 @@
       }
       r.progress = Math.max(r.progress || 0, rn.progress);
       if (r.progress > 0.97) r.speed *= 0.88;
-      r.pos.y = rn.point.y + 0.38; // v412: match player ride height
+      r.pos.y = rn.point.y + 0.72; // v412: match player ride height
       r.mesh.position.copy(r.pos);
       // Always apply setYaw so baked GLB face stays correct
       if (GAME.vehicles.setYaw) GAME.vehicles.setYaw(r.mesh, r.yaw);

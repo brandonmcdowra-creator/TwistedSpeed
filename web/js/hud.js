@@ -896,21 +896,21 @@
       aliveR = 1;
       (state.rivals || []).forEach(function (r) { if (!r.dead) aliveR++; });
     }
-    this.panel(w / 2 - 64, 48, 128, 44, 0.88);
+    this.panel(w / 2 - 64, 56, 128, 44, 0.88);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold 10px monospace';
-    ctx.fillText('PLACE', w / 2, 62);
+    ctx.fillText('PLACE', w / 2, 70);
     ctx.fillStyle = '#f2e9e4';
     ctx.font = 'bold 22px monospace';
-    ctx.fillText('P' + place + '/' + aliveR, w / 2, 84);
+    ctx.fillText('P' + place + '/' + aliveR, w / 2, 92);
     ctx.textAlign = 'left';
 
     // EMP banner — full 3s disable must read on dim Night 2 (v281)
     if (state._empHudT > 0) {
       var empLeft = state._empHudT;
       var empHits = state._empHitN | 0;
-      this.panel(w / 2 - 120, 92, 240, 28, 0.88);
+      this.panel(w / 2 - 120, 100, 240, 28, 0.88);
       ctx.fillStyle = '#d070ff';
       ctx.font = 'bold 13px monospace';
       ctx.textAlign = 'center';
@@ -1000,12 +1000,13 @@
     ctx.font = '10px monospace';
     ctx.fillText(Math.round(prog * 100) + '% → FINISH   S' + state.runScrap + ' K' + p.kills, w - 188, chipY + 28);
 
-    this.panel(w / 2 - 90, 16, 180, 18, 0.65);
-    this.bar(w / 2 - 86, 20, 172, 10, (state.meta.stage - 1) / GAME.config.stageCount, '#00e5ff');
+    // Stage parole bar under PLACE — top slot fights tips toast + canvas clip (v412)
+    this.panel(w / 2 - 90, 106, 180, 22, 0.65);
+    this.bar(w / 2 - 86, 111, 172, 10, (state.meta.stage - 1) / GAME.config.stageCount, '#00e5ff');
     ctx.fillStyle = '#f2e9e4';
-    ctx.font = '9px monospace';
+    ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('FREEDOM', w / 2, 42);
+    ctx.fillText('FREEDOM', w / 2, 122);
     ctx.textAlign = 'left';
 
     // Active temporary race buffs (drive-through pickups — not garage upgrades)

@@ -2,12 +2,12 @@
 
 ## 2026-08-31 — Web v412: debug glitch loop (both maps)
 
-Playtests on Neon Circuit + THE REACH showed wall clipping, asphalt shimmer, chassis sink, and FREEDOM HUD cut off at the top.
+Playtests on Neon Circuit + THE REACH showed wall clipping, asphalt shimmer, chassis sink, hill burial, and FREEDOM HUD cut off at the top.
 
-- **Wall clip:** canyon glass sat inside the sidewalk band (`openEdge` 2.2 → face ~13.7 while raised went to ~15.5). Pushed `openEdge` to 4.5/5.4, tighter void tug (15/12.5), hard lateral rail after integrate, rival hard rail.
-- **Road z-fight:** wet sheen + lane paint lifted; polygonOffset on asphalt/sheen/lines.
-- **Ride height:** player + rivals `+0.38` (was `+0.2`).
-- **HUD:** FREEDOM drawn at y=42; BUILD 412 + cache bust `?v=412`.
+- **Wall clip:** canyon glass sat inside the sidewalk band (`openEdge` 2.2). Pushed `openEdge` to 4.5/5.4, earlier void tug, hard lateral rail after integrate (tighter max lat ~road+curb+1 / wall−2.35).
+- **Road z-fight:** wet sheen + lane paint lifted; polygonOffset on asphalt layers.
+- **Ride height:** player + rivals `+0.58` (was `+0.2`). Fast Y catch-up when damp lagged on coast hills.
+- **HUD:** FREEDOM parole bar moved under PLACE (top slot fought tips toast). BUILD 412 + `?v=412`.
 
 Hard-refresh `?v=412`.
 

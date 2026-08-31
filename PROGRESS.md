@@ -9,12 +9,12 @@
 ## This block
 | Check | Result |
 |-------|--------|
-| Play | BUILD 412. Debug pass after v411 scenery: cars no longer tunnel canyon glass; road shimmer reduced; ride height raised; FREEDOM HUD cleared top clip. |
-| Neon walls | Canyon `openEdge` 4.5/5.4 (was 2.2/3.6). Hard lateral rail after integrate. Void tug earlier (15/12.5). |
-| Road | Sheen/paint lifted + polygonOffset — asphalt z-fight shimmer. |
-| Ride | Player + rivals `+0.38` above ribbon (was `+0.2`). |
-| HUD | FREEDOM at y=42; BUILD 412. |
-| REACH | Same drive clamps apply (coast walk band stays thin). |
+| Play | BUILD 412. Debug pass after v411: wall rails, road z-fight, ride height, hill Y catch-up, FREEDOM under PLACE. |
+| Neon walls | Canyon `openEdge` 4.5/5.4. Hard rail ~12m max lat in verify (was clipping at glass ~16). |
+| Road | Sheen/paint lifted + polygonOffset. |
+| Ride | `+0.72` ride + fast catch-up when \|gap\| > 1.15m (REACH hills stay ≥ ~0.72). |
+| HUD | FREEDOM parole bar at y≈106 under PLACE. BUILD 412. |
+| REACH | Wall rail + hill Y fix verified (teleport mid-climb ride ~1.1m clear). |
 | Maglev | Unchanged wait/thread gap on Neon ~22–30%. |
 | Quality bar | Night city at clip density — not wasteland day. |
 
