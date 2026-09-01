@@ -1,14 +1,12 @@
 # Changelog
 
-## 2026-09-01 — Web v433: cleanup / debug / efficiency on gauntlet
+## 2026-09-01 — Web v434: living Neon warden (maglev yard + lane sweep)
 
-Single SoT pass on the gauntlet (v432) tree — not the abandoned v412 branch.
+- Added `docs/AAA-ROADMAP.md` so agents keep moving P0→P3 without re-asking.
+- Maglev junction dress: prison container stencils, WARDEN FREIGHT board, shoulder chevrons, gantry strip syncs to wait/gap.
+- Neon-only **Warden Lane Sweep** after freight (~38–56%): amber telegraph, soft speed/hurt bite, center line stays open half the cycle. REACH skipped.
 
-- **Cleanup:** deleted unused runtime stubs (`city.js`, `night_circuit.js`, `engine.js`, `engine2d.js`, `shaders.js`, syntax-check helpers).
-- **Debug:** canyon `openEdge` 4.5/5.4, hard lateral rail after integrate, ride height `+0.72`, hill Y catch-up, FREEDOM bar under PLACE, favicon data-URI.
-- **Efficiency:** share particle materials (less GC), canvas textures without mipmaps, cache cloud path mid-point, slightly tighter building LOD bands; mute world/preload logs unless `?debug=1`.
-
-Hard-refresh `?v=433`.
+Hard-refresh `?v=434`.
 
 ---
 

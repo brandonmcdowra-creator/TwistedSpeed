@@ -1231,6 +1231,8 @@
     (state.hazards || []).forEach(function (h) { kill(h.mesh); });
     if (GAME.maglev && GAME.maglev.clear) GAME.maglev.clear(state.maglev, scene);
     state.maglev = null;
+    if (GAME.wardenLane && GAME.wardenLane.clear) GAME.wardenLane.clear(state.wardenLane, scene);
+    state.wardenLane = null;
     (state.projectiles || []).forEach(function (pr) {
       recycleProjectileMesh(pr.mesh);
     });
@@ -1383,6 +1385,9 @@
     state.hazards = makeHazards(state.path, state.meta.stage);
     if (GAME.maglev && GAME.maglev.spawn) {
       state.maglev = GAME.maglev.spawn(scene, state.path, state.mapDef);
+    }
+    if (GAME.wardenLane && GAME.wardenLane.spawn) {
+      state.wardenLane = GAME.wardenLane.spawn(scene, state.path, state.mapDef);
     }
     if (hasMutator('last_mile')) {
       // LAST MILE (Night 7): finish stretch is mean — not a label
@@ -3757,6 +3762,17 @@
       GAME.maglev.update(state.maglev, dt, {
         player: p,
         rivals: state.rivals,
+        roadHalf: cfg.drive.roadHalf,
+        toast: toast,
+        hurtPlayer: hurtPlayer,
+        hurtRival: hurtRival,
+      });
+    }
+    if (GAME.wardenLane && GAME.wardenLane.update && state.wardenLane) {
+      GAME.wardenLane.update(state.wardenLane, dt, {
+        player: p,
+        rivals: state.rivals,
+        path: state.path,
         roadHalf: cfg.drive.roadHalf,
         toast: toast,
         hurtPlayer: hurtPlayer,
