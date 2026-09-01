@@ -21,6 +21,7 @@ Mark items done in this file + `PROGRESS.md` when shipped. Do not invent paralle
 - [x] **P1.1** Shield energy before HP (readable bar + absorb FX) — absorb/break sting + HUD pulse (v436).
 - [x] **P1.2** Signature special readability pass (wind-up, impact, cooldown HUD) for 2–3 roster cars.
 - [x] **P1.3** Wreck → scrap loop that changes the *next* night (one meaningful upgrade beat).
+- [x] **P1.4** Scrap Line — wreckable shoulder freight toward Turbo Sloths Mad Max density (MeshBasic + InstancedMesh; soft punish).
 
 ## Then (P2) — Diegetic story
 

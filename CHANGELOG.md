@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-01 — Web v441: Scrap Line shoulder freight density
+
+- **P1.4 Scrap Line** — wreckable shoulder clutter (drums, ballast, spools, crates, glow discs) via InstancedMesh pools along Neon ribbon; centre 44% clear; maglev band t∈[0.26,0.34] and coast/REACH skipped.
+- Overhead district gantries at ~0.10 / 0.26 / 0.66 / 0.80. Soft hit: speed tax + 3–4 HP chip (0.55s CD); no freight toast.
+- Rival wrecks settle as hulks (cap 6) with throttled smoke instead of vanishing after corpse timer.
+- Quality bar: Turbo Sloths Mad Max density (felt), not UE5 photoreal. Locks: maglev timing, warden_lane, saveKey unchanged.
+
+Hard-refresh `?v=441`.
+
+---
+
 ## 2026-09-01 — Web v440: P2.2 Sepulcher district fiction chips
 
 - **P2.2** Four Neon-only district placards on a left-edge HUD channel (not toast): INTAKE ROW `WRDN-03`, FREIGHT SEPULCHER `SEP-12`, HOLDING TERRACES `HOLD-9`, PAROLE MILE `PAROLE`.

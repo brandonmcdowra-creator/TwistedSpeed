@@ -1310,6 +1310,8 @@
     state.maglev = null;
     if (GAME.wardenLane && GAME.wardenLane.clear) GAME.wardenLane.clear(state.wardenLane, scene);
     state.wardenLane = null;
+    if (GAME.scrapLine && GAME.scrapLine.clear) GAME.scrapLine.clear(state.scrapLine, scene);
+    state.scrapLine = null;
     (state.projectiles || []).forEach(function (pr) {
       recycleProjectileMesh(pr.mesh);
     });
@@ -1465,6 +1467,12 @@
     }
     if (GAME.wardenLane && GAME.wardenLane.spawn) {
       state.wardenLane = GAME.wardenLane.spawn(scene, state.path, state.mapDef);
+    }
+    if (GAME.scrapLine && GAME.scrapLine.spawn) {
+      state.scrapLine = GAME.scrapLine.spawn(scene, state.path, state.mapDef, {
+        roadHalf: state.roadHalf || cfg.drive.roadHalf || 11.5,
+        stage: state.meta.stage,
+      });
     }
     if (hasMutator('last_mile')) {
       // LAST MILE (Night 7): finish stretch is mean — not a label
@@ -3952,6 +3960,22 @@
         hurtRival: hurtRival,
       });
     }
+    if (GAME.scrapLine && state.scrapLine) {
+      var scrapCtx = {
+        player: p,
+        path: state.path,
+        world: world,
+        particles: particles,
+        cfg: cfg,
+        state: state,
+        hurtPlayer: hurtPlayer,
+      };
+      GAME.scrapLine.update(state.scrapLine, dt, scrapCtx);
+      GAME.scrapLine.collide(state.scrapLine, p, true, scrapCtx);
+      (state.rivals || []).forEach(function (rv) {
+        if (!rv.dead) GAME.scrapLine.collide(state.scrapLine, rv, false, scrapCtx);
+      });
+    }
     if (I.key('j') || I.key('z')) fireMg();
     if (I.pressed('k') || I.pressed('x')) fireRocket();
     if (I.pressed('l')) dropMine();
@@ -4400,8 +4424,15 @@
 
     // Rivals AI — path follow + rubber band + mixed weapons (open course)
     state.rivals.forEach(function (r, ri) {
-      // Corpse: tumble + secondary boom + smoke then hide (v359)
+      // Corpse: tumble + secondary boom + smoke → settled hulk (v441)
       if (r.dead) {
+        if (r._hulkSettled) {
+          if (r.mesh && !r._hulkHidden) {
+            r.mesh.position.copy(r.pos);
+            r.mesh.position.y = r.pos.y - 0.22;
+          }
+          return;
+        }
         if (r._corpseT != null && r._corpseT > 0) {
           r._corpseT -= dt;
           if (r._wreckBoomT != null && r._wreckBoomT > 0) {
@@ -4441,7 +4472,26 @@
             r.mesh.rotation.x = r._wreckPitch;
             r.mesh.position.y = r.pos.y + Math.sin(r._wreckPitch) * 0.35;
           }
-          if (r._corpseT <= 0 && r.mesh) r.mesh.visible = false;
+          if (r._corpseT <= 0 && !r._hulkSettled) {
+            r._hulkSettled = true;
+            r._wreckSpin = 0;
+            r._wreckPitch = 0.1 + Math.random() * 0.12;
+            r.yaw = (r.yaw || 0) + (Math.random() - 0.5) * 0.4;
+            if (r.mesh) {
+              r.mesh.visible = true;
+              r.mesh.position.copy(r.pos);
+              r.mesh.position.y = r.pos.y - 0.22;
+              if (GAME.vehicles.setYaw) GAME.vehicles.setYaw(r.mesh, r.yaw);
+              else r.mesh.rotation.y = r.yaw;
+              r.mesh.rotation.x = r._wreckPitch;
+              r.mesh.rotation.z = (Math.random() - 0.5) * 0.08;
+            }
+            if (GAME.scrapLine && GAME.scrapLine.registerHulk && state.scrapLine) {
+              var nearH = world && world.nearest ? world.nearest(r.pos, r.progress || 0) : null;
+              r._lat = nearH && isFinite(nearH.lateralDist) ? nearH.lateralDist : 0;
+              GAME.scrapLine.registerHulk(state.scrapLine, r);
+            }
+          }
         }
         return;
       }
