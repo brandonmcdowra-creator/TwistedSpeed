@@ -1,7 +1,7 @@
 # Next session pickup
 
-**Canonical build:** web **v441** (P1.4 Scrap Line shoulder freight).  
-Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
+**Canonical build:** web **v442** (Wreck Wake — dress + smash juice toward Turbo Sloths).  
+Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item (or continue quality if director overrides).
 
 ## Model workflow (director)
 1. Plan / prioritize with **Other Models** (Opus / Sonnet thinking-high, GPT sol xhigh).  
@@ -10,14 +10,14 @@ Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=441
+# http://127.0.0.1:8765/?v=442
 ```
-Title / boot must say **BUILD 441**.
+Title / boot must say **BUILD 442**.
 
 ## Just shipped
-- Scrap Line: wreckable shoulder freight (InstancedMesh pools, glow discs, district gantries).
-- Hulks stay after rival death (settled wreck, cap 6, soft collide).
-- Quality north star: Turbo Sloths Mad Max density felt at chase-cam speed — not photoreal UE5.
+- Scrap Line dress layer (≤900 non-hit gravel/shard/scrub to horizon).
+- Knocked props settle as wreck marks; debris.js chunks + dust wake; smashKick blur.
+- Quality north star: Turbo Sloths Mad Max density *felt* at chase-cam speed — not photoreal UE5.
 
 ## Next
-- **P2.3** Finish ceremony polish (Parole Arch) as story punctuation.
+- **P2.3** Finish ceremony polish (Parole Arch), **or** thruster/exhaust readability if still chasing the ref.
