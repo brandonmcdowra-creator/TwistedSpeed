@@ -1,32 +1,22 @@
 # Twisted Speed — Progress
 
-**Build:** web **v443** (Wreck Wake dress on chase-cam shoulder lip)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=443`  
-**Gauntlet:** COMPLETE (Heat R12 · TM R17) — visual/combat baseline  
-**SoT:** one build · follow `docs/AAA-ROADMAP.md` for next work  
-**Quality bar:** Turbo Sloths Mad Max combat-racer density (felt), not UE5 photoreal.
+**Build:** web **v444** (Wreck Wake + night-readable Scrap Line silhouettes)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=444`  
+**Quality bar:** Turbo Sloths Mad Max density (felt), not UE5 photoreal.
 
-## This block (v442→v443)
+## This block (v442–v444)
 | Check | Result |
 |-------|--------|
-| Dress layer | gravel / shard / scrub · ≤900 · lat **0.92–1.87×** roadHalf · **no collide** |
-| Knocked props | 0.45s tumble → y-scale 0.3 wreck mark |
-| Debris wake | 96 chunks + 64 dust · player wake @0.10s · smash burst |
-| Smash juice | collide SFX · camShake 0.18 · smashKick → motion blur |
-| Hazard freeze | clearFrac 0.44 · maxInstances 400 · step 0.0032 · hpChip/hitCd unchanged |
-| Locks | Maglev wait/gap · warden_lane · saveKey |
+| Dress | ≤900 · lat 0.92–1.87× · brighter/larger night silhouettes · no collide |
+| Knocked props | tumble → flattened wreck |
+| Debris wake | chunks + dust + smashKick |
+| Hazard freeze | clearFrac 0.44 · max 400 · maglev/warden/save untouched |
 
-## Don’t regress
-- Gauntlet VFX · maglev wait/gap · soft hazards · lip-only steer  
-- Original cast · saves `twisted-speed-v5-night`  
-- Toast substrings: BONE HARVEST, THREAD THE VEIN, VEIN MISS, BLACKOUT KISS, REAR VEIN  
-- District index `0` is real (INTAKE ROW) — never falsy-skip  
-
-## Next (from roadmap)
-**P2.3** Finish ceremony polish (Parole Arch) as story punctuation — or further Turbo Sloths feel (thruster read / impact polish) if director keeps quality push.
+## Next
+**P2.3** Parole Arch ceremony — or thruster/exhaust readability if still chasing Turbo Sloths.
 
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=443  → BUILD 443
+# http://127.0.0.1:8765/?v=444
 ```

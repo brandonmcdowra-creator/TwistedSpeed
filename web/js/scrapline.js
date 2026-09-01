@@ -37,9 +37,9 @@
       glow: new THREE.RingGeometry(0.32, 0.52, 14),
       gantryPost: new THREE.BoxGeometry(0.75, 14, 0.75),
       gantryBeam: new THREE.BoxGeometry(26, 0.65, 1.15),
-      gravel: new THREE.IcosahedronGeometry(0.35, 0),
-      shard: new THREE.BoxGeometry(0.9, 0.05, 0.6),
-      scrub: new THREE.PlaneGeometry(1.1, 1.1),
+      gravel: new THREE.IcosahedronGeometry(0.55, 0),
+      shard: new THREE.BoxGeometry(1.35, 0.12, 0.85),
+      scrub: new THREE.PlaneGeometry(1.85, 1.85),
     };
     return _geo;
   }
@@ -75,23 +75,28 @@
       });
     }
     if (kind === 'gravel') {
-      return new THREE.MeshBasicMaterial({ color: 0x2e2a26 });
+      return new THREE.MeshBasicMaterial({ color: 0x6a5a48 });
     }
     if (kind === 'shard') {
-      return new THREE.MeshBasicMaterial({ color: 0x3a342e });
+      return new THREE.MeshBasicMaterial({ color: 0x8a7a62 });
     }
     if (kind === 'scrub') {
       return new THREE.MeshBasicMaterial({
-        color: 0x1a2420,
+        color: 0x3a5548,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.78,
         side: THREE.DoubleSide,
         depthWrite: false,
       });
     }
-    var cols = [0x3a3530, 0x2a2825, 0x4a4038, 0x352830];
+    // Collidable freight — lift a step so it reads against asphalt at night
+    if (kind === 'drum') return new THREE.MeshBasicMaterial({ color: 0x5a4838 });
+    if (kind === 'ballast') return new THREE.MeshBasicMaterial({ color: 0x4a4038 });
+    if (kind === 'spool') return new THREE.MeshBasicMaterial({ color: 0x3a4850 });
+    if (kind === 'crate') return new THREE.MeshBasicMaterial({ color: 0x6a5038 });
+    var cols = [0x5a5048, 0x4a4540, 0x5a4840, 0x453840];
     var ci = KINDS.indexOf(kind);
-    return new THREE.MeshBasicMaterial({ color: cols[ci] != null ? cols[ci] : 0x3a3530 });
+    return new THREE.MeshBasicMaterial({ color: cols[ci] != null ? cols[ci] : 0x5a5048 });
   }
 
   function placeMatrix(path, item, pool, opts) {

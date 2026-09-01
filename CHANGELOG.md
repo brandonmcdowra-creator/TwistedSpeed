@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-01 — Web v444: Scrap Line night-readable silhouettes
+
+- Dress + freight materials lifted (warm grey / desert scrap, not dark-on-asphalt vanish).
+- Dress geos scaled up (gravel/shard/scrub) so chase-cam shoulders read packed at Neon night.
+- Hazard count / maglev / saveKey still frozen.
+
+Hard-refresh `?v=444`.
+
+---
 ## 2026-09-01 — Web v443: Wreck Wake dress on chase-cam lip
 
 - Pull non-hit dress inward to **0.92–1.87× roadHalf** (was 1–3×, often behind neon blocks) + slightly larger scales so shoulder clutter reads at chase-cam speed.
