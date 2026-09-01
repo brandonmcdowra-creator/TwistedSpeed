@@ -3,6 +3,7 @@
 **Build:** web **v432** (killNova gh-02 soot)  
 **Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=432`  
 **Gauntlet:** **COMPLETE** — Heat chase WON (R12) · TM combat WON (R17)  
+**SoT:** **one build** — `main` = web v432. Parallel v412 debug branch closed/deleted.  
 
 ## Final scoreboard
 | Bar | Round | Verdict |
