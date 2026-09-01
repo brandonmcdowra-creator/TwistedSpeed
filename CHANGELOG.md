@@ -1,13 +1,13 @@
 # Changelog
 
-## 2026-09-01 — Web v442: Wreck Wake (Turbo Sloths density juice)
+## 2026-09-01 — Web v443: Wreck Wake (Turbo Sloths density juice)
 
 - **Dress layer** — up to 900 non-collidable gravel/shard/scrub instances outside the hit band (1.02–3.2× roadHalf) so chase-cam shoulders read packed without raising hazard count.
 - **Knocked props** — smashed Scrap Line freight tumbles ~0.45s then settles as flattened wreck marks (no silent vanish).
 - **debris.js** — InstancedMesh ballistic chunks (96) + ground dust wake (64); player/rival dust trails; smash burst + crunch SFX + smashKick motion blur.
 - Hit difficulty frozen (clearFrac 0.44, maxInstances 400, step 0.0032, hpChip/hitCd). Maglev / warden_lane / saveKey untouched.
 
-Hard-refresh `?v=442`.
+Hard-refresh `?v=443`.
 
 ---
 

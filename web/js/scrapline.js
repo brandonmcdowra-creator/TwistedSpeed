@@ -309,7 +309,7 @@
             lat: dressSide * roadHalf * latMul,
             kind: dk,
             spin: (U.seeded(seed + dSlot * 2.7) - 0.5) * 1.2,
-            scale: 0.7 + U.seeded(seed + dSlot * 1.9) * 0.9,
+            scale: 0.95 + U.seeded(seed + dSlot * 1.9) * 1.15,
           });
           dSlot++;
         }

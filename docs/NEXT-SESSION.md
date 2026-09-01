@@ -1,6 +1,6 @@
 # Next session pickup
 
-**Canonical build:** web **v442** (Wreck Wake — dress + smash juice toward Turbo Sloths).  
+**Canonical build:** web **v443** (Wreck Wake — dress + smash juice toward Turbo Sloths).  
 Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item (or continue quality if director overrides).
 
 ## Model workflow (director)
@@ -10,9 +10,9 @@ Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item (or continue qu
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=442
+# http://127.0.0.1:8765/?v=443
 ```
-Title / boot must say **BUILD 442**.
+Title / boot must say **BUILD 443**.
 
 ## Just shipped
 - Scrap Line dress layer (≤900 non-hit gravel/shard/scrub to horizon).
