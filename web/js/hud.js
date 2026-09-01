@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 411', w / 2, h * 0.395);
+    ctx.fillText('BUILD 432', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -638,6 +638,62 @@
     var p = state.player;
     if (!p) return;
 
+    // v424: windshield rain streaks when wet (Heat chase-cam atmosphere)
+    if (state.wetBias > 0.12) {
+      var wb = state.wetBias;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(220,235,255,' + (0.08 + wb * 0.14) + ')';
+      ctx.lineWidth = 1.2;
+      var t = (state.time || 0) * 1.8;
+      for (var ri = 0; ri < 14; ri++) {
+        var rx = ((ri * 137 + Math.floor(t * 3) * 17) % 1000) / 1000 * w;
+        var ry = ((ri * 211 + Math.floor(t * 5) * 23) % 1000) / 1000 * h;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx - 18 - ri * 2, ry + 42 + ri * 3);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // v430: chase speed streaks + combat heat haze (TM motion-blur read)
+    var firingNow = (state.firingMg > 0) || (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
+    if (state.camMode !== 'hood' && p.speed > 80) {
+      var sb = Math.min(1, (p.speed - 80) / 50);
+      var combatBoost = firingNow ? 0.35 : 0;
+      ctx.save();
+      ctx.globalAlpha = 0.08 + sb * 0.18 + combatBoost;
+      ctx.strokeStyle = 'rgba(255,200,120,0.6)';
+      ctx.lineWidth = 1.5 + sb;
+      var cx = w * 0.5, cy = h * 0.55;
+      var nStreaks = firingNow ? 18 : 12;
+      for (var si = 0; si < nStreaks; si++) {
+        var ang = (si / nStreaks) * Math.PI * 2 + (state.time || 0) * 0.5;
+        var r0 = 30 + si * 8;
+        var r1 = r0 + 80 + sb * 110 + (firingNow ? 40 : 0);
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0 * 0.55);
+        ctx.lineTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1 * 0.55);
+        ctx.stroke();
+      }
+      // Edge radial smear when firing at speed
+      if (firingNow && p.speed > 95) {
+        var hb = Math.min(1, (p.speed - 95) / 45);
+        var eg = ctx.createRadialGradient(cx, cy, w * 0.08, cx, cy, w * 0.62);
+        eg.addColorStop(0, 'rgba(0,0,0,0)');
+        eg.addColorStop(0.65, 'rgba(255,140,40,' + (0.04 * hb) + ')');
+        eg.addColorStop(1, 'rgba(20,10,5,' + (0.22 * hb) + ')');
+        ctx.fillStyle = eg;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.restore();
+    }
+
+    var holdingJEarly = (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
+    if (holdingJEarly) {
+      state.firingMg = Math.max(state.firingMg || 0, 0.2);
+      state.muzzleFlash = Math.max(state.muzzleFlash || 0, 0.9);
+    }
     if (state.hitFlash > 0) {
       var fa = Math.min(0.45, state.hitFlash * 0.55);
       var g = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.15, w * 0.5, h * 0.5, w * 0.72);
@@ -646,6 +702,36 @@
       g.addColorStop(1, 'rgba(180,0,30,' + fa + ')');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
+    }
+    // v428: MG screen kick — tighter TM cross-bloom (was full-screen wash)
+    if (state.muzzleFlash > 0 || holdingJEarly) {
+      var ma = Math.min(0.42, Math.max(state.muzzleFlash || 0.7, holdingJEarly ? 0.7 : 0) * 0.65);
+      var mx = w * 0.5, my = h * 0.58;
+      var mg = ctx.createRadialGradient(mx, my, 4, mx, my, w * 0.14);
+      mg.addColorStop(0, 'rgba(255,255,220,' + ma + ')');
+      mg.addColorStop(0.3, 'rgba(255,170,50,' + (ma * 0.35) + ')');
+      mg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = mg;
+      ctx.fillRect(mx - w * 0.14, my - w * 0.12, w * 0.28, w * 0.24);
+      // 4-petal TM cross
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.globalAlpha = ma * 0.85;
+      ctx.fillStyle = 'rgba(255,255,200,0.9)';
+      ctx.fillRect(-w * 0.055, -3, w * 0.11, 6);
+      ctx.fillRect(-3, -w * 0.045, 6, w * 0.09);
+      ctx.restore();
+    }
+    if (state.firingMg > 0 || holdingJEarly) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(w * 0.5 - 70, h * 0.68 - 18, 140, 36);
+      ctx.fillStyle = '#ffe66d';
+      ctx.font = 'bold 26px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('◆ MG ◆', w * 0.5, h * 0.68);
+      ctx.restore();
     }
     // v401: hit chevron — large, HUD-safe frame (clear armor / minimap / weapon bar)
     if (state.hitDirT > 0) {
@@ -685,20 +771,25 @@
       ctx.stroke();
       ctx.restore();
     }
-    // v404: MG hit confirm + rocket lock pip (chase-cam combat read)
+    // v427: MG hit confirm — TM-style impact read (crosshair + HIT banner)
     if (p._hitConfirmT > 0) {
-      var hc = Math.min(1, p._hitConfirmT / 0.28);
+      var hc = Math.min(1, p._hitConfirmT / 0.38);
       ctx.save();
-      ctx.globalAlpha = 0.35 + 0.65 * hc;
+      ctx.globalAlpha = 0.45 + 0.55 * hc;
       ctx.strokeStyle = '#ffe66d';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       var hx = w * 0.5, hy = h * 0.42;
       ctx.beginPath();
-      ctx.moveTo(hx - 14, hy); ctx.lineTo(hx - 4, hy);
-      ctx.moveTo(hx + 4, hy); ctx.lineTo(hx + 14, hy);
-      ctx.moveTo(hx, hy - 14); ctx.lineTo(hx, hy - 4);
-      ctx.moveTo(hx, hy + 4); ctx.lineTo(hx, hy + 14);
+      ctx.moveTo(hx - 22, hy); ctx.lineTo(hx - 6, hy);
+      ctx.moveTo(hx + 6, hy); ctx.lineTo(hx + 22, hy);
+      ctx.moveTo(hx, hy - 22); ctx.lineTo(hx, hy - 6);
+      ctx.moveTo(hx, hy + 6); ctx.lineTo(hx, hy + 22);
       ctx.stroke();
+      ctx.fillStyle = 'rgba(255,60,40,0.55)';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('◆ HIT ◆', hx, hy + 36);
       ctx.restore();
     }
     if (state._lockRival && state._lockRival.pos && GAME.camera) {
@@ -742,16 +833,25 @@
       ctx.fillStyle = mg;
       ctx.fillRect(mx - w * 0.22, my - w * 0.18, w * 0.44, w * 0.36);
     }
-    // Chase MG muzzle — smaller HUD burst; van occludes world flash at gun (v400)
+    // Chase MG muzzle — v428 TM 4-petal cross (localized, not full-frame)
     if (state.camMode !== 'hood' && p._chaseMuzzleT > 0) {
       var cm = Math.min(1, p._chaseMuzzleT / 0.07);
-      var cx = w * 0.5, cy = h * 0.62;
-      var cg = ctx.createRadialGradient(cx, cy, 2, cx, cy, w * 0.12);
-      cg.addColorStop(0, 'rgba(255,246,180,' + (0.55 * cm) + ')');
-      cg.addColorStop(0.4, 'rgba(255,180,40,' + (0.28 * cm) + ')');
+      var cx = w * 0.5, cy = h * 0.58;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.globalAlpha = 0.5 * cm;
+      ctx.fillStyle = 'rgba(255,255,210,0.85)';
+      ctx.fillRect(-w * 0.04, -2, w * 0.08, 4);
+      ctx.fillRect(-2, -w * 0.035, 4, w * 0.07);
+      var cg = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
+      cg.addColorStop(0, 'rgba(255,255,200,' + (0.7 * cm) + ')');
+      cg.addColorStop(0.5, 'rgba(255,160,40,' + (0.3 * cm) + ')');
       cg.addColorStop(1, 'rgba(255,100,0,0)');
       ctx.fillStyle = cg;
-      ctx.fillRect(cx - w * 0.12, cy - w * 0.1, w * 0.24, w * 0.2);
+      ctx.beginPath();
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     // Armor + run scrap — high contrast for first-minute read (v303)
@@ -839,8 +939,16 @@
       return cd > 0 ? '#6a6070' : null;
     }
     // MG overheat: red lockout on the J chip (toast only fires once at onset) (v316)
+    // v418: light chip while J held — HUD feedback even if fireMg is gated / agent focus flaky
+    var holdingJ = (GAME.input && (GAME.input.key('j') || GAME.input.key('z')));
+    if (holdingJ && W.mg && !(p.mgOverT > 0)) {
+      state.firingMg = Math.max(state.firingMg || 0, 0.15);
+      state.muzzleFlash = Math.max(state.muzzleFlash || 0, 0.9);
+      ctx.fillStyle = 'rgba(255,230,80,0.6)';
+      ctx.fillRect(w / 2 - 172, h - 52, 78, 34);
+    }
     if (W.mg && (p.mgOverT > 0)) ctx.fillStyle = '#ff2d55';
-    else ctx.fillStyle = wepCol(W.mg, p.mgCd) || '#ffe66d';
+    else ctx.fillStyle = wepCol(W.mg, p.mgCd) || (holdingJ ? '#ffffff' : '#ffe66d');
     ctx.fillText('J ' + (W.mg ? ((p.mgOverT > 0) ? 'OVERHEAT' : (W.mgLabel || 'GUNS')) : '—'), w / 2 - 160, h - 32);
     ctx.fillStyle = wepCol(W.rocket, p.rocketCd) || '#ff8a4a';
     ctx.fillText('K ' + (W.rocket ? (W.rocketLabel || 'ROCKET') : '—'), w / 2 - 72, h - 32);

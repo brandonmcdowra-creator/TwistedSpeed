@@ -138,6 +138,7 @@
         time: { value: 0 },
         liftCyan: { value: grade.liftCyan },
         liftAmber: { value: grade.liftAmber },
+        motionBlur: { value: 0 },
       },
       vertexShader: [
         'varying vec2 vUv;',
@@ -146,7 +147,7 @@
       fragmentShader: [
         'uniform sampler2D tScene, tBloom0, tBloom1, tBloom2, tBloom3;',
         'uniform float exposure, contrast, saturation, bloomStrength, vignette, grain, chromatic, time;',
-        'uniform float liftCyan, liftAmber;',
+        'uniform float liftCyan, liftAmber, motionBlur;',
         'varying vec2 vUv;',
         'vec3 ACESFilm(vec3 x){',
         '  const float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14;',
@@ -161,6 +162,19 @@
         '  float g = texture2D(tScene, uv).g;',
         '  float b = texture2D(tScene, uv - dir).b;',
         '  vec3 col = vec3(r,g,b);',
+        '  // v431: radial motion smear — TM chase-combat blur on scene geometry',
+        '  if (motionBlur > 0.002) {',
+        '    vec2 ctr = vec2(0.5, 0.46);',
+        '    vec2 rad = uv - ctr;',
+        '    float dist = length(rad);',
+        '    vec2 dir = dist > 0.0001 ? rad / dist : vec2(0.0, 1.0);',
+        '    float smear = motionBlur * dist * dist * 1.35;',
+        '    col += texture2D(tScene, uv + dir * smear * 0.008).rgb * 0.22;',
+        '    col += texture2D(tScene, uv + dir * smear * 0.018).rgb * 0.18;',
+        '    col += texture2D(tScene, uv + dir * smear * 0.032).rgb * 0.14;',
+        '    col += texture2D(tScene, uv - dir * smear * 0.006).rgb * 0.08;',
+        '    col *= 0.92;',
+        '  }',
         '  // Bloom (single-mip path still samples slots — extras may alias mip0)',
         '  vec3 bloom = texture2D(tBloom0, uv).rgb * 0.72;',
         '  bloom += texture2D(tBloom1, uv).rgb * 0.18;',
@@ -310,6 +324,12 @@
     u.time.value = time || 0;
     r.setRenderTarget(null);
     r.render(this.scene, this.cam);
+  };
+
+  PostFX.prototype.setMotionBlur = function (amount) {
+    if (this.compositeMat && this.compositeMat.uniforms.motionBlur) {
+      this.compositeMat.uniforms.motionBlur.value = Math.max(0, Math.min(0.65, amount || 0));
+    }
   };
 
   PostFX.prototype.setGrade = function (partial) {

@@ -1,0 +1,38 @@
+GAUNTLET R8 — TWISTED SPEED v422 EVALUATION
+===========================================
+
+VERDICT: NFS HEAT WINS
+BIGGEST GAP: Uniform tiled specular grid vs Heat's unique per-lamp pools with texture falloff
+
+GAP PROGRESSION:
+- v420: 95% gap (emissive road glow bug)
+- v421: 85% gap (fixed emissive but invisible speculars) 
+- v422: 70% gap (specular mask visible but repeating tile pattern)
+
+IMPROVEMENT: 15% gap closed from v421 → v422
+
+v422 DELIVERED:
+✅ Tiled specular mask ribbon (visible white/grey grid on road)
+✅ START gate neon ground pool (cyan glow under gate)
+✅ Lamp pools on road center (faint but present)
+✅ Headlight sweep glint (orange/white glow ahead)
+✅ Denser rain (132 particle streaks)
+✅ Road mist (horizon haze)
+
+STILL MISSING VS HEAT:
+❌ Per-light pool uniqueness (v422 uses global repeating tile)
+❌ Texture-aware specularity (Heat breaks up by asphalt grain)
+❌ Specular color tint (v422 is white/grey only, Heat picks up neon colors)
+❌ Fresnel rim lighting on car flanks
+⚠️ Rain directionality + windshield splatter
+
+HARSH BUT FAIR: 
+Builder shipped everything promised. Speculars are VISIBLE and FUNCTIONAL.
+But they read as "repeating pattern overlay" not "light interacting with material."
+Heat: emergent per-frame lighting. v422: stamped wallpaper texture.
+
+For stylized indie/retro aesthetic: v422 is solid (70% Heat fidelity).
+For "fool player into thinking it's Heat": tiling pattern is instant tell.
+
+FILES: /workspace/gauntlet/shots/r8-chase-{open,wet,specular}.png
+REPORT: /workspace/gauntlet/rounds/r8-critic.md (126 lines)

@@ -1,0 +1,83 @@
+GAUNTLET CRITIC R7 - TWISTED SPEED v421 vs NFS HEAT
+====================================================
+
+BLIND A/B VERDICT: **NFS HEAT WINS**
+
+BIGGEST REMAINING GAP:
+"Road surface still reads as flat matte panel—no localized specular pools, 
+no wet-asphalt texture grain, no lighting interaction depth."
+
+KEY FINDINGS:
+-------------
+
+1. BUILD VERIFICATION:
+   ✓ Title screen confirmed "BUILD 421" 
+   ⚠ URL bar showed v=420 throughout (likely browser cache artifact)
+   ✓ No-cache serve.py used on port 8765
+
+2. v421 IMPROVEMENTS (vs v420's 95% gap):
+   ✓ Road NO LONGER glows/emits light (emissive panel bug FIXED)
+   ✓ Base color darkened from cyan-white to dark grey-blue
+   ✓ Surface now reads as "road" not "neon strip"
+   
+   GAP CLOSED: 95% → 85% (10% improvement)
+
+3. STILL MISSING (Critical for Heat parity):
+   ✗ Localized specular streaks under lamps
+   ✗ Lamp pools with concentrated bright spots
+   ✗ Wet texture grain/roughness variation
+   ⚠ Rain density (present but sparse vs Heat's layered diagonal)
+
+4. MATRIX SCORES (v421 vs Heat):
+   - Wet road specular: 85% gap
+   - Rain atmosphere: 80% gap
+   - Neon storefronts: 85% gap
+   - Palm/flank density: 90% gap
+   - Chase energy: 75% gap
+
+5. ROOT CAUSE ANALYSIS:
+   Heat's road is a MATERIAL SURFACE that receives light.
+   Twisted Speed's road (even v421) is a COLORED SHAPE that ignores lighting.
+   
+   Result: Heat roads feel "alive with light" — every lamp creates pools,
+   reflections have character. v421 road is inert — stage floor that light
+   passes over, not into.
+
+BUILDER ORDERS FOR R8:
+----------------------
+1. Specular mask pass (white spots under neon lights + car headlights)
+2. Texture micro-detail (noise/grain overlay to break smoothness)
+3. Wetness shader (increase reflectivity in puddle zones near lights)
+4. Rain interaction (denser diagonal rain + splatter particles)
+5. Atmospheric depth (fog/mist for "humid night" feel)
+
+FILES CAPTURED:
+--------------
+✓ r7-chase-open.webp  (opening stretch, 55 mph, 7% progress)
+✓ r7-chase-wet.webp   (mid race, 47 mph, 16% progress)
+✓ r7-chase-flank.webp (freight zone, 50 mph, 23% progress)
+
+REFERENCES USED:
+---------------
+✓ heat-chase-01-sm.jpg (wet garage floor, tube-light reflections)
+✓ heat-chase-04-sm.jpg (wet concrete, pink neon pool, god rays)
+
+TEST CONDITIONS:
+---------------
+- Server: python3 serve.py on port 8765
+- URL: http://127.0.0.1:8765/?v=421
+- Track: NEON CIRCUIT, CHILL mode, Night 2/13, BLACKOUT
+- Camera: Chase cam, ~25 seconds driving
+
+HARSH TRUTH:
+-----------
+v421 solved the emergency blocking comparison (emissive glow), but only
+closed 10% of the gap. If goal is "stylized low-poly + wet atmosphere,"
+v421 is 50% there. If goal is "fool player for 2 seconds into thinking
+it's Heat," road material remains #1 blocker.
+
+The opening/wet/flank shots show identical material behavior: dark, matte,
+uniformly lit. Heat would show variation—brighter under cyan START gate,
+dimmer in shadows, white streaks where fixtures hit wet surface.
+
+FINAL: Heat wins. Road now correct darkness but still lacks life.

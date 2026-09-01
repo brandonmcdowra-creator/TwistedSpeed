@@ -46,3 +46,8 @@ dist/
 # Source art outside the playable web package
 assets/models/
 !web/assets/models/
+
+# Gauntlet: keep lean refs in git; ignore 4K dumps
+gauntlet/refs/heat-imgur-*.jpg
+gauntlet/refs/heat-night-*.jpg
+gauntlet/refs/heat-chase-0[1-5].jpg

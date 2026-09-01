@@ -2326,16 +2326,13 @@
       var boomPos = r.pos.clone();
       boomPos.y += 0.7;
       if (particles) {
-        if (particles.explosion) particles.explosion(boomPos, true);
+        if (particles.killNova) particles.killNova(boomPos);
+        else {
+          if (particles.explosion) particles.explosion(boomPos, true);
+          if (particles.smokeStack) particles.smokeStack(boomPos, true);
+        }
         if (particles.spawn) {
-          particles.spawn('fire', boomPos, { count: 22, speed: 14, life: 0.55, gravity: 2 });
-          particles.spawn('spark', boomPos.clone().setY(boomPos.y + 0.3), {
-            count: 18, speed: 16, life: 0.35, gravity: 3,
-          });
-          particles.spawn('smoke', boomPos.clone().setY(boomPos.y + 0.5), {
-            count: 12, speed: 4, life: 1.4, scale: 1.6, gravity: -0.5,
-          });
-          particles.spawn('pink', boomPos, { count: 10, speed: 11, life: 0.28, gravity: 1 });
+          particles.spawn('pink', boomPos, { count: 10, speed: 12, life: 0.32, gravity: 1 });
         }
       }
       if (GAME.sfx) {
@@ -2384,15 +2381,17 @@
 
   function ensureCombatPool() {
     if (_combatPool.tracerGeo) return;
-    // v400: thicker/longer so chase cam can read MG at speed (was r=0.05, len=1.3)
-    _combatPool.tracerGeo = new THREE.CylinderGeometry(0.15, 0.15, TRACER_BASE_LEN, 6);
+    // v428 Gauntlet TM: thin orange tracers — TM 2012 chain-gun read at chase speed
+    _combatPool.tracerGeo = new THREE.BoxGeometry(0.14, 0.14, TRACER_BASE_LEN);
     _combatPool.tracerMatY = new THREE.MeshBasicMaterial({
-      color: 0xffe66d, transparent: true, opacity: 1,
-      depthWrite: false, blending: THREE.AdditiveBlending,
+      color: 0xffaa33, transparent: true, opacity: 0.95,
+      depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+      depthTest: false,
     });
     _combatPool.tracerMatP = new THREE.MeshBasicMaterial({
-      color: 0xffcc66, transparent: true, opacity: 1,
-      depthWrite: false, blending: THREE.AdditiveBlending,
+      color: 0xff8833, transparent: true, opacity: 0.95,
+      depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+      depthTest: false,
     });
     _combatPool.rocketBodyGeo = new THREE.CylinderGeometry(0.16, 0.2, 1.35, 6);
     _combatPool.rocketNoseGeo = new THREE.ConeGeometry(0.16, 0.48, 6);
@@ -2418,9 +2417,10 @@
    */
   function aimMgTracer(mesh, pos, dir) {
     ensureCombatPool();
+    // BoxGeometry long axis is +Z — lookAt aims -Z, so rotateY(PI) after
     _combatPool.lookTmp.copy(pos).add(dir);
     mesh.lookAt(_combatPool.lookTmp);
-    mesh.rotateX(-Math.PI / 2);
+    mesh.rotateY(Math.PI);
   }
 
   function makeTracer(color, length) {
@@ -2435,7 +2435,8 @@
     // Pistol = warmer, MG = yellow — shared mats, just swap ref
     mesh.material = (color === 0xffcc66) ? _combatPool.tracerMatP : _combatPool.tracerMatY;
     var len = length || TRACER_BASE_LEN;
-    mesh.scale.set(1, len / TRACER_BASE_LEN, 1);
+    // v417: BoxGeometry long axis = Z
+    mesh.scale.set(1, 1, len / TRACER_BASE_LEN);
     mesh.userData.pooled = 'tracer';
     return mesh;
   }
@@ -2554,57 +2555,52 @@
     var hood = state.camMode === 'hood';
     // Chase: van body occludes ahead-of-bumper tracers — spawn high + wide (v400)
     // Hood: spawn further ahead/higher so tracers sit in FOV (body is hidden) (v302)
-    var fwdOff = hood ? 4.2 : 1.8;
-    var yOff = hood ? 1.45 : 2.6;
-    // Chase length ~8 / radius ~0.30 via scale on base geo r=0.15 h=3
-    var tracerLen = hood ? 3.8 : (W.mgLabel === 'PISTOL' ? 6.0 : 8.0);
-    var radScale = hood ? 1.45 : 2.0; // chase effective r ≈ 0.30
+    var fwdOff = hood ? 4.2 : 2.4;
+    var yOff = hood ? 1.45 : 3.1;
+    // v428: TM thin tracers — long orange lines, not screen-filling rods
+    var tracerLen = hood ? 5.5 : 14.0;
+    var radScale = hood ? 1.6 : 2.4;
     function spawnMgRound(sideOff) {
       if (state.projectiles.length > 28) return;
       var origin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, sideOff);
       origin.y += yOff;
-      var col = W.mgLabel === 'PISTOL' ? 0xffcc66 : 0xffe66d;
+      var col = W.mgLabel === 'PISTOL' ? 0xffcc66 : 0xfff2a0;
       var mesh = makeTracer(col, tracerLen);
-      mesh.scale.x = mesh.scale.z = radScale;
+      mesh.scale.x = radScale;
+      mesh.scale.y = radScale;
       mesh.position.copy(origin);
       aimMgTracer(mesh, origin, tmpV);
       scene.add(mesh);
       state.projectiles.push({
         type: 'mg', mesh: mesh, pos: origin.clone(),
         vel: tmpV.clone().multiplyScalar(cfg.combat.mgSpeed * (W.mgLabel === 'PISTOL' ? 0.92 : 1)),
-        life: hood ? 0.55 : 0.48, dmg: dmg, fromPlayer: true, trail: false,
+        life: hood ? 0.9 : 1.05, dmg: dmg, fromPlayer: true, trail: true,
       });
     }
-    if (hasBuff('guns')) {
-      spawnMgRound(hood ? -0.35 : -1.05);
-      spawnMgRound(hood ? 0.35 : 1.05);
-    } else if (hood) {
-      var sideOffH = (W.mgLabel === 'PISTOL') ? 0 : (Math.random() > 0.5 ? 1 : -1) * 0.22;
-      spawnMgRound(sideOffH);
+    // Always dual stream in chase so rods clear the silhouette
+    if (hasBuff('guns') || !hood) {
+      spawnMgRound(hood ? -0.35 : -1.2);
+      spawnMgRound(hood ? 0.35 : 1.2);
     } else {
-      // Alternate flanks so streaks clear the van silhouette from chase cam
-      var sideOffC = (W.mgLabel === 'PISTOL') ? ((Math.random() > 0.5 ? 1 : -1) * 0.85)
-        : (Math.random() > 0.5 ? 1 : -1) * 1.05;
-      spawnMgRound(sideOffC);
+      spawnMgRound((Math.random() > 0.5 ? 1 : -1) * 0.22);
     }
     p._muzzleFxT = (p._muzzleFxT || 0);
     if (particles && p._muzzleFxT <= 0) {
-      p._muzzleFxT = hood ? 0.03 : 0.04;
-      // Match tracer flank so muzzle isn't buried in the body
-      var mSide = hood ? 0 : ((Math.random() > 0.5 ? 1 : -1) * 1.0);
+      p._muzzleFxT = hood ? 0.03 : 0.035;
+      var mSide = hood ? 0 : ((Math.random() > 0.5 ? 1 : -1) * 1.1);
       var mOrigin = p.pos.clone().addScaledVector(tmpV, fwdOff).addScaledVector(tmpV2, mSide);
       mOrigin.y += yOff;
-      particles.muzzle(mOrigin, tmpV);
+      if (particles.muzzleBurst) particles.muzzleBurst(mOrigin, tmpV, hood);
+      else particles.muzzle(mOrigin, tmpV);
       if (particles.spawn) {
         particles.spawn('muzzle', mOrigin, {
-          count: hood ? 3 : 3, speed: hood ? 14 : 12, life: hood ? 0.1 : 0.09,
-          scale: hood ? 0.9 : 1.05, dir: tmpV, gravity: 0,
+          count: hood ? 4 : 6, speed: 14, life: 0.12,
+          scale: hood ? 0.9 : 1.1, dir: tmpV, gravity: 0,
         });
         particles.spawn('spark', mOrigin, {
-          count: hood ? 6 : 5, speed: 12, life: hood ? 0.12 : 0.11, gravity: 2,
+          count: hood ? 6 : 10, speed: 16, life: 0.14, gravity: 2,
         });
       }
-      // Flash existing gun mesh if present
       if (p.mesh && p.mesh.userData) {
         var guns = p.mesh.userData.guns || p.mesh.userData.gunMeshes;
         if (guns && guns.length) {
@@ -2616,14 +2612,15 @@
           p._gunFlashT = 0.06;
         }
       }
+      p._muzzleBodyT = hood ? 0.1 : 0.14;
     }
-    // Screen muzzle flash — hood full; chase smaller (van occludes world flash) (v400)
-    if (hood) {
-      p._hoodMuzzleT = 0.08;
-      state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + 0.18);
-    } else {
-      p._chaseMuzzleT = 0.07;
-    }
+    // Screen flash + sticky FIRING flag for HUD (R3: must be unmistakable)
+    state.muzzleFlash = 1;
+    state.firingMg = 0.25;
+    state.hitFlash = Math.min(1.0, (state.hitFlash || 0) + (hood ? 0.14 : 0.28));
+    state.camShake = Math.max(state.camShake || 0, hood ? 0.05 : 0.08);
+    if (hood) p._hoodMuzzleT = 0.08;
+    else p._chaseMuzzleT = 0.1;
     if (GAME.sfx) GAME.sfx.mg();
   }
 
@@ -2821,6 +2818,8 @@
   function updateRace(dt) {
     state.raceTime += dt;
     if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 2.8);
+    if (state.muzzleFlash > 0) state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 4.0);
+    if (state.firingMg > 0) state.firingMg = Math.max(0, state.firingMg - dt);
     if (state.hitDirT > 0) state.hitDirT = Math.max(0, state.hitDirT - dt);
     if (state._startBannerT > 0) state._startBannerT = Math.max(0, state._startBannerT - dt);
     // Re-unlock + engine if AudioContext still suspended / silent after START (v311/v357)
@@ -3679,8 +3678,34 @@
       if (p.mgHeat < 0.25) p._overheatToastArmed = false;
     }
     if (p._gunFlashT > 0) p._gunFlashT -= dt;
+    if (p._muzzleBodyT > 0) p._muzzleBodyT -= dt;
     if (p._hoodMuzzleT > 0) p._hoodMuzzleT -= dt;
     if (p._chaseMuzzleT > 0) p._chaseMuzzleT -= dt;
+    // v431: muzzle flash lights car body orange (TM secondary illumination)
+    if (p.mesh) {
+      var bodyFlash = Math.max((p._muzzleBodyT || 0) / 0.14, (state.firingMg || 0) * 0.55);
+      if (bodyFlash > 0.03) {
+        p.mesh.traverse(function (c) {
+          if (!c.isMesh || !c.material || !c.material.emissive) return;
+          if (c.userData && (c.userData._isGun || c.userData.gun)) return;
+          if (c.material.emissiveIntensity > 2.8) return;
+          if (!c.material.userData) c.material.userData = {};
+          if (c.material.userData._muzBaseEI == null) {
+            c.material.userData._muzBaseEI = c.material.emissiveIntensity || 0;
+            c.material.userData._muzBaseHex = c.material.emissive.getHex();
+          }
+          c.material.emissive.setHex(0xff7722);
+          c.material.emissiveIntensity = c.material.userData._muzBaseEI + bodyFlash * 2.4;
+        });
+      } else if (p._muzzleBodyT <= 0 && (state.firingMg || 0) <= 0) {
+        p.mesh.traverse(function (c) {
+          if (!c.isMesh || !c.material || !c.material.emissive || !c.material.userData) return;
+          if (c.material.userData._muzBaseEI == null) return;
+          c.material.emissive.setHex(c.material.userData._muzBaseHex);
+          c.material.emissiveIntensity = c.material.userData._muzBaseEI;
+        });
+      }
+    }
     if (p._engineDipT > 0) {
       p._engineDipT -= dt;
       p.speed *= (1 - 0.35 * Math.min(1, p._engineDipT * 8));
@@ -3859,6 +3884,15 @@
       // Reuse lookTmp — never clone every frame
       if (pr.type === 'mg') {
         aimMgTracer(pr.mesh, pr.pos, pr.vel);
+        // v430: white smoke ribbons along MG path (TM chain-gun trail)
+        if (pr.trail && particles && Math.random() < 0.62) {
+          if (particles.mgRibbon) particles.mgRibbon(pr.pos, pr.vel);
+          else if (particles.spawn) {
+            particles.spawn('spark', pr.pos.clone(), {
+              count: 1, speed: 2, life: 0.14, scale: 0.22, gravity: 0,
+            });
+          }
+        }
       } else if (pr.type === 'rocket' || pr.type === 'bone') {
         _combatPool.lookTmp.copy(pr.pos).add(pr.vel);
         pr.mesh.lookAt(_combatPool.lookTmp);
@@ -3913,7 +3947,14 @@
               else {
                 // v400: MG hit spark must read in chase (hitTrail alone was too small)
                 if (particles.sparks) particles.sparks(pr.pos, pr.vel);
-                particles.hitTrail(pr.pos, 'spark');
+                if (particles.hitBurst) particles.hitBurst(pr.pos);
+                else particles.hitTrail(pr.pos, 'spark');
+                if (particles.spawn) {
+                  particles.spawn('spark', pr.pos.clone(), {
+                    count: 8, speed: 16, life: 0.22, scale: 0.5, gravity: 8,
+                  });
+                }
+                if (particles.burstLight) particles.burstLight(pr.pos, 0xff6622, 6, 0.12);
               }
             }
             if ((pr.type === 'rocket' || pr.type === 'bone') && GAME.sfx) GAME.sfx.explode();
@@ -3921,7 +3962,7 @@
             state.camShake = Math.max(state.camShake || 0, (pr.type === 'rocket' || pr.type === 'bone') ? 0.22 : 0.07);
             if (pr.type === 'mg') {
               p._hitConfirmT = (p._hitConfirmT || 0);
-              if (p._hitConfirmT <= 0) p._hitConfirmT = 0.28;
+              if (p._hitConfirmT <= 0) p._hitConfirmT = 0.38;
               // slight cam nudge sells hits at speed
               state.camShake = Math.max(state.camShake || 0, 0.09);
             } else {
@@ -4874,10 +4915,17 @@
         particles.ensureRain(camera.position);
         particles.updateRain(dt, camera.position);
       }
-      // Road wetness bias while raining (subtle — no rainbow wash)
-      if (particles.getWetBias && world && world.group) {
-        var wet = particles.getWetBias();
-        if (wet > 0.01 && !state._wetRoadApplied) {
+      // Road wetness + specular pulse — v424: always tick (not only when raining)
+      if (world) {
+        var wetRoad = (particles.getWetBias && particles.getWetBias()) || 0;
+        state.wetBias = wetRoad;
+        if (world._wetSheenMat) {
+          world._wetSheenMat.opacity = 0.14 + wetRoad * 0.18;
+        }
+        if (world.updateRoadWet) {
+          world.updateRoadWet(wetRoad, camera.position, state.time || 0, p.progress);
+        }
+        if (wetRoad > 0.01 && !state._wetRoadApplied) {
           state._wetRoadApplied = true;
           world.group.traverse(function (c) {
             if (!c.isMesh || !c.material) return;
@@ -4887,8 +4935,8 @@
                 m.userData._baseRough = m.roughness;
                 m.userData._baseEnv = m.envMapIntensity;
               }
-              m.roughness = Math.max(0.08, m.userData._baseRough * (1 - wet * 0.35));
-              m.envMapIntensity = m.userData._baseEnv * (1 + wet * 0.4);
+              m.roughness = Math.max(0.08, m.userData._baseRough * (1 - wetRoad * 0.35));
+              m.envMapIntensity = m.userData._baseEnv * (1 + wetRoad * 0.4);
             }
           });
         }
@@ -5042,7 +5090,8 @@
       // 62° idle → ~74° at max + nitro event kick (Wave 4)
       targetFov = 62 + speedNormCam * 12
         + (p.nitroActive ? 7 : 0) + (p.drifting ? 5 : 0)
-        + (state._nitroFovKick || 0);
+        + (state._nitroFovKick || 0)
+        + ((state.firingMg > 0 && p.speed > 75) ? (3 + speedNormCam * 5) : 0);
       // Drift camera: offset toward outside of slide
       if (p.drifting && Math.abs(p.slip || 0) > 2) {
         camPos.addScaledVector(tmpV2, Math.sign(p.slip) * 0.85);
@@ -5889,6 +5938,21 @@
       } else if (!state._frozen && state.mode === 'freedom') {
         updateMenuCamera(t);
       }
+    }
+
+    // v431: scene radial motion blur during chase combat at speed
+    if (postfx && postfx.setMotionBlur) {
+      var mb = 0;
+      if (state.mode === 'race' && state.player && state.camMode !== 'hood') {
+        var pMb = state.player;
+        var maxSp = cfg.drive.maxSpeed * ((pMb.mul && pMb.mul.speed) || 1);
+        var sn = Math.abs(pMb.speed || 0) / Math.max(1, maxSp);
+        mb = Math.max(0, (sn - 0.28) * 0.44);
+        if (state.firingMg > 0) mb += 0.1 + sn * 0.24;
+        if ((state.camShake || 0) > 0.12) mb += 0.05;
+        mb = Math.min(0.52, mb);
+      }
+      postfx.setMotionBlur(mb);
     }
 
     postfx.render(scene, camera, t);

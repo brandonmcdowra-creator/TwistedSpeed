@@ -1,6 +1,268 @@
 # Changelog
 
+## 2026-08-31 — Web v432: killNova gh-02 parity — Gauntlet COMPLETE
+
+TM combat bar WON at R17. Full Gauntlet Loop objective achieved.
+
+- `killNova()`: 4.2× fireball + 9-layer opaque soot column on rival elim
+- Replaces explosion+smokeStack stack on kills
+- Heat chase WON R12 · TM combat WON R17
+
+Hard-refresh via `python3 serve.py` → `?v=432`.
+
+---
+
+## 2026-08-31 — Web v431: postfx blur + smoke stacks (Gauntlet R16)
+
+R15 gap ~18% → R16 ~8%.
+
+- PostFX radial `motionBlur` on scene geometry (0.52 max at MG+speed)
+- `smokeStack()` 7-layer volumetric column on kill explosions
+- Car body emissive orange flash when firing MG (`_muzzleBodyT`)
+
+Hard-refresh via `python3 serve.py` → `?v=431`.
+
+---
+
+## 2026-08-31 — Web v430: smoke ribbons + combat blur (Gauntlet R15)
+
+R14 gap ~32% → R15 ~18%.
+
+- `mgRibbon()` white smoke trails along MG tracer path
+- `hitBurst()` orange puff on MG impact (between spark and kill boom)
+- Kill explosions 2.5× core scale + dense smoke/dark smoke columns
+- Chase FOV punch when firing MG above 75 mph
+- HUD radial streaks + edge heat haze when MG+speed>95
+
+Hard-refresh via `python3 serve.py` → `?v=430`.
+
+---
+
+## 2026-08-31 — Web v428–v429: TM combat refs + MG polish (Gauntlet R14)
+
+R13 critic invalidated — TM refs were dev-build top-down, not TM 2012.
+
+- **Ref pack fixed:** tm-combat-01..04 from verified TM 2012 PS3 stills (VGB/GameHope)
+- **v428:** Thin orange tracers (0.14 box), TM 4-petal muzzle burst, tighter HUD bloom, hit light flash
+- **v429:** Chase speed radial streaks when mph > 88 (motion-blur read)
+- **R14 verdict:** TM still wins (~32% gap); hit feedback + readability ours
+
+Hard-refresh via `python3 serve.py` → `?v=429`.
+
+---
+
+## 2026-08-31 — Web v427: TM combat readability (Gauntlet Piece D)
+
+R12 won Heat chase A/B. TM combat bar next — MG was PARTIAL since R5.
+
+- MG tracers: 0.8 thick, 18m chase length, 5.5× radius, 1.05s life
+- Hot spark trails along MG path + bigger hit bursts
+- Muzzle particle density 2×, cam shake on fire
+- HUD `◆ HIT ◆` banner + larger crosshair on confirm
+- TM ref pack: tm-combat-01..04-sm.jpg
+
+Hard-refresh via `python3 serve.py` → `?v=427`.
+
+---
+
+## 2026-08-31 — Web v426: chase-cam visible asphalt + Fresnel pools (R12 gap)
+
+R11 critic: v425 features below perceptual threshold at race speed (68% material gap).
+
+- Brighter asphalt albedo + 2× grain contrast for chase-cam read
+- Pool tint floor rgba(60,72,88) — fades to grey asphalt not black void
+- Macro sparkles 1.1m, macro wet/dry zone strips
+- Fresnel grazing-angle boost on all pools (distant road glow)
+- Pool alphaMap noise for texture-modulated falloff
+
+Hard-refresh via `python3 serve.py` → `?v=426`.
+
+---
+
+## 2026-08-31 — Web v425: asphalt grain + micro-sparkle between pools (R11 gap)
+
+R10 critic: pool edges fixed (8% gap) but road between pools is black void (75% material gap).
+
+- Lifted road albedo multiplier; higher-contrast grit + tar seams
+- Pool falloff tints to dark asphalt (not pure black void)
+- Micro-sparkle flecks on asphalt between pools
+- Pool texture cache v425
+
+Hard-refresh via `python3 serve.py` → `?v=425`.
+
+---
+
+## 2026-08-31 — Web v424: soft pool gradients + rain motion streaks (R10 gap)
+
+R9 critic: pools work but hard dithered edges (40% wet road gap).
+
+- 256px soft radial pool textures with blur pass + hot core punch
+- Brighter lamp pools (0.78) + wide halo layer per pole
+- Neon/gate pool opacity boost; lamp kind boost in updateRoadWet
+- Rain: 148 drops, 2.75-length streaks, stronger diagonal lean
+- HUD windshield rain streaks when wetBias active
+
+Hard-refresh via `python3 serve.py` → `?v=424`.
+
+---
+
+## 2026-08-31 — Web v423: per-lamp radial pools, remove tiled grid (R9 gap)
+
+R8 critic: speculars visible but uniform tiled grid (70% gap). Heat uses unique per-light pools.
+
+- Removed global specular mask ribbon (tiled carpet)
+- `_poolTexForColor()` radial gradients with noise breakup
+- Per-lamp warm radial pools on road center (8×10 planes)
+- Neon-tinted storefront pools on asphalt (cyan/pink/amber per sign)
+- Gate pools use colored radial textures
+- Sparse accent pools only (18 max, no grid)
+
+Hard-refresh via `python3 serve.py` → `?v=423`.
+
+---
+
+## 2026-08-31 — Web v422: specular mask ribbon + bright lamp pools (R8 gap)
+
+R7 critic: road still matte — no visible lamp pools or specular depth (85% gap).
+
+- Tiled specular mask ribbon (additive pools/streaks on dark asphalt)
+- Brighter localized glints (depthTest off, opacity 0.45–0.58)
+- Lamp bright pools on road center + warm streaks per pole
+- START/FINISH gate neon ground pools
+- Headlight sweep glint ahead on path (`updateRoadWet` + pathT)
+- Higher-contrast asphalt micro-grain texture
+- Low road-hugging mist + denser diagonal rain (132 drops)
+
+Hard-refresh via `python3 serve.py` → `?v=422`.
+
+---
+
+## 2026-08-31 — Web v421: dark wet asphalt + localized specular (R6 gap)
+
+R6 critic: road was uniform emissive panel — Heat wins on wet asphalt (95% gap).
+
+- Dark charcoal asphalt texture + muted albedo multiplier (not self-lit ribbon)
+- Wet glaze: normal blend dark tint (replaces additive cyan glow)
+- Localized specular streaks + lamp warm pools on asphalt (`updateRoadWet`)
+- Rain: 112 drops, longer diagonal streaks, opacity 0.38
+
+Hard-refresh via `python3 serve.py` → `?v=421`.
+
+---
+
+## 2026-08-31 — Web v420: Heat-chase rain + palms + wet punch
+
+Gauntlet Heat A/B still losing on atmosphere/density.
+
+- City rain 22→96 drops, higher opacity + more splashes
+- Palm silhouettes both flanks (Heat signature, MeshBasic)
+- Denser storefront frontage (step 7m)
+- Wet sheen opacity 0.48 + live boost from rain wetBias
+- Neon bloom 0.24
+
+Hard-refresh via `python3 serve.py` → `?v=420`. Neon↔REACH once.
+
+---
+
+## 2026-08-31 — Web v419: ◆ MG ◆ banner same-frame as J hold
+
+R5 (clean v418): maglev PASS; MG chip+flash PASS; banner missed because `firingMg` was set *after* the banner draw.
+
+- Resolve `input.key(j)` at top of `drawRace`
+- Draw `◆ MG ◆` at mid-screen with dark plate (above weapon bar)
+
+Hard-refresh `?v=419` via `python3 serve.py`.
+
+---
+
+## 2026-08-31 — Web v418: no-cache serve + HUD-driven MG flash
+
+R4: maglev STOP/GO **PASS**; MG still FAIL — critic tab kept stale `?v=411` / cached index (title was stuck at v411).
+
+- `serve.py` is the play server (Cache-Control: no-store on html/js)
+- `<title>` bumped with build (was frozen at v411)
+- HUD lights J-chip + muzzle bloom whenever `input.key('j')` is held (independent of fireMg gates)
+
+Hard-refresh `http://127.0.0.1:8765/?v=418` — title **BUILD 418**. Confirm URL + title match.
+
+---
+
+## 2026-08-31 — Web v417: fix mirrored STOP/GO + unmistakable MG
+
+R3: boards mirrored; MG invisible (capture also on stale ?v=415).
+
+- Maglev boards face oncoming traffic (`roadYaw + PI`)
+- MG tracers = bright boxes, depthTest:false, dual fat streams
+- HUD yellow muzzle bloom + sticky `◆ MG ◆` while firing
+
+Hard-refresh `?v=417` (must say BUILD 417).
+
+---
+
+## 2026-08-31 — Web v416: STOP/GO maglev boards + fat MG + flank haze
+
+R2 critic (Heat wins): maglev not one-glance, MG invisible, flanks void.
+
+- Maglev: huge STOP/GO canvas boards facing traffic + raising gate bars
+- MG: dual fat rods (r≈1.2), 0.9s life, chase screen yellow muzzle flash
+- Flank haze cards both sides (qualityExtra)
+
+Hard-refresh `?v=416` · Neon↔REACH once.
+
+---
+
+## 2026-08-31 — Web v415: Gauntlet density + maglev signal punch
+
+R1 critic (Heat wins): density void + maglev not one-glance / not prison-freight.
+
+- Street life both flanks denser (planters, bollards, cones, parked silhouettes)
+- More lamp poles + bigger fake glow pools (PointLight pool still ≤3)
+- Maglev signals ~3× radius + additive halo + pulse; thicker deck; post warning stripes
+- Neon bloom 0.10→0.18 on Neon Circuit
+
+Hard-refresh `?v=415` · Neon↔REACH once. Quality O still strips qualityExtra.
+
+---
+
+## 2026-08-30 — Web v414: Gauntlet C+D — wet asphalt + MG rods
+
+Round 0 critic (Heat wins): biggest gaps were matte road and mute MG.
+
+- **C wet:** stronger additive sheen ribbon + hot center band + sparse cyan/magenta asphalt reflection patches (MeshBasic fake SSR)
+- **D MG:** thicker/longer/brighter tracers (r≈0.73 chase), longer life, higher spawn — fog:false
+
+Hard-refresh `?v=414` · Neon↔REACH once for road dress.
+
+---
+
+## 2026-08-30 — Web v413: Gauntlet Piece A — both-flank over-wall density
+
+Chase FOV was a neon trench (flat canyon + black void). Added:
+
+- Late both-flank skyline cards at 0.58 / 0.72 (LOD far; cut in v394 for FPS)
+- Mid-climb **right** peeks (left already densified)
+- Neon blade fins over the lip on both shoulders (nameable)
+
+MeshBasic · qualityExtra · no new PointLights. Hard-refresh `?v=413` + Neon↔REACH once.
+
+---
+
+## 2026-08-30 — Web v412: Gauntlet Piece B — dress the maglev junction
+
+Lead Gauntlet Loop started (`gauntlet/progress.html`). First ship: prison-freight silhouette on the same Neon crossing (`CROSS_T=0.30`).
+
+- Freight cars: dark container shells + ribs, end doors, deck crates (hit volumes unchanged)
+- Dark rails + thin cyan edge (replaced neon glow slabs)
+- Gantry portal + amber strip; signal housing/arm on poles
+- Off-road cargo stacks, local wet sheen, flank haze cards
+- Wait-red / gap-green still owned only by lamp spheres + deck
+
+MeshBasic only · no new PointLights. Hard-refresh `?v=412`. Critic A/B pending.
+
+---
+
 ## 2026-08-22 — Session save (v411 frozen)
+
 
 Pickup written: `docs/NEXT-SESSION.md` + `PROGRESS.md`. Next: director play v411, then dress the maglev junction. Arcade zip on Desktop.
 

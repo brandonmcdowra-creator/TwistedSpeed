@@ -78,6 +78,7 @@
       pink: softMat(0xff2d55, 1, true),
       debris: new THREE.MeshBasicMaterial({ color: 0x886644, transparent: true, opacity: 1, depthWrite: false }),
       ring: softMat(0xffaa44, 0.7, true),
+      ribbon: null,
     };
     this._cam = null;
   }
@@ -199,10 +200,107 @@
   };
 
   Particles.prototype.muzzle = function (pos, dir) {
-    // v400: readable 1-frame flash in chase (was count:1 / scale:0.55 — mute at speed)
+    // v428: tight localized flash — not screen-filling billboard
     if (this.items.length > 120) return;
-    this.spawn('muzzle', pos, { count: 2, speed: 10, life: 0.09, scale: 0.85, dir: dir, gravity: 0 });
-    this.spawn('spark', pos, { count: 2, speed: 12, life: 0.11, scale: 0.35, dir: dir, gravity: 2 });
+    this.spawn('muzzle', pos, { count: 2, speed: 8, life: 0.07, scale: 0.55, dir: dir, gravity: 0 });
+    this.spawn('spark', pos, { count: 2, speed: 10, life: 0.09, scale: 0.25, dir: dir, gravity: 2 });
+  };
+
+  /** TM-style 4-petal cross muzzle burst — additive planes, camera-facing */
+  Particles.prototype.muzzleBurst = function (pos, dir, hood) {
+    if (this.items.length > 130) return;
+    var cam = this._cam || (GAME.camera);
+    if (!cam) { this.muzzle(pos, dir); return; }
+    var sc = hood ? 0.55 : 0.85;
+    var petals = 4;
+    var tmpR = new THREE.Vector3();
+    var tmpU = new THREE.Vector3();
+    var tmpF = dir.clone().normalize();
+    tmpR.crossVectors(tmpF, cam.up).normalize();
+    if (tmpR.lengthSq() < 0.01) tmpR.set(1, 0, 0);
+    tmpU.crossVectors(tmpR, tmpF).normalize();
+    var mat = this.mats.muzzle;
+    for (var pi = 0; pi < petals; pi++) {
+      var mesh = this._alloc('muzzle');
+      mesh.geometry = this.geo;
+      mesh.material = mat;
+      mesh.userData.ownedMat = false;
+      mesh.position.copy(pos);
+      mesh.scale.set(hood ? 0.9 : 1.4, hood ? 0.18 : 0.28, 1);
+      var ang = (pi / petals) * Math.PI;
+      var ax = tmpR.clone().multiplyScalar(Math.cos(ang)).addScaledVector(tmpU, Math.sin(ang));
+      mesh.lookAt(pos.clone().add(ax));
+      var s0 = mesh.scale.x;
+      this.items.push({
+        mesh: mesh, vel: tmpF.clone().multiplyScalar(2),
+        life: hood ? 0.06 : 0.08, maxLife: hood ? 0.06 : 0.08,
+        drag: 0.85, gravity: 0, kind: 'muzzle', billboard: false,
+        baseScale: s0, noPool: false, softFade: true,
+      });
+    }
+    // hot core
+    var core = this._alloc('muzzle');
+    core.geometry = this.sphereGeo;
+    core.material = this.mats.fireCore;
+    core.position.copy(pos);
+    core.scale.setScalar(sc * 0.5);
+    this.items.push({
+      mesh: core, vel: new THREE.Vector3(), life: 0.05, maxLife: 0.05,
+      drag: 1, gravity: 0, kind: 'muzzle', billboard: true, baseScale: sc * 0.5,
+      noPool: false, softFade: true,
+    });
+    this.burstLight(pos, 0xffaa44, hood ? 4 : 7, 0.08);
+  };
+
+  /** TM white smoke ribbon along MG tracer path */
+  Particles.prototype.mgRibbon = function (pos, dir) {
+    if (this.items.length > 145) return;
+    if (!this.mats.ribbon) {
+      this.mats.ribbon = new THREE.MeshBasicMaterial({
+        map: this.softSmokeTex, color: 0xf2f2fa, transparent: true, opacity: 0.48,
+        depthWrite: false, blending: THREE.NormalBlending, side: THREE.DoubleSide,
+      });
+    }
+    var mesh = this._alloc('smoke');
+    mesh.geometry = this.geo;
+    mesh.material = this.mats.ribbon;
+    mesh.userData.ownedMat = false;
+    mesh.userData.kind = 'smoke';
+    mesh.position.copy(pos);
+    var d = dir.clone().normalize();
+    mesh.lookAt(pos.clone().add(d));
+    var len = 2.4 + Math.random() * 1.6;
+    mesh.scale.set(0.2, len, 1);
+    this.items.push({
+      mesh: mesh,
+      vel: d.clone().multiplyScalar(-2.2),
+      life: 0.32 + Math.random() * 0.14,
+      maxLife: 0.46,
+      drag: 0.97, gravity: 0,
+      kind: 'mgRibbon', billboard: false, softFade: true,
+      baseScale: len, noPool: false,
+    });
+  };
+
+  /** MG / light hit — orange puff between spark and full kill boom */
+  Particles.prototype.hitBurst = function (pos) {
+    if (this.items.length > 140) return;
+    var B = this._ensureBoomMats();
+    var ball = new THREE.Mesh(this.geo, B.fire);
+    ball.position.copy(pos);
+    ball.position.y += 0.55;
+    ball.scale.setScalar(1.15);
+    this.scene.add(ball);
+    this.items.push({
+      mesh: ball, vel: new THREE.Vector3(0, 0.6, 0),
+      life: 0.28, maxLife: 0.28, drag: 1, gravity: 0,
+      kind: 'fireCore', noPool: true, baseScale: 1.15, grow: 0.55,
+      billboard: true, softFade: true,
+    });
+    this.spawn('smoke', pos, { count: 4, speed: 5, life: 0.55, scale: 1.35, gravity: -0.15 });
+    this.spawn('spark', pos, { count: 4, speed: 12, life: 0.2, scale: 0.35, gravity: 6 });
+    this.burstLight(pos, 0xff8833, 7, 0.14);
+    this._cullIfHeavy();
   };
 
   Particles.prototype._ensureBoomMats = function () {
@@ -225,6 +323,85 @@
     return this._boomMats;
   };
 
+  /** v432: opaque soot + gh-02 scale fireball for kill eliminations */
+  Particles.prototype._ensureSootMats = function () {
+    if (this._sootMats) return this._sootMats;
+    this._sootMats = {
+      soot: new THREE.MeshBasicMaterial({
+        map: this.softSmokeTex, color: 0x14100c, transparent: true, opacity: 0.9,
+        depthWrite: false, blending: THREE.NormalBlending, side: THREE.DoubleSide,
+      }),
+      sootMid: new THREE.MeshBasicMaterial({
+        map: this.softSmokeTex, color: 0x2a2018, transparent: true, opacity: 0.78,
+        depthWrite: false, blending: THREE.NormalBlending, side: THREE.DoubleSide,
+      }),
+      nova: new THREE.MeshBasicMaterial({
+        map: this.softFireTex, color: 0xffffcc, transparent: true, opacity: 0.96,
+        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      }),
+      novaOuter: new THREE.MeshBasicMaterial({
+        map: this.softFireTex, color: 0xff7722, transparent: true, opacity: 0.72,
+        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      }),
+    };
+    return this._sootMats;
+  };
+
+  Particles.prototype.killNova = function (pos) {
+    if (this.items.length > 115) return;
+    var S = this._ensureSootMats();
+    var B = this._ensureBoomMats();
+    var fi;
+    for (fi = 0; fi < 4; fi++) {
+      var mat = fi === 0 ? S.nova : (fi === 1 ? S.novaOuter : B.fire);
+      var ball = new THREE.Mesh(this.geo, mat);
+      ball.position.copy(pos);
+      ball.position.y += 0.45 + fi * 0.35;
+      var fsc = 4.2 - fi * 0.85;
+      ball.scale.setScalar(fsc);
+      this.scene.add(ball);
+      this.items.push({
+        mesh: ball, vel: new THREE.Vector3(0, 0.55 + fi * 0.15, 0),
+        life: 0.7 - fi * 0.08, maxLife: 0.7 - fi * 0.08,
+        drag: 1, gravity: 0, kind: 'fireCore', noPool: true,
+        baseScale: fsc, grow: 0.45, billboard: true, softFade: true,
+      });
+    }
+    var ring = new THREE.Mesh(B.ringGeo, B.ring);
+    ring.position.copy(pos);
+    ring.position.y = 0.1;
+    ring.rotation.x = -Math.PI / 2;
+    ring.scale.setScalar(2.2);
+    this.scene.add(ring);
+    this.items.push({
+      mesh: ring, vel: new THREE.Vector3(), life: 0.45, maxLife: 0.45,
+      drag: 1, gravity: 0, kind: 'ring', noPool: true, expand: 22,
+    });
+    var si;
+    for (si = 0; si < 9; si++) {
+      var sm = new THREE.Mesh(this.geo, si < 3 ? S.soot : S.sootMid);
+      sm.position.copy(pos);
+      sm.position.y += 0.15 + si * 0.6;
+      var sc = 3.4 + si * 0.75;
+      sm.scale.set(sc * 1.7, sc * 1.2, 1);
+      this.scene.add(sm);
+      this.items.push({
+        mesh: sm,
+        vel: new THREE.Vector3((Math.random() - 0.5) * 2.2, 3.2 + si * 0.55, (Math.random() - 0.5) * 2.2),
+        life: 2.5 + si * 0.22, maxLife: 2.5 + si * 0.22,
+        drag: 0.97, gravity: -0.04,
+        kind: 'soot', billboard: true, softFade: true,
+        baseScale: sc, noPool: true, grow: 0.3,
+      });
+    }
+    this.spawn('spark', pos, { count: 12, speed: 18, life: 0.42, scale: 0.45, gravity: 7 });
+    this.spawn('smokeDark', pos.clone().setY(pos.y + 1.2), {
+      count: 6, speed: 4, life: 2.2, scale: 3.2, gravity: -0.2,
+    });
+    this.burstLight(pos, 0xff6622, 24, 0.55);
+    this._cullIfHeavy();
+  };
+
   Particles.prototype.explosion = function (pos, big) {
     // Shared mats + few meshes — was allocating 15+ materials per rocket hit
     if (this.items.length > 150) {
@@ -232,20 +409,20 @@
       return;
     }
     var B = this._ensureBoomMats();
-    var nCore = big ? 2 : 1;
+    var nCore = big ? 3 : 1;
     for (var ci = 0; ci < nCore; ci++) {
       var ball = new THREE.Mesh(this.geo, ci === 0 ? B.core : B.fire);
       ball.position.copy(pos);
-      ball.position.y += 0.6 + ci * 0.25;
-      var sc = (big ? 1.4 : 0.9) * (1 - ci * 0.25);
+      ball.position.y += 0.6 + ci * 0.35;
+      var sc = (big ? 2.5 : 1.0) * (1 - ci * 0.18);
       ball.scale.setScalar(sc);
       this.scene.add(ball);
       this.items.push({
         mesh: ball,
-        vel: new THREE.Vector3(0, 0.4, 0),
-        life: big ? 0.45 : 0.32, maxLife: big ? 0.45 : 0.32,
+        vel: new THREE.Vector3(0, big ? 0.7 : 0.4, 0),
+        life: big ? 0.55 : 0.32, maxLife: big ? 0.55 : 0.32,
         drag: 1, gravity: 0,
-        kind: 'fireCore', noPool: true, baseScale: sc, grow: 0.35,
+        kind: 'fireCore', noPool: true, baseScale: sc, grow: big ? 0.55 : 0.35,
         billboard: true, softFade: true,
       });
     }
@@ -253,15 +430,51 @@
     ring.position.copy(pos);
     ring.position.y = 0.08;
     ring.rotation.x = -Math.PI / 2;
-    ring.scale.setScalar(big ? 0.7 : 0.45);
+    ring.scale.setScalar(big ? 1.5 : 0.5);
     this.scene.add(ring);
     this.items.push({
-      mesh: ring, vel: new THREE.Vector3(), life: 0.28, maxLife: 0.28,
-      drag: 1, gravity: 0, kind: 'ring', noPool: true, expand: big ? 8 : 5,
+      mesh: ring, vel: new THREE.Vector3(), life: big ? 0.38 : 0.28, maxLife: big ? 0.38 : 0.28,
+      drag: 1, gravity: 0, kind: 'ring', noPool: true, expand: big ? 18 : 5,
     });
     this.spawn('spark', pos, {
-      count: big ? 6 : 4, speed: big ? 14 : 10, life: 0.28, scale: 0.28, gravity: 8,
+      count: big ? 10 : 4, speed: big ? 16 : 10, life: 0.32, scale: big ? 0.38 : 0.28, gravity: 8,
     });
+    if (big) {
+      this.spawn('smoke', pos.clone().setY(pos.y + 0.4), {
+        count: 8, speed: 6, life: 1.35, scale: 2.4, gravity: -0.25,
+      });
+      this.spawn('smokeDark', pos, { count: 4, speed: 3, life: 1.6, scale: 1.8, gravity: -0.1 });
+      this.burstLight(pos, 0xff6622, 16, 0.38);
+      if (this.smokeStack) this.smokeStack(pos, true);
+    }
+    this._cullIfHeavy();
+  };
+
+  /** TM volumetric smoke column — stacked billboards rising from blast */
+  Particles.prototype.smokeStack = function (pos, big) {
+    if (this.items.length > 130) return;
+    var layers = big ? 7 : 4;
+    for (var li = 0; li < layers; li++) {
+      var mesh = this._alloc('smokeDark');
+      mesh.geometry = this.geo;
+      mesh.material = this.mats.smokeDark;
+      mesh.userData.ownedMat = false;
+      mesh.userData.kind = 'smokeDark';
+      var yOff = li * (big ? 0.75 : 0.55);
+      mesh.position.copy(pos);
+      mesh.position.y += 0.35 + yOff;
+      var sc = (big ? 2.8 : 1.6) + li * (big ? 0.55 : 0.35);
+      mesh.scale.set(sc * 1.4, sc, 1);
+      this.items.push({
+        mesh: mesh,
+        vel: new THREE.Vector3((Math.random() - 0.5) * 1.5, 2.5 + li * 0.8, (Math.random() - 0.5) * 1.5),
+        life: (big ? 2.2 : 1.4) + li * 0.25,
+        maxLife: (big ? 2.2 : 1.4) + li * 0.25,
+        drag: 0.98, gravity: -0.08,
+        kind: 'smoke', billboard: true, softFade: false,
+        baseScale: sc, noPool: false, expand: big ? 1.8 : 1.1,
+      });
+    }
     this._cullIfHeavy();
   };
 
@@ -294,6 +507,12 @@
           p.mesh.scale.set(sc * 0.4, sc * 0.4, sc * 2.0 * fade);
         } else if (p.kind === 'tireSmoke' || p.kind === 'wetMist') {
           p.mesh.scale.set(sc * 1.5, sc * 0.65, 1);
+        } else if (p.kind === 'mgRibbon') {
+          var ribW = 0.2 * (0.4 + 0.6 * fade);
+          p.mesh.scale.set(ribW, (p.baseScale || 2.4) * (0.45 + 0.55 * fade), 1);
+        } else if (p.kind === 'soot') {
+          var sootSc = base * (1 + age * 0.35) * (0.5 + 0.5 * fade);
+          p.mesh.scale.set(sootSc * 1.65, sootSc * 1.15, 1);
         } else {
           p.mesh.scale.setScalar(sc);
         }
@@ -331,7 +550,7 @@
 
   Particles.prototype.sparks = function (pos, dir) {
     if (this.items.length > 130) return;
-    this.spawn('spark', pos, { count: 3, speed: 11, life: 0.22, scale: 0.25, dir: dir, gravity: 10 });
+    this.spawn('spark', pos, { count: 6, speed: 14, life: 0.28, scale: 0.38, dir: dir, gravity: 10 });
   };
 
   /**
@@ -509,8 +728,8 @@
 
   Particles.prototype._wxEnsureShared = function () {
     if (this._wxShared) return this._wxShared;
-    // Thin rain needle — shared geo/mat for InstancedMesh
-    var rainGeo = new THREE.BoxGeometry(0.014, 1.15, 0.014);
+    // Thin rain needle — v424 longer streak for motion-blur read
+    var rainGeo = new THREE.BoxGeometry(0.01, 2.75, 0.01);
     var rainMat = new THREE.MeshBasicMaterial({
       color: 0xb0c8e0,
       transparent: true,
@@ -600,24 +819,24 @@
     this.rainStop();
 
     var S = this._wxEnsureShared();
-    // PERF budgets (v381 floor fix; v391: cards 19 FOV tax)
-    var rainN = 22;
-    var mistN = 2;
+    // PERF budgets — v424 Gauntlet: dense diagonal rain + motion streaks
+    var rainN = 148;
+    var mistN = 7;
     var emberN = 0;
-    var rainOp = 0.18;
-    var rainCol = 0xb0c8e0;
-    var wind = 3.2;
-    var fallMin = 26;
-    var fallSpan = 28;
-    var spread = 30;
-    var mistOp = 0.12;
-    var mistCol = 0xc0d0e0;
+    var rainOp = 0.46;
+    var rainCol = 0xc8dcff;
+    var wind = 4.0;
+    var fallMin = 32;
+    var fallSpan = 36;
+    var spread = 36;
+    var mistOp = 0.22;
+    var mistCol = 0xd0e0f0;
 
     if (t === 'industrial') {
-      rainN = 72;
-      mistN = 2;
+      rainN = 88;
+      mistN = 3;
       emberN = 8;
-      rainOp = 0.18;
+      rainOp = 0.22;
       rainCol = 0xa8a090;
       wind = 2.4;
       fallMin = 24;
@@ -626,10 +845,10 @@
       mistOp = 0.12;
       mistCol = 0xc8b090;
     } else if (t === 'coastal') {
-      rainN = 52;
+      rainN = 70;
       mistN = 6;
       emberN = 0;
-      rainOp = 0.12;
+      rainOp = 0.18;
       rainCol = 0xc0d8f0;
       wind = 4.5;
       fallMin = 14;
@@ -639,10 +858,10 @@
       mistCol = 0xa8c8e8;
     }
 
-    if (rainN > 120) rainN = 120;
+    if (rainN > 150) rainN = 150;
     if (rainN < 20) rainN = 20;
 
-    var splashN = t === 'coastal' ? 14 : t === 'industrial' ? 16 : 12;
+    var splashN = t === 'coastal' ? 18 : t === 'industrial' ? 16 : 24;
     if (splashN > 20) splashN = 20;
     if (splashN < 8) splashN = 8;
 
@@ -806,7 +1025,7 @@
     wx.wetBias = wetPeak * ramp;
 
     // Cap splash spawns per frame so heavy rain doesn't thrash the free list
-    var splashBudget = 6;
+    var splashBudget = 10;
     var sn = wx.splashN || 0;
     var sLife = wx.sLife;
     var sMax = wx.sMax;
@@ -823,7 +1042,7 @@
       // Respawn when below camera (near ground relative to cam) or far off in XZ
       if (pos[iy] < -6) {
         // Ground splash at impact offset (sample — not every drop)
-        if (sn > 0 && splashBudget > 0 && Math.random() < 0.28) {
+        if (sn > 0 && splashBudget > 0 && Math.random() < 0.38) {
           var si = wx.splashCursor;
           wx.splashCursor = (si + 1) % sn;
           sOx[si] = pos[ix];
@@ -844,8 +1063,8 @@
       py = cy + pos[iy];
       pz = cz + pos[iz];
       dummy.position.set(px, py, pz);
-      // Lean into wind so streaks read as rain not stars
-      dummy.rotation.set(0, 0, 0.18);
+      // Lean into wind — v424 diagonal motion streak
+      dummy.rotation.set(0, 0, 0.48);
       dummy.scale.set(1, len[i], 1);
       dummy.updateMatrix();
       im.setMatrixAt(i, dummy.matrix);
