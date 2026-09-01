@@ -24,6 +24,13 @@
 (function () {
   var GAME = (window.GAME = window.GAME || {});
   function _safeCanvasTex(canvas) {
+    if (!canvas || !(canvas.width > 0) || !(canvas.height > 0)) {
+      // Avoid WebGL texSubImage2D overload failures on empty canvases
+      canvas = document.createElement('canvas');
+      canvas.width = 2; canvas.height = 2;
+      var cx = canvas.getContext('2d');
+      if (cx) { cx.fillStyle = '#111'; cx.fillRect(0, 0, 2, 2); }
+    }
     var tex = new THREE.CanvasTexture(canvas);
     tex.generateMipmaps = false;
     tex.minFilter = THREE.LinearFilter;
