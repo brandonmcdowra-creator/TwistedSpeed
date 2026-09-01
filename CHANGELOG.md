@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-01 — Web v439: P2.1 thin warden parole broadcast (Neon)
+
+- **P2.1** Progress-gated warden / parole toasts on Neon (Sepulcher / city) — 5 beats keyed to `wardenScript.gates`, stage buckets (early/mid/late), salvage swap on beat 2 when armed.
+- Yields to combat channel (wreck/special/hunter) and ceremony tail (>0.92); skips REACH/coast.
+- Locks: maglev, warden_lane, specials damage/timing, salvage cost/parts, saveKey unchanged.
+
+Hard-refresh `?v=439`.
+
+---
+
 ## 2026-09-01 — Web v438: P1.3 salvage rig (wreck feeds next night)
 
 - **P1.3** Salvage loop: rival wreck tracks `runSalvage` by class; results screen offers keyed **4 SALVAGE** chip (60 scrap) mapped from last kill class → injector / hot feed / tomb plate.

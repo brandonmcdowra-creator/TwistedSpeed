@@ -24,7 +24,7 @@ Mark items done in this file + `PROGRESS.md` when shipped. Do not invent paralle
 
 ## Then (P2) — Diegetic story
 
-- [ ] **P2.1** Warden / parole toast script arc across one 8–10 min Neon run (no cutscenes).
+- [x] **P2.1** Warden / parole toast script arc across one 8–10 min Neon run (no cutscenes). *(thin Neon broadcast — v439)*
 - [ ] **P2.2** Map fiction chips (Sepulcher districts, freight codes) tied to landmarks.
 - [ ] **P2.3** Finish ceremony polish (Parole Arch) as story punctuation.
 

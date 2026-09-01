@@ -82,6 +82,43 @@
     var until = now + (extra != null ? extra : 2.8);
     state._corridorQuietUntil = Math.max(state._corridorQuietUntil || 0, until);
   }
+  function tickWardenScript(dt) {
+    var p = state.player;
+    if (!p || state.mode !== 'race') return;
+    var mapId = (state.mapDef && state.mapDef.id) || state.meta.mapId || '';
+    var theme = state.mapDef && state.mapDef.theme;
+    // Neon only — sepulcher / city; skip coast/REACH
+    if (theme === 'coast') return;
+    if (mapId === 'reach' || mapId === 'coast') return;
+    var script = cfg.wardenScript;
+    if (!script || !script.gates) return;
+    state._wardenBeats = state._wardenBeats || [];
+    if (state._wardenBeats.length >= script.gates.length) return;
+    var stage = state.meta.stage | 0;
+    var bucket = stage <= 4 ? 'early' : (stage <= 9 ? 'mid' : 'late');
+    var lines = (script.buckets && script.buckets[bucket]) || script.buckets.early;
+    var next = state._wardenBeats.length;
+    var gate = script.gates[next];
+    var prog = p.progress || 0;
+    if (prog < gate) return;
+    // Don't fire in lane-sweep window for gates that might land there — gates already avoid 0.4–0.55
+    if (prog >= 0.92) return; // ceremony owns tail
+    // Priority 0 — lose to combat
+    if (state.msgT > 0) return;
+    if (combatChannelBusy && combatChannelBusy()) return;
+    if (wreckBusy && wreckBusy()) return;
+    var now = state.raceTime || 0;
+    if (state._lastCombatToastT != null && (now - state._lastCombatToastT) < 1.6) return;
+    // Also check if last toast was special/wreck via helpers if available
+    if (typeof isSpecialToast === 'function' && isSpecialToast(state.msg) && state.msgT > 0) return;
+
+    var line = lines[next] || lines[lines.length - 1];
+    if (next === 1 && state.activeSalvage && script.salvageBeat2) {
+      line = script.salvageBeat2;
+    }
+    toast(line, 2.0, 0);
+    state._wardenBeats.push(gate);
+  }
   function scrapFromWreckToast(t) {
     var m = /(\d+)\s*SCRAP/i.exec(t || '');
     return m ? (parseInt(m[1], 10) || 0) : 0;
@@ -181,6 +218,7 @@
     state.msg = t;
     state.msgT = d;
     state._toastPri = pri;
+    if (pri >= 2) state._lastCombatToastT = state.raceTime || 0;
     // Hunter/special/wreck leave a corridor quiet tail so mid-void doesn't spam (v300)
     if (isHunterToast(t)) extendCorridorQuiet(Math.max(d, 1.4) + 2.6);
     else if (isWreckToast(t) || isSpecialToast(t)) extendCorridorQuiet(Math.max(d, 1.0) + 1.2);
@@ -1582,7 +1620,8 @@
         + (salv.fromCar ? ' (' + salv.fromCar + ')' : '');
       state.meta.salvage = null;
       saveMeta();
-      toast(salvToast, 2.2, 1);
+      // Defer toast until after map identity banner so it isn't stomped (v438)
+      state._salvageBoltedToast = salvToast;
     }
     state.lap = 1;
     state.laps = 1; // point-to-point — no multi-lap
@@ -1606,6 +1645,8 @@
     state._ramDmgWin = null;
     state._inDmgWin = null;
     state._toastQueue = [];
+    state._wardenBeats = [];
+    state._lastCombatToastT = null;
     state._lastWreckT = null;
     state._corridorQuietUntil = 0;
     state._lastCorridorToastT = null;
@@ -1630,6 +1671,10 @@
     toast((mapDef.name || 'COURSE') + ' · ' + themeTag, 2.0, 1);
     // First 10s: queue a short drive hint so new players aren't stuck staring (v308)
     state._toastQueue = state._toastQueue || [];
+    if (state._salvageBoltedToast) {
+      state._toastQueue.push({ t: state._salvageBoltedToast, d: 2.2, pri: 1 });
+      state._salvageBoltedToast = null;
+    }
     state._toastQueue.push({ t: 'WASD drive  ·  Space drift fills NITRO  ·  Q burn', d: 1.8, pri: 0 });
     state._startBannerT = 2.5;
     state._raceEngineKick = true;
@@ -3275,6 +3320,7 @@
 
     // Place hysteresis — don't flip P every second (v280/v281 stickier)
     updateDisplayPlace(dt);
+    tickWardenScript(dt);
 
     // Approach finish warning + ceremony build (Wave ∞)
     if (!state._finishWarned && p.progress >= 0.88) {

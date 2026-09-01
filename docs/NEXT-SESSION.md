@@ -1,6 +1,6 @@
 # Next session pickup
 
-**Canonical build:** web **v438** (P1.3 salvage rig — wreck feeds next night).  
+**Canonical build:** web **v439** (P2.1 thin warden parole broadcast — Neon).  
 Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 
 ## Model workflow (director)
@@ -10,14 +10,13 @@ Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=438
+# http://127.0.0.1:8765/?v=439
 ```
-Title / boot must say **BUILD 438**.
+Title / boot must say **BUILD 439**.
 
 ## Just shipped
-- P1.3 salvage loop: wreck class → results **4 SALVAGE** (60 scrap) → armed for next night.
-- Three parts: Stripped Injector, Hot Feed, Tomb Plate — bolt at race start with toast.
-- HUD salvage chip on results + race; `ARMED ·` on next-night strip.
+- P2.1 warden broadcast: 5 progress-gated toasts on Neon (Sepulcher/city), stage buckets, salvage beat swap.
+- Yields to combat toasts and ceremony tail; REACH/coast unchanged.
 
 ## Next
-- **P2.1** Warden / parole toast script arc across one 8–10 min Neon run (no cutscenes).
+- **P2.2** Map fiction chips (Sepulcher districts, freight codes) tied to landmarks.

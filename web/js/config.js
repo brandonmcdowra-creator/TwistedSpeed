@@ -510,6 +510,36 @@ GAME.config = {
     },
   ],
 
+  /** P2.1 — progress-gated warden / parole broadcast (Neon only). */
+  wardenScript: {
+    gates: [0.02, 0.22, 0.38, 0.62, 0.86],
+    // skip 0.40–0.55 (lane sweep) and >0.92 (ceremony)
+    buckets: {
+      early: [ // nights 1–4
+        'WARDEN: CARGO ON THE ASPHALT — KEEP ROLLING',
+        'WARDEN: YOUR PLATE NUMBER IS NOTED',
+        'WARDEN: FREIGHT DOES NOT PRAY',
+        'PAROLE BOARD: ONE CLEAN NIGHT BUYS AIR',
+        'WARDEN: THE ARCH DOES NOT FORGIVE SLOW',
+      ],
+      mid: [ // 5–9
+        'WARDEN: YOU ARE NO LONGER CARGO',
+        'WARDEN: THE PACK TALKS ABOUT YOU',
+        'WARDEN: THAT SALVAGE SMELLS LIKE TROUBLE', // beat 2 can swap if activeSalvage
+        'PAROLE BOARD: THREAT INDEX RISING',
+        'WARDEN: FINISH OR BECOME FREIGHT',
+      ],
+      late: [ // 10–13
+        'PAROLE BOARD: YOUR FILE IS OPEN',
+        'WARDEN: THE CITY OWES YOU NOTHING',
+        'WARDEN: WEARING A DEAD MAN\'S PARTS — BOLD',
+        'PAROLE BOARD: ONE ARCH AND YOU BREATHE',
+        'WARDEN: RUN THE LAST MILE LIKE YOU MEAN IT',
+      ],
+    },
+    salvageBeat2: 'WARDEN: YOU\'RE WEARING A DEAD MAN\'S PLATE',
+  },
+
   models: {
     marrow: 'assets/models/marrow.glb',
     needle: 'assets/models/needle.glb',
