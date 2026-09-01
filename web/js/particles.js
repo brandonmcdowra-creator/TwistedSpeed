@@ -99,10 +99,10 @@
     }
     var base = this.mats[kind] || this.mats.spark;
     if (!mesh.material || mesh.userData.kind !== kind) {
-      // Never dispose shared drive-FX mats (tireSmoke / wetMist / flames)
+      // v433: share mat instances — cloning every spawn thrashed GC during combat
       if (mesh.material && mesh.userData.ownedMat) mesh.material.dispose();
-      mesh.material = base.clone();
-      mesh.userData.ownedMat = true;
+      mesh.material = base;
+      mesh.userData.ownedMat = false;
       mesh.userData.kind = kind;
     }
     if (mesh.material.opacity != null) mesh.material.opacity = 1;
