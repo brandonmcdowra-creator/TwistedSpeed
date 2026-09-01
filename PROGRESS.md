@@ -20,7 +20,11 @@
 - District index `0` is real (INTAKE ROW) — never falsy-skip  
 
 ## Next (from roadmap)
-**P2.3** Finish ceremony polish (Parole Arch) as story punctuation.
+**P1.4 (inserted)** BUILD 441 "SCRAP LINE" — see `docs/BUILD-441-PLAN.md`.
+Shoulder freight that breaks · kills stay as hulks · overhead gantries.
+Budget lock: ≤ +12 draw calls / ≤ +120k tris over the measured 586 / 64,302 baseline.
+
+**P2.3** Finish ceremony polish (Parole Arch) — still next after 441.
 
 ## Run
 ```bash

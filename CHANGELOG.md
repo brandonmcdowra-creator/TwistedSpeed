@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-01 — Planning: BUILD 441 "SCRAP LINE" decision (no game code changed)
+
+- Director pass against the Turbo Sloths reference. Drove BUILD 440 at speed and measured the
+  real budget: **586 draw calls / 64,302 triangles** — ~5× triangle headroom, almost no
+  draw-call headroom, so any density pass must be instanced. Container renders in SwiftShader,
+  so FPS is not a valid gate.
+- Baseline chase frames captured: `gauntlet/shots/v440-baseline-chase-{early,maglev,warden}.png`.
+- Decision written to `docs/BUILD-441-PLAN.md`: ranked top 5 gaps, picked one cohesive pass
+  (shoulder freight that breaks + kills that stay as hulks + overhead gantries), with budget
+  lock, no-go bands, probes and acceptance frames.
+- **No runtime files touched.** Build stays v440.
+
+---
+
 ## 2026-09-01 — Web v440: P2.2 Sepulcher district fiction chips
 
 - **P2.2** Four Neon-only district placards on a left-edge HUD channel (not toast): INTAKE ROW `WRDN-03`, FREIGHT SEPULCHER `SEP-12`, HOLDING TERRACES `HOLD-9`, PAROLE MILE `PAROLE`.

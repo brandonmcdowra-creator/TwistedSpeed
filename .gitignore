@@ -51,3 +51,6 @@ assets/models/
 gauntlet/refs/heat-imgur-*.jpg
 gauntlet/refs/heat-night-*.jpg
 gauntlet/refs/heat-chase-0[1-5].jpg
+
+# Playwright MCP scratch output
+.playwright-mcp/
