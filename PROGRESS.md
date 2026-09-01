@@ -1,31 +1,29 @@
 # Twisted Speed — Progress
 
-**Build:** web **v439** (P2.1 thin warden parole broadcast — Neon)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=439`  
+**Build:** web **v440** (P2.2 Sepulcher district fiction chips)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=440`  
 **Gauntlet:** COMPLETE (Heat R12 · TM R17) — visual/combat baseline  
 **SoT:** one build · follow `docs/AAA-ROADMAP.md` for next work  
 
-## This block (v439)
+## This block (v440)
 | Check | Result |
 |-------|--------|
-| P2.1 Warden broadcast | 5 progress gates · stage buckets (early/mid/late) · salvage beat swap |
-| Scope | Neon/Sepulcher only — REACH/coast skipped; no audio/cutscenes/HUD panels |
-| Combat yield | pri-0 toasts wait for wreck/special/hunter + 1.6s post-combat tail |
-| Locks | Maglev · warden_lane · specials damage/timing · salvage · saveKey unchanged |
+| P2.2 District chips | Left-edge placard · 4 districts · freight codes from maglev stencil vocabulary |
+| Channel | Own HUD state (`_districtChip`) — never `toast()` |
+| Neon only | REACH/coast skipped; defer if warden beat <2.5s ago |
+| Locks | Maglev · warden_lane · saveKey · toast substrings unchanged |
 
-## Don't regress
-- Gauntlet VFX · maglev wait/gap logic · rivals own-pace  
-- Soft hazards only (no hard ribbon walls)  
-- Lip-only steer · original cast · saves `twisted-speed-v5-night`
-- Shield at 0 is real (dim bar when maxShield > 0)
-- Toast substrings: BONE HARVEST, THREAD THE VEIN, VEIN MISS, BLACKOUT KISS, REAR VEIN
-- P1.3 salvage bolt toast queues after map banner (v438)
+## Don’t regress
+- Gauntlet VFX · maglev wait/gap · soft hazards · lip-only steer  
+- Original cast · saves `twisted-speed-v5-night`  
+- Toast substrings: BONE HARVEST, THREAD THE VEIN, VEIN MISS, BLACKOUT KISS, REAR VEIN  
+- District index `0` is real (INTAKE ROW) — never falsy-skip  
 
 ## Next (from roadmap)
-**P2.2** Map fiction chips (Sepulcher districts, freight codes) tied to landmarks.
+**P2.3** Finish ceremony polish (Parole Arch) as story punctuation.
 
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=439  → BUILD 439
+# http://127.0.0.1:8765/?v=440  → BUILD 440
 ```

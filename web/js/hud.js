@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 439', w / 2, h * 0.395);
+    ctx.fillText('BUILD 440', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -1261,8 +1261,44 @@
     }
 
     this.drawTurnArrow(state);
+    this.drawDistrictChip(state);
     this.drawMinimap(state);
     this.drawRivalHealthBars(state);
+  };
+
+  /** P2.2 — left-edge Sepulcher district placard (own channel, not toast). */
+  Hud.prototype.drawDistrictChip = function (state) {
+    var chip = state._districtChip;
+    if (!chip || !(chip.t > 0)) return;
+    var ctx = this.ctx;
+    var maxT = chip.maxT > 0 ? chip.maxT : 3.5;
+    var fade = chip.t < 0.5 ? (chip.t / 0.5) : 1;
+    var x = 16;
+    var y = 120;
+    if (state.activeSalvage && state.activeSalvage.name) y = 132;
+    var wChip = 210;
+    var hChip = 36;
+    ctx.save();
+    ctx.globalAlpha = 0.88 * fade;
+    ctx.fillStyle = 'rgba(10,12,16,0.92)';
+    ctx.fillRect(x, y, wChip, hChip);
+    ctx.strokeStyle = '#ff2d55';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 6, y);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + 6);
+    ctx.stroke();
+    ctx.fillStyle = '#ffe66d';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText(String(chip.name || ''), x + 10, y + 15);
+    ctx.fillStyle = '#8a7a88';
+    ctx.font = '10px monospace';
+    var sub = String(chip.code || '');
+    if (chip.tag) sub += '  ·  ' + String(chip.tag);
+    ctx.fillText(sub, x + 10, y + 29);
+    ctx.restore();
   };
 
   /**

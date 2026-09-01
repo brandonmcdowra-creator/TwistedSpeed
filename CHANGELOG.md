@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-01 — Web v440: P2.2 Sepulcher district fiction chips
+
+- **P2.2** Four Neon-only district placards on a left-edge HUD channel (not toast): INTAKE ROW `WRDN-03`, FREIGHT SEPULCHER `SEP-12`, HOLDING TERRACES `HOLD-9`, PAROLE MILE `PAROLE`.
+- Progress gates 0.10 / 0.26 / 0.66 / 0.80 — clear of warden beats, maglev, lane sweep, and ceremony.
+- Defers (does not drop) if a warden beat fired within 2.5s. REACH/coast unchanged.
+
+Hard-refresh `?v=440`.
+
+---
+
 ## 2026-09-01 — Web v439: P2.1 thin warden parole broadcast (Neon)
 
 - **P2.1** Progress-gated warden / parole toasts on Neon (Sepulcher / city) — 5 beats keyed to `wardenScript.gates`, stage buckets (early/mid/late), salvage swap on beat 2 when armed.

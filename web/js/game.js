@@ -118,7 +118,44 @@
     }
     toast(line, 2.0, 0);
     state._wardenBeats.push(gate);
+    state._lastWardenBeatT = state.raceTime || 0;
   }
+
+  /** P2.2 — district fiction placard (own HUD channel; never toast()). */
+  function tickDistrictChips(dt) {
+    var p = state.player;
+    if (!p || state.mode !== 'race') return;
+    // Decay active placard
+    if (state._districtChip && state._districtChip.t > 0) {
+      state._districtChip.t = Math.max(0, state._districtChip.t - dt);
+      if (state._districtChip.t <= 0) state._districtChip = null;
+    }
+    var mapId = (state.mapDef && state.mapDef.id) || state.meta.mapId || '';
+    var theme = state.mapDef && state.mapDef.theme;
+    if (theme === 'coast') return;
+    if (mapId === 'reach' || mapId === 'coast') return;
+    var list = cfg.sepulcherDistricts;
+    if (!list || !list.length) return;
+    if (state._districtIdx == null) state._districtIdx = 0;
+    if (state._districtIdx >= list.length) return;
+    var next = list[state._districtIdx];
+    if (!next) return;
+    var prog = p.progress || 0;
+    if (prog < next.gate) return;
+    if (prog >= 0.92) return;
+    // Defer (don't consume) if a warden beat landed recently — keeps the district
+    var now = state.raceTime || 0;
+    if (state._lastWardenBeatT != null && (now - state._lastWardenBeatT) < 2.5) return;
+    state._districtChip = {
+      name: next.name,
+      code: next.code,
+      tag: next.tag || '',
+      t: 3.5,
+      maxT: 3.5,
+    };
+    state._districtIdx = state._districtIdx + 1;
+  }
+
   function scrapFromWreckToast(t) {
     var m = /(\d+)\s*SCRAP/i.exec(t || '');
     return m ? (parseInt(m[1], 10) || 0) : 0;
@@ -1646,6 +1683,9 @@
     state._inDmgWin = null;
     state._toastQueue = [];
     state._wardenBeats = [];
+    state._districtIdx = 0;
+    state._districtChip = null;
+    state._lastWardenBeatT = null;
     state._lastCombatToastT = null;
     state._lastWreckT = null;
     state._corridorQuietUntil = 0;
@@ -3321,6 +3361,7 @@
     // Place hysteresis — don't flip P every second (v280/v281 stickier)
     updateDisplayPlace(dt);
     tickWardenScript(dt);
+    tickDistrictChips(dt);
 
     // Approach finish warning + ceremony build (Wave ∞)
     if (!state._finishWarned && p.progress >= 0.88) {

@@ -540,6 +540,14 @@ GAME.config = {
     salvageBeat2: 'WARDEN: YOU\'RE WEARING A DEAD MAN\'S PLATE',
   },
 
+  /** P2.2 — Sepulcher district fiction chips (Neon HUD placard; not toast). */
+  sepulcherDistricts: [
+    { gate: 0.10, name: 'INTAKE ROW', code: 'WRDN-03', tag: 'processing · no exit' },
+    { gate: 0.26, name: 'FREIGHT SEPULCHER', code: 'SEP-12', tag: 'wait the gap' },
+    { gate: 0.66, name: 'HOLDING TERRACES', code: 'HOLD-9', tag: 'stacking yard' },
+    { gate: 0.80, name: 'PAROLE MILE', code: 'PAROLE', tag: 'arch ahead' },
+  ],
+
   models: {
     marrow: 'assets/models/marrow.glb',
     needle: 'assets/models/needle.glb',

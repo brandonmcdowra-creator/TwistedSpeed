@@ -1,6 +1,6 @@
 # Next session pickup
 
-**Canonical build:** web **v439** (P2.1 thin warden parole broadcast — Neon).  
+**Canonical build:** web **v440** (P2.2 Sepulcher district fiction chips).  
 Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 
 ## Model workflow (director)
@@ -10,13 +10,13 @@ Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=439
+# http://127.0.0.1:8765/?v=440
 ```
-Title / boot must say **BUILD 439**.
+Title / boot must say **BUILD 440**.
 
 ## Just shipped
-- P2.1 warden broadcast: 5 progress-gated toasts on Neon (Sepulcher/city), stage buckets, salvage beat swap.
-- Yields to combat toasts and ceremony tail; REACH/coast unchanged.
+- P2.2 left-edge district placards (INTAKE / FREIGHT / HOLDING / PAROLE) with freight codes.
+- Own HUD channel — does not fight center toast band.
 
 ## Next
-- **P2.2** Map fiction chips (Sepulcher districts, freight codes) tied to landmarks.
+- **P2.3** Finish ceremony polish (Parole Arch) as story punctuation.
