@@ -221,6 +221,27 @@ GAME.config = {
     specialEmpDisable: 3,
   },
 
+  salvage: {
+    cost: 60,
+    parts: {
+      injector: {
+        id: 'injector', name: 'STRIPPED INJECTOR',
+        desc: 'Full nitro at green · +25% nitro regen this night',
+        fromClass: ['needle', 'vesper'],
+      },
+      hotFeed: {
+        id: 'hotFeed', name: 'HOT FEED',
+        desc: 'Special charged at green · −25% special CD this night',
+        fromClass: ['marrow', 'razorback'],
+      },
+      tombPlate: {
+        id: 'tombPlate', name: 'TOMB PLATE',
+        desc: '+25 shield bolted at green (no generator needed)',
+        fromClass: ['mausoleum', 'choir'],
+      },
+    },
+  },
+
   // Legacy post-race quick upgrades (still work as global small bonuses)
   upgrades: {
     costBase: 30,

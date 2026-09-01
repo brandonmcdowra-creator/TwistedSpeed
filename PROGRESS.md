@@ -1,17 +1,17 @@
 # Twisted Speed — Progress
 
-**Build:** web **v437** (P1.2 special readability — Marrow / Needle / Vesper)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=437`  
+**Build:** web **v438** (P1.3 salvage rig — wreck feeds next night)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=438`  
 **Gauntlet:** COMPLETE (Heat R12 · TM R17) — visual/combat baseline  
 **SoT:** one build · follow `docs/AAA-ROADMAP.md` for next work  
 
-## This block (v437)
+## This block (v438)
 | Check | Result |
 |-------|--------|
-| P1.2 Special readability | Charge rings, target marks, needle miss stub, HUD charging/cooldown bars |
-| Cars touched | Marrow, Needle, Vesper only |
-| Locks | Windup/CD/damage/range unchanged · Mausoleum/Choir/Razorback untouched |
-| Saves | `twisted-speed-v5-night` unchanged |
+| P1.3 Salvage rig | Wreck class → results offer (key 4) → armed meta → bolt at next race start |
+| Parts | Injector (needle/vesper), Hot Feed (marrow/razorback), Tomb Plate (mausoleum/choir) |
+| Locks | Maglev · warden_lane · specials damage/timing · saveKey unchanged |
+| Saves | `twisted-speed-v5-night` — `meta.salvage` added; older saves load |
 
 ## Don't regress
 - Gauntlet VFX · maglev wait/gap logic · rivals own-pace  
@@ -21,10 +21,10 @@
 - Toast substrings: BONE HARVEST, THREAD THE VEIN, VEIN MISS, BLACKOUT KISS, REAR VEIN
 
 ## Next (from roadmap)
-**P1.3** Wreck → scrap loop that changes the *next* night (one meaningful upgrade beat).
+**P2.1** Warden / parole toast script arc across one 8–10 min Neon run.
 
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=437  → BUILD 437
+# http://127.0.0.1:8765/?v=438  → BUILD 438
 ```

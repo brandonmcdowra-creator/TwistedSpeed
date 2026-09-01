@@ -289,6 +289,7 @@
       mapId: 'sepulcher',
       difficulty: 'adventurous',
       quality: 'high', // Wave 9: low | high
+      salvage: null,
     };
   }
   function loadMeta() {
@@ -310,6 +311,7 @@
       var mig = { easy: 'chill', normal: 'adventurous', hard: 'brutal' };
       if (mig[m.difficulty]) m.difficulty = mig[m.difficulty];
       if (!cfg.difficulties[m.difficulty]) m.difficulty = 'adventurous';
+      m.salvage = m.salvage || null;
       return m;
     } catch (e) { return defaultMeta(); }
   }
@@ -1557,6 +1559,31 @@
     state.runKills = 0;
     state.finishPlace = null;
     state.partsRoll = [];
+    state.runSalvage = [];
+    state.salvageOffer = null;
+    state.activeSalvage = null;
+    // Salvage rig — bolt armed part at race start (P1.3 v438)
+    if (state.meta.salvage && state.meta.salvage.partId && state.player) {
+      var salv = state.meta.salvage;
+      var sp = salv.partId;
+      var pSalv = state.player;
+      state.activeSalvage = { partId: sp, fromCar: salv.fromCar, name: salv.name };
+      if (sp === 'injector') {
+        pSalv.nitro = pSalv.nitroMax != null ? pSalv.nitroMax : cfg.nitro.capacity;
+        pSalv._salvageNitroRegen = 1.25;
+      } else if (sp === 'hotFeed') {
+        pSalv.specialCd = 0;
+        pSalv.mul.specialCool = (pSalv.mul.specialCool || 1) * 1.25;
+      } else if (sp === 'tombPlate') {
+        pSalv.maxShield = Math.max(pSalv.maxShield || 0, 25);
+        pSalv.shield = Math.max(pSalv.shield || 0, 25);
+      }
+      var salvToast = 'SALVAGE BOLTED · ' + (salv.name || sp)
+        + (salv.fromCar ? ' (' + salv.fromCar + ')' : '');
+      state.meta.salvage = null;
+      saveMeta();
+      toast(salvToast, 2.2, 1);
+    }
     state.lap = 1;
     state.laps = 1; // point-to-point — no multi-lap
     state.pointToPoint = true;
@@ -1782,6 +1809,32 @@
           b.levels.mgPower = Math.min(6, (b.levels.mgPower | 0) + 1);
           state.partsRoll.push('MG POWER +1 on ' + String(carId).toUpperCase());
         }
+      }
+    }
+
+    state.salvageOffer = null;
+    var salvList = state.runSalvage || [];
+    if (salvList.length > 0) {
+      var lastId = salvList[salvList.length - 1];
+      var parts = (cfg.salvage && cfg.salvage.parts) || {};
+      var offer = null;
+      for (var pk in parts) {
+        if (parts[pk].fromClass && parts[pk].fromClass.indexOf(lastId) >= 0) { offer = parts[pk]; break; }
+      }
+      if (offer) {
+        var fromName = lastId.toUpperCase();
+        if (cfg.cars) {
+          for (var csi = 0; csi < cfg.cars.length; csi++) {
+            if (cfg.cars[csi].id === lastId) {
+              fromName = String(cfg.cars[csi].name || lastId).toUpperCase();
+              break;
+            }
+          }
+        }
+        state.salvageOffer = {
+          partId: offer.id, name: offer.name, desc: offer.desc, fromCar: fromName,
+          cost: (cfg.salvage.cost | 0) || 60,
+        };
       }
     }
 
@@ -2343,6 +2396,11 @@
       var drop = 14 + state.meta.stage * 3;
       state.runScrap += drop;
       state.player.kills++;
+      state.runSalvage = state.runSalvage || [];
+      if (r.defId) {
+        if (state.runSalvage.indexOf(r.defId) < 0) state.runSalvage.push(r.defId);
+        if (state.runSalvage.length > 3) state.runSalvage.shift();
+      }
       var killN = state.player.kills | 0;
       // Kill beat juice — short inv so a same-frame RAM trade doesn't delete the glory (v292/v359)
       if (state.player && state.player.hp > 0) {
@@ -3001,7 +3059,7 @@
         particles.exhaustFlame(exPos.clone().addScaledVector(tmpV2, -0.28), tmpV);
       }
     } else {
-      p.nitro = Math.min(nitroMax, p.nitro + cfg.nitro.regen * (p.mul.nitroRegen || 1) * dt);
+      p.nitro = Math.min(nitroMax, p.nitro + cfg.nitro.regen * (p.mul.nitroRegen || 1) * (p._salvageNitroRegen || 1) * dt);
       // Cool while not on nitro — extra dump when not holding fire so Eye can end ~8s after a fight.
       // Never use I.pressed here: that eats rocket/mine edges before the fire block below.
       var heatCool = cfg.heat.cool * (p.mul.heatCool || 1) * (p._mutHeatCool || 1);
@@ -5596,6 +5654,25 @@
     }
   }
 
+  function trySalvage() {
+    var offer = state.salvageOffer;
+    if (!offer) return;
+    var cost = offer.cost | 0;
+    if ((state.meta.scrap | 0) < cost) {
+      if (GAME.sfx && GAME.sfx.deny) GAME.sfx.deny();
+      toast('NEED ' + cost + ' SCRAP', 1.0, 0);
+      return;
+    }
+    state.meta.scrap -= cost;
+    state.meta.salvage = {
+      partId: offer.partId, fromCar: offer.fromCar, name: offer.name,
+      armedNight: state.meta.stage | 0,
+    };
+    saveMeta();
+    if (GAME.sfx && GAME.sfx.confirm) GAME.sfx.confirm();
+    toast('ARMED · ' + offer.name, 1.4, 1);
+  }
+
   function tryBuy(idx) {
     var c = state.pendingChoices[idx];
     if (!c || c.maxed) { if (GAME.sfx) GAME.sfx.deny(); return; }
@@ -5633,11 +5710,16 @@
     if (I.pressed('1')) tryBuy(0);
     if (I.pressed('2')) tryBuy(1);
     if (I.pressed('3')) tryBuy(2);
+    if (I.pressed('4')) trySalvage();
     // Click upgrade chips or footer → garage (v309)
     if (I.pressed('click')) {
       var rp = hudPointer();
       var rh = state._resultsHit;
       if (rh) {
+        if (rh.salvage && hitRect(rp.x, rp.y, rh.salvage)) {
+          trySalvage();
+          return;
+        }
         var ci;
         for (ci = 0; ci < (rh.choices || []).length; ci++) {
           if (hitRect(rp.x, rp.y, rh.choices[ci])) {

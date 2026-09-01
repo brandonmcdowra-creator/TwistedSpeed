@@ -1,6 +1,6 @@
 # Next session pickup
 
-**Canonical build:** web **v437** (P1.2 special readability — Marrow / Needle / Vesper).  
+**Canonical build:** web **v438** (P1.3 salvage rig — wreck feeds next night).  
 Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 
 ## Model workflow (director)
@@ -10,14 +10,14 @@ Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item.
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=437
+# http://127.0.0.1:8765/?v=438
 ```
-Title / boot must say **BUILD 437**.
+Title / boot must say **BUILD 438**.
 
 ## Just shipped
-- P1.2 charge rings + target marks + needle miss stub (Marrow / Needle / Vesper).
-- HUD special chip: charging / cooldown fill bars with per-car tints.
-- Bone volley toast `BONE HARVEST · n/3 HIT`.
+- P1.3 salvage loop: wreck class → results **4 SALVAGE** (60 scrap) → armed for next night.
+- Three parts: Stripped Injector, Hot Feed, Tomb Plate — bolt at race start with toast.
+- HUD salvage chip on results + race; `ARMED ·` on next-night strip.
 
 ## Next
-- **P1.3** Wreck → scrap loop that changes the *next* night (one meaningful upgrade beat).
+- **P2.1** Warden / parole toast script arc across one 8–10 min Neon run (no cutscenes).

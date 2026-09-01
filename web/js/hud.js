@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 437', w / 2, h * 0.395);
+    ctx.fillText('BUILD 438', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -905,6 +905,11 @@
     ctx.fillStyle = '#ffc857';
     ctx.font = 'bold 12px monospace';
     ctx.fillText('SCRAP ' + (state.runScrap | 0), 24, hasShieldHud ? 86 : 64);
+    if (state.activeSalvage && state.activeSalvage.name) {
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('SALVAGE · ' + state.activeSalvage.name, 24, hasShieldHud ? 100 : 78);
+    }
 
     this.panel(16, h - 100, 160, 84, 0.82);
     ctx.fillStyle = '#c8b8c0';
@@ -1570,7 +1575,7 @@
     ctx.fillStyle = '#6a5a68';
     ctx.font = '11px monospace';
     ctx.fillText(
-      'Click chip to buy  ·  R retry night  ·  ENTER garage',
+      'Click chip to buy  ·  4 salvage  ·  R retry night  ·  ENTER garage',
       w / 2, h * 0.288
     );
 
@@ -1605,6 +1610,32 @@
       ctx.font = '12px monospace';
       ctx.fillText(c.maxed ? 'MAX' : (c.cost + ' SCRAP'), cx + chipW / 2, chipY + 56);
     }
+
+    // Salvage offer chip — key 4 (P1.3 v438)
+    var salvHit = null;
+    var offer = state.salvageOffer;
+    if (offer) {
+      var salvY = chipY + chipH + 14;
+      var salvW = Math.min(420, w * 0.72);
+      var salvX = (w - salvW) / 2;
+      var salvH = 58;
+      salvHit = { x: salvX, y: salvY, w: salvW, h: salvH };
+      ctx.fillStyle = 'rgba(0,229,255,0.22)';
+      ctx.fillRect(salvX, salvY, salvW, salvH);
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(salvX, salvY, salvW, salvH);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText('4', salvX + salvW / 2, salvY + 20);
+      ctx.fillStyle = '#f2e9e4';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('SALVAGE · ' + offer.name, salvX + salvW / 2, salvY + 38);
+      ctx.fillStyle = '#ffc857';
+      ctx.font = '11px monospace';
+      ctx.fillText((offer.cost | 0) + ' SCRAP · from ' + (offer.fromCar || 'WRECK'), salvX + salvW / 2, salvY + 52);
+    }
     ctx.textAlign = 'center';
 
     // Mutator strip — freedom win still fills the band so panel isn't hollow (v379)
@@ -1624,6 +1655,11 @@
       ctx.fillStyle = '#c8b8c0';
       ctx.font = '11px monospace';
       ctx.fillText(state.nextMutators[0].desc || '', w / 2, mutY + 16);
+      if (state.meta && state.meta.salvage && state.meta.salvage.name) {
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('ARMED · ' + state.meta.salvage.name, w / 2, mutY + 32);
+      }
     } else if (state.freedomWin) {
       ctx.fillStyle = 'rgba(0,229,255,0.12)';
       ctx.fillRect(w * 0.22, mutY - 18, w * 0.56, 44);
@@ -1649,6 +1685,7 @@
     state._resultsHit = {
       choices: choiceHits,
       footer: { x: w * 0.2, y: footY - 18, w: w * 0.6, h: 36 },
+      salvage: salvHit,
     };
   };
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-01 — Web v438: P1.3 salvage rig (wreck feeds next night)
+
+- **P1.3** Salvage loop: rival wreck tracks `runSalvage` by class; results screen offers keyed **4 SALVAGE** chip (60 scrap) mapped from last kill class → injector / hot feed / tomb plate.
+- Armed part persists in meta until next race start: full nitro + regen, special ready + faster CD, or +25 bolted shield; toast `SALVAGE BOLTED` on green.
+- HUD: results salvage chip + `ARMED ·` on next-night strip; race chip `SALVAGE ·` near armor cluster.
+- Locks: maglev, warden_lane, specials damage/timing, saveKey unchanged.
+
+Hard-refresh `?v=438`.
+
+---
+
 ## 2026-09-01 — Web v437: P1.2 special readability (Marrow / Needle / Vesper)
 
 - **P1.2** Signature special readability: pooled charge rings under player during windup, target marks on rivals (Marrow aim, Needle tether, Vesper EMP), needle-miss cable stub; probe counters for playtest.
