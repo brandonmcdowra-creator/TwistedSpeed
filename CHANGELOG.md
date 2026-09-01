@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-01 — Web v433: cleanup / debug / efficiency on gauntlet
+
+Single SoT pass on the gauntlet (v432) tree — not the abandoned v412 branch.
+
+- **Cleanup:** deleted unused runtime stubs (`city.js`, `night_circuit.js`, `engine.js`, `engine2d.js`, `shaders.js`, syntax-check helpers).
+- **Debug:** canyon `openEdge` 4.5/5.4, hard lateral rail after integrate, ride height `+0.72`, hill Y catch-up, FREEDOM bar under PLACE, favicon data-URI.
+- **Efficiency:** share particle materials (less GC), canvas textures without mipmaps, cache cloud path mid-point, slightly tighter building LOD bands; mute world/preload logs unless `?debug=1`.
+
+Hard-refresh `?v=433`.
+
+---
+
 ## 2026-08-31 — Web v432: killNova gh-02 parity — Gauntlet COMPLETE
 
 TM combat bar WON at R17. Full Gauntlet Loop objective achieved.

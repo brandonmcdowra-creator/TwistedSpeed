@@ -3103,8 +3103,9 @@
 
     // Hard snap ONLY if you're really off the ribbon in XZ — never teleport to progress
     // Wave 3: no void tug while nearest is a Y-fold pick
-    var voidHard = !nearFolded && isFinite(ribbonLat) && ribbonLat > 28;
-    var voidSoft = !nearFolded && isFinite(ribbonLat) && ribbonLat > 18 && !voidHard;
+    // v433: thresholds were 28/18 — canyon faces ~roadHalf+openEdge; cars clipped walls
+    var voidHard = !nearFolded && isFinite(ribbonLat) && ribbonLat > 15;
+    var voidSoft = !nearFolded && isFinite(ribbonLat) && ribbonLat > 12.5 && !voidHard;
     var steeringHard = Math.abs(p.steer) >= 0.28;
     var progAgree = near && Math.abs((near.progress || 0) - progHint) < 0.05;
     if (path && path.curve && voidHard && near && near.point && progAgree) {
@@ -3508,6 +3509,34 @@
     p.pos.x += tmpV.x * p.speed * dt + tmpV2.x * p.slip * dt;
     p.pos.z += tmpV.z * p.speed * dt + tmpV2.z * p.slip * dt;
 
+    // Hard rail after integrate — never tunnel sidewalk into canyon glass (v433)
+    if (near && near.tangent && !nearFolded) {
+      var nearAfter = world.nearest(p.pos, p.progress != null ? p.progress : progHint);
+      if (nearAfter && isFinite(nearAfter.lateralDist) && nearAfter.tangent) {
+        var latA = nearAfter.lateralDist;
+        var maxBodyLat = rh + curbW + 0.45;
+        var wallFace = rh + 4.5;
+        maxBodyLat = Math.min(maxBodyLat, wallFace - 3.2);
+        if (Math.abs(latA) > maxBodyLat) {
+          var sideA = new THREE.Vector3(-nearAfter.tangent.z, 0, nearAfter.tangent.x);
+          var overA = Math.abs(latA) - maxBodyLat;
+          var sgnA = Math.sign(latA || 1);
+          p.pos.x -= sideA.x * sgnA * overA;
+          p.pos.z -= sideA.z * sgnA * overA;
+          p.slip *= 0.15;
+          p.speed *= Math.max(0.72, 1 - 1.1 * dt);
+          if (overA > 0.8) {
+            state.camShake = Math.max(state.camShake || 0, 0.1);
+            if (GAME.sfx && GAME.sfx.scrape) GAME.sfx.scrape(0.15);
+          }
+          near = nearAfter;
+          ribbonLat = nearAfter.dist;
+          ribbonDist = ribbonLat;
+          nearFolded = false;
+        }
+      }
+    }
+
     // Ride height — ignore fold picks at a different altitude (mid-race camera freak)
     // v393: 7-sample look-ahead + grade grade damp — climb less faceted
     var groundY = p.pos.y;
@@ -3537,7 +3566,7 @@
             if (span > 1) gradeY = (yFar.y - yNear.y) / span;
           }
         }
-        groundY = yBlend + 0.2;
+        groundY = yBlend + 0.72; // v433: wheels clear asphalt/sheen
       }
     }
     // Rate-limit grade so pitch/ride don't jump on control-point kinks
@@ -3564,8 +3593,15 @@
     if (!isFinite(groundY)) groundY = p.pos.y;
     // Double-smooth: target then body (v393: softer on steep grade to kill facet)
     if (p._groundYSm == null || !isFinite(p._groundYSm)) p._groundYSm = groundY;
+    // v433: coast hills left chassis buried when damp lagged
+    var yGapPre = groundY - p.pos.y;
+    if (!nearFolded && Math.abs(yGapPre) > 1.15) {
+      p._groundYSm = groundY;
+      p.pos.y += Math.sign(yGapPre) * Math.min(Math.abs(yGapPre), 36 * dt);
+    }
     p._groundYSm = U.damp(p._groundYSm, groundY, 18 + Math.min(8, Math.abs(gradeY) * 32), dt);
     var yDamp = 14 + Math.min(10, Math.abs(gradeY) * 36);
+    if (!nearFolded && Math.abs(groundY - p.pos.y) > 0.55) yDamp += 22;
     p.pos.y = U.damp(p.pos.y, p._groundYSm, yDamp, dt);
     if (!isFinite(p.pos.y)) p.pos.y = groundY;
     if (!isFinite(p.pos.x)) p.pos.x = near.point.x;
@@ -4469,9 +4505,19 @@
         r.pos.z -= sideNr.z * latR * pullAmtR * 0.7;
         r.speed *= 0.98;
       }
+      // Hard rail — rivals never tunnel into canyon (v433)
+      var maxRivalLat = D.roadHalf + 1.1;
+      if (rn.lateralDist != null && Math.abs(rn.lateralDist) > maxRivalLat) {
+        var sideHr = new THREE.Vector3(-rn.tangent.z, 0, rn.tangent.x);
+        var overR = Math.abs(rn.lateralDist) - maxRivalLat;
+        r.pos.x -= sideHr.x * Math.sign(rn.lateralDist || 1) * overR;
+        r.pos.z -= sideHr.z * Math.sign(rn.lateralDist || 1) * overR;
+        r.speed *= 0.96;
+        rn = world.nearest(r.pos, r.progress);
+      }
       r.progress = Math.max(r.progress || 0, rn.progress);
       if (r.progress > 0.97) r.speed *= 0.88;
-      r.pos.y = rn.point.y + 0.2;
+      r.pos.y = rn.point.y + 0.72; // v433: match player ride height
       r.mesh.position.copy(r.pos);
       // Always apply setYaw so baked GLB face stays correct
       if (GAME.vehicles.setYaw) GAME.vehicles.setYaw(r.mesh, r.yaw);
@@ -6161,7 +6207,7 @@
           if (GAME.prepareMoneyShotFrame) GAME.prepareMoneyShotFrame();
         }, 200);
       }
-      console.log('[Twisted Speed] GLB + city props preload done');
+      if (/[?&]debug=1/.test(location.search)) console.log('[Twisted Speed] GLB + city props preload done');
     });
   });
 })();

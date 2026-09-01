@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 432', w / 2, h * 0.395);
+    ctx.fillText('BUILD 433', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -1108,12 +1108,13 @@
     ctx.font = '10px monospace';
     ctx.fillText(Math.round(prog * 100) + '% → FINISH   S' + state.runScrap + ' K' + p.kills, w - 188, chipY + 28);
 
-    this.panel(w / 2 - 90, 16, 180, 18, 0.65);
-    this.bar(w / 2 - 86, 20, 172, 10, (state.meta.stage - 1) / GAME.config.stageCount, '#00e5ff');
+    // v433: under PLACE — top slot fought tips toast + canvas clip
+    this.panel(w / 2 - 90, 106, 180, 22, 0.65);
+    this.bar(w / 2 - 86, 111, 172, 10, (state.meta.stage - 1) / GAME.config.stageCount, '#00e5ff');
     ctx.fillStyle = '#f2e9e4';
-    ctx.font = '9px monospace';
+    ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('FREEDOM', w / 2, 29);
+    ctx.fillText('FREEDOM', w / 2, 122);
     ctx.textAlign = 'left';
 
     // Active temporary race buffs (drive-through pickups — not garage upgrades)
