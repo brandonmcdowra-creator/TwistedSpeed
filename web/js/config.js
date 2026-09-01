@@ -540,15 +540,25 @@ GAME.config = {
     salvageBeat2: 'WARDEN: YOU\'RE WEARING A DEAD MAN\'S PLATE',
   },
 
-  /** P2.2 — Sepulcher district fiction chips (Neon HUD placard; not toast). */
+  /** P1.4/v442 — Scrap Line + Wreck Wake dress (Neon). Soft hit params frozen. */
   scrapLine: {
     density: 1,
     maxInstances: 400,
-    clearFrac: 0.44, // centre clear
+    clearFrac: 0.44, // centre clear — do not tighten without a dedicated build
     hitCd: 0.55,
     hpChip: 3,
+    maxDress: 900,
+    dressStep: 0.0011,
   },
 
+  /** v442 — ballistic scrap + dust wake (InstancedMesh). */
+  debris: {
+    playerWake: 0.1,
+    rivalWake: 0.22,
+    speedNormGate: 0.45,
+  },
+
+  /** P2.2 — Sepulcher district fiction chips (Neon HUD placard; not toast). */
   sepulcherDistricts: [
     { gate: 0.10, name: 'INTAKE ROW', code: 'WRDN-03', tag: 'processing · no exit' },
     { gate: 0.26, name: 'FREIGHT SEPULCHER', code: 'SEP-12', tag: 'wait the gap' },

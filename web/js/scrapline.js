@@ -1,6 +1,7 @@
 /**
- * Scrap Line — wreckable shoulder freight (v441).
+ * Scrap Line — wreckable shoulder freight + non-hit dress (v441/v442).
  * MeshBasic + InstancedMesh only. Neon/Sepulcher/city — not coast/REACH.
+ * v442: dress clutter to horizon + knocked props + debris wake hooks.
  */
 (function () {
   var GAME = (window.GAME = window.GAME || {});
@@ -13,6 +14,7 @@
   var T_MIN = 0.15;
   var T_MAX = 0.90;
   var KINDS = ['drum', 'ballast', 'spool', 'crate', 'glow'];
+  var DRESS_KINDS = ['gravel', 'shard', 'scrub'];
 
   var _geo = null;
   var _zeroMat = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -35,6 +37,9 @@
       glow: new THREE.RingGeometry(0.32, 0.52, 14),
       gantryPost: new THREE.BoxGeometry(0.75, 14, 0.75),
       gantryBeam: new THREE.BoxGeometry(26, 0.65, 1.15),
+      gravel: new THREE.IcosahedronGeometry(0.35, 0),
+      shard: new THREE.BoxGeometry(0.9, 0.05, 0.6),
+      scrub: new THREE.PlaneGeometry(1.1, 1.1),
     };
     return _geo;
   }
@@ -69,13 +74,29 @@
         side: THREE.DoubleSide,
       });
     }
+    if (kind === 'gravel') {
+      return new THREE.MeshBasicMaterial({ color: 0x2e2a26 });
+    }
+    if (kind === 'shard') {
+      return new THREE.MeshBasicMaterial({ color: 0x3a342e });
+    }
+    if (kind === 'scrub') {
+      return new THREE.MeshBasicMaterial({
+        color: 0x1a2420,
+        transparent: true,
+        opacity: 0.55,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+    }
     var cols = [0x3a3530, 0x2a2825, 0x4a4038, 0x352830];
     var ci = KINDS.indexOf(kind);
     return new THREE.MeshBasicMaterial({ color: cols[ci] != null ? cols[ci] : 0x3a3530 });
   }
 
-  function placeMatrix(path, item, pool) {
+  function placeMatrix(path, item, pool, opts) {
     if (!path || !path.curve || !item || !pool || !pool.mesh) return;
+    opts = opts || {};
     var pt = path.curve.getPointAt(item.t);
     var tan = path.curve.getTangentAt(item.t);
     _tmpTan.set(tan.x, 0, tan.z);
@@ -95,11 +116,28 @@
       _tmpP.y += 0.52;
     } else if (item.kind === 'spool') {
       _tmpP.y += 0.28;
+    } else if (item.kind === 'gravel') {
+      _tmpP.y += 0.18;
+    } else if (item.kind === 'shard') {
+      _tmpP.y += 0.04;
+    } else if (item.kind === 'scrub') {
+      _tmpP.y += 0.55;
     } else {
       _tmpP.y += 0.45;
     }
+
+    // Knocked / settled overrides
+    if (opts.knock) {
+      _tmpP.add(opts.knock.offset);
+      _tmpQ.multiply(opts.knock.quat);
+    }
+    if (opts.settle) {
+      _tmpP.y = pt.y + 0.12;
+    }
+
     var sc = item.scale || 1;
-    _tmpS.set(sc, sc, sc);
+    if (opts.yScale != null) _tmpS.set(sc, sc * opts.yScale, sc);
+    else _tmpS.set(sc, sc, sc);
     _tmpM.compose(_tmpP, _tmpQ, _tmpS);
     pool.mesh.setMatrixAt(item.matrixIndex, _tmpM);
   }
@@ -130,7 +168,17 @@
     return Math.max(12, maxSp * 0.45);
   }
 
-  function applyHit(handle, body, isPlayer, ctx, hitPos) {
+  function hitDir(body) {
+    if (body && body.mesh && body.mesh.getWorldDirection) {
+      var d = new THREE.Vector3();
+      body.mesh.getWorldDirection(d);
+      d.y = 0;
+      if (d.lengthSq() > 1e-6) return d.normalize();
+    }
+    return new THREE.Vector3(0, 0, 1);
+  }
+
+  function applyHit(handle, body, isPlayer, ctx, hitPos, kind) {
     var mass = (body.mul && body.mul.mass) || 1;
     var lossFrac = U.clamp(0.22 / mass, 0.08, 0.22);
     body.speed *= (1 - lossFrac);
@@ -146,6 +194,14 @@
       }
     }
 
+    // v442: debris burst + crunch
+    if (ctx && ctx.debris && hitPos && GAME.debris && GAME.debris.burst) {
+      GAME.debris.burst(ctx.debris, hitPos, hitDir(body), kind || 'crate');
+    }
+    if (ctx && ctx.sfx && ctx.sfx.collide) {
+      try { ctx.sfx.collide(); } catch (e) {}
+    }
+
     if (isPlayer && ctx && ctx.hurtPlayer && handle.hitCd <= 0) {
       var cfgSl = (GAME.config && GAME.config.scrapLine) || {};
       var chip = cfgSl.hpChip != null ? cfgSl.hpChip : 3;
@@ -155,8 +211,37 @@
     }
 
     if (ctx && ctx.state) {
-      ctx.state.camShake = Math.max(ctx.state.camShake || 0, isPlayer ? 0.14 : 0.08);
+      ctx.state.camShake = Math.max(ctx.state.camShake || 0, isPlayer ? 0.18 : 0.1);
+      if (isPlayer) {
+        ctx.state.smashKick = Math.max(ctx.state.smashKick || 0, 0.28);
+      }
     }
+  }
+
+  function beginKnock(item, body) {
+    var dir = hitDir(body);
+    var side = new THREE.Vector3(-dir.z, 0, dir.x);
+    item.alive = false;
+    item.knocked = {
+      age: 0,
+      life: 0.45,
+      offset: new THREE.Vector3(0, 0.2, 0),
+      vel: dir.clone().multiplyScalar(2 + Math.random() * 3)
+        .addScaledVector(side, (Math.random() - 0.5) * 2.5)
+        .add(new THREE.Vector3(0, 4 + Math.random() * 3, 0)),
+      spin: (Math.random() - 0.5) * 10,
+      quat: new THREE.Quaternion(),
+      euler: 0,
+    };
+  }
+
+  function settleKnock(handle, item) {
+    item.knocked = null;
+    item.settled = true;
+    var pool = handle.pools[item.kind];
+    if (!pool) return;
+    placeMatrix(handle._path, item, pool, { settle: true, yScale: 0.3 });
+    pool.mesh.instanceMatrix.needsUpdate = true;
   }
 
   GAME.scrapLine = {
@@ -173,6 +258,8 @@
       var maxInst = cfgSl.maxInstances || 400;
       var density = cfgSl.density != null ? cfgSl.density : 1;
       var clearFrac = cfgSl.clearFrac != null ? cfgSl.clearFrac : 0.44;
+      var maxDress = cfgSl.maxDress != null ? cfgSl.maxDress : 900;
+      var dressStep = cfgSl.dressStep != null ? cfgSl.dressStep : 0.0011;
       var seed = mapSeed(stage, mapId);
       var g = geos();
 
@@ -202,27 +289,68 @@
         slot++;
       }
 
+      // v442 dress layer — non-collidable horizon filler outside hit band
+      var dress = [];
+      var dSlot = 0;
+      var dressSide = 1;
+      for (var dt = T_MIN; dt <= T_MAX && dress.length < maxDress; dt += dressStep) {
+        if (skipT(dt)) continue;
+        var thin = dt >= WARDEN_LO && dt <= WARDEN_HI;
+        var picks = thin ? 2 : 3;
+        for (var p = 0; p < picks && dress.length < maxDress; p++) {
+          var drv = U.seeded(seed + dSlot * 7.13 + p * 0.37);
+          if (thin && drv > 0.72) { dSlot++; continue; }
+          dressSide = -dressSide;
+          var latMul = 1.02 + U.seeded(seed + dSlot * 4.4) * 2.18; // 1.02–3.2 × roadHalf
+          var dk = DRESS_KINDS[Math.floor(U.seeded(seed + dSlot * 11.2) * 3)];
+          dress.push({
+            alive: true,
+            t: dt,
+            lat: dressSide * roadHalf * latMul,
+            kind: dk,
+            spin: (U.seeded(seed + dSlot * 2.7) - 0.5) * 1.2,
+            scale: 0.7 + U.seeded(seed + dSlot * 1.9) * 0.9,
+          });
+          dSlot++;
+        }
+      }
+
       var counts = { drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0 };
-      placements.forEach(function (p) { counts[p.kind]++; });
+      placements.forEach(function (it) { counts[it.kind]++; });
+      var dressCounts = { gravel: 0, shard: 0, scrub: 0 };
+      dress.forEach(function (it) { dressCounts[it.kind]++; });
 
       var group = new THREE.Group();
       group.name = 'scrapLine';
       var pools = {};
       var matsOwned = [];
 
-      KINDS.forEach(function (kind) {
-        var n = counts[kind] || 0;
+      function addPool(kind, n) {
         if (n <= 0) return;
         var mat = kindMat(kind, 0);
         matsOwned.push(mat);
         var mesh = new THREE.InstancedMesh(g[kind], mat, n);
         mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        mesh.frustumCulled = false;
         pools[kind] = { mesh: mesh, cap: n, used: 0 };
         group.add(mesh);
-      });
+      }
 
-      var perKindIdx = { drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0 };
+      KINDS.forEach(function (kind) { addPool(kind, counts[kind] || 0); });
+      DRESS_KINDS.forEach(function (kind) { addPool(kind, dressCounts[kind] || 0); });
+
+      var perKindIdx = {
+        drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0,
+        gravel: 0, shard: 0, scrub: 0,
+      };
       placements.forEach(function (item) {
+        var pool = pools[item.kind];
+        if (!pool) return;
+        item.matrixIndex = perKindIdx[item.kind]++;
+        placeMatrix(path, item, pool);
+        pool.mesh.instanceMatrix.needsUpdate = true;
+      });
+      dress.forEach(function (item) {
         var pool = pools[item.kind];
         if (!pool) return;
         item.matrixIndex = perKindIdx[item.kind]++;
@@ -254,6 +382,7 @@
           _tmpP.copy(pt).addScaledVector(_tmpSide, s * span);
           _tmpP.y = pt.y + 7;
           _tmpQ.setFromAxisAngle(_axisY, yaw);
+          _tmpS.set(1, 1, 1);
           _tmpM.compose(_tmpP, _tmpQ, _tmpS);
           postMesh.setMatrixAt(pi, _tmpM);
           pi++;
@@ -261,6 +390,7 @@
         _tmpP.copy(pt);
         _tmpP.y = pt.y + 13.5;
         _tmpQ.setFromAxisAngle(_axisY, yaw);
+        _tmpS.set(1, 1, 1);
         _tmpM.compose(_tmpP, _tmpQ, _tmpS);
         beamMesh.setMatrixAt(gantries.length, _tmpM);
         gantries.push({ t: gt, pt: pt.clone() });
@@ -274,6 +404,7 @@
         group: group,
         pools: pools,
         items: placements,
+        dress: dress,
         gantries: gantries,
         hulks: [],
         roadHalf: roadHalf,
@@ -283,6 +414,7 @@
         _gantryPosts: postMesh,
         _gantryBeams: beamMesh,
         _lodTick: 0,
+        _path: path,
       };
     },
 
@@ -320,8 +452,7 @@
         if (!item.alive) continue;
         if (Math.abs(item.t - progress) > hitRadT) continue;
         if (Math.abs(lat - item.lat) > hitRadLat) continue;
-        item.alive = false;
-        markDead(handle, item);
+        beginKnock(item, body);
         var hitPos = body.pos;
         if (ctx && ctx.path && ctx.path.curve) {
           var pt = ctx.path.curve.getPointAt(item.t);
@@ -333,7 +464,7 @@
           _tmpSide.set(-_tmpTan.z, 0, _tmpTan.x);
           hitPos.addScaledVector(_tmpSide, item.lat);
         }
-        applyHit(handle, body, isPlayer, ctx, hitPos);
+        applyHit(handle, body, isPlayer, ctx, hitPos, item.kind);
         hits++;
       }
 
@@ -343,7 +474,7 @@
         if (Math.abs(hk.progress - progress) > hitRadT * 1.5) continue;
         if (Math.abs(lat - hk.lat) > 2.8) continue;
         if (isPlayer && handle.hitCd > 0) continue;
-        applyHit(handle, body, isPlayer, ctx, hk.pos);
+        applyHit(handle, body, isPlayer, ctx, hk.pos, 'ballast');
         hits++;
       }
 
@@ -353,8 +484,36 @@
     update: function (handle, dt, ctx) {
       if (!handle) return;
       if (handle.hitCd > 0) handle.hitCd -= dt;
+      if (ctx && ctx.path) handle._path = ctx.path;
 
-      // Spin glow discs
+      // Knocked prop tumble → settle as flattened wreck
+      for (var ki = 0; ki < handle.items.length; ki++) {
+        var kn = handle.items[ki];
+        if (!kn.knocked) continue;
+        var k = kn.knocked;
+        k.age += dt;
+        k.vel.y -= 22 * dt;
+        k.offset.x += k.vel.x * dt;
+        k.offset.y += k.vel.y * dt;
+        k.offset.z += k.vel.z * dt;
+        if (k.offset.y < 0) {
+          k.offset.y = 0;
+          k.vel.y *= -0.25;
+          k.vel.x *= 0.7;
+          k.vel.z *= 0.7;
+        }
+        k.euler += k.spin * dt;
+        k.quat.setFromAxisAngle(_axisX, k.euler * 0.6);
+        k.quat.multiply(new THREE.Quaternion().setFromAxisAngle(_axisY, k.euler));
+        var poolK = handle.pools[kn.kind];
+        if (poolK && ctx && ctx.path) {
+          placeMatrix(ctx.path, kn, poolK, { knock: k });
+          poolK.mesh.instanceMatrix.needsUpdate = true;
+        }
+        if (k.age >= k.life) settleKnock(handle, kn);
+      }
+
+      // Spin glow discs (alive only)
       var pool = handle.pools && handle.pools.glow;
       if (pool && pool.mesh && ctx && ctx.path) {
         for (var i = 0; i < handle.items.length; i++) {
@@ -384,35 +543,47 @@
         }
       }
 
-      // LOD: zero-scale far instances (>130m from player)
+      // LOD: zero-scale far instances
       if (!ctx || !ctx.player || !ctx.player.pos) return;
       handle._lodTick = (handle._lodTick || 0) + 1;
       if (handle._lodTick % 4 !== 0) return;
       var px = ctx.player.pos.x;
       var pz = ctx.player.pos.z;
-      var lodR = 130;
-      KINDS.forEach(function (kind) {
-        var pl = handle.pools[kind];
-        if (!pl || !pl.mesh) return;
-        for (var j = 0; j < handle.items.length; j++) {
-          var it = handle.items[j];
-          if (it.kind !== kind) continue;
-          if (!it.alive) continue;
+      var lodHit = 130;
+      var lodDress = 165;
+      var low = !!(GAME.qualityLevel === 'low');
+
+      function lodList(list, radius) {
+        for (var j = 0; j < list.length; j++) {
+          var it = list[j];
+          if (it.knocked) continue; // keep animating near
+          if (!it.alive && !it.settled) continue;
+          var pl = handle.pools[it.kind];
+          if (!pl || !pl.mesh) continue;
           if (!ctx.path || !ctx.path.curve) continue;
           var ptp = ctx.path.curve.getPointAt(it.t);
           var dx = ptp.x - px;
           var dz = ptp.z - pz;
-          var far = (dx * dx + dz * dz) > lodR * lodR;
+          var far = (dx * dx + dz * dz) > radius * radius;
+          if (low && DRESS_KINDS.indexOf(it.kind) >= 0) {
+            // Low quality: drop half of dress via LOD bias
+            if ((it.matrixIndex | 0) % 2 === 1) far = true;
+          }
           if (far && !it._lodHidden) {
             pl.mesh.setMatrixAt(it.matrixIndex, _zeroMat);
             it._lodHidden = true;
+            pl.mesh.instanceMatrix.needsUpdate = true;
           } else if (!far && it._lodHidden) {
             it._lodHidden = false;
-            placeMatrix(ctx.path, it, pl);
+            if (it.settled) placeMatrix(ctx.path, it, pl, { settle: true, yScale: 0.3 });
+            else placeMatrix(ctx.path, it, pl);
+            pl.mesh.instanceMatrix.needsUpdate = true;
           }
         }
-        pl.mesh.instanceMatrix.needsUpdate = true;
-      });
+      }
+
+      lodList(handle.items, lodHit);
+      if (handle.dress) lodList(handle.dress, lodDress);
     },
 
     clear: function (handle, scene) {
@@ -424,11 +595,10 @@
       if (handle._mats) {
         handle._mats.forEach(function (m) { if (m && m.dispose) m.dispose(); });
       }
-      var g = geos();
-      // Shared geos — do not dispose
       handle.group = null;
       handle.pools = null;
       handle.items = null;
+      handle.dress = null;
       handle.hulks = null;
     },
   };

@@ -1,20 +1,20 @@
 # Twisted Speed — Progress
 
-**Build:** web **v441** (P1.4 Scrap Line shoulder freight)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=441`  
+**Build:** web **v442** (Wreck Wake — dress clutter + smash juice)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=442`  
 **Gauntlet:** COMPLETE (Heat R12 · TM R17) — visual/combat baseline  
 **SoT:** one build · follow `docs/AAA-ROADMAP.md` for next work  
 **Quality bar:** Turbo Sloths Mad Max combat-racer density (felt), not UE5 photoreal.
 
-## This block (v441)
+## This block (v442)
 | Check | Result |
 |-------|--------|
-| P1.4 Scrap Line | 5 InstancedMesh pools + gantries · ~400 cap · shoulders 0.50–0.90 roadHalf |
-| Centre clear | \|across\| < 0.44 × roadHalf — no props |
-| Skip bands | t<0.15 · t>0.90 · maglev [0.26,0.34] · thin density warden 0.38–0.56 |
-| Hulks | Settled wrecks stay (cap 6) · smoke · soft collide proxy |
-| Neon only | REACH/coast return null |
-| Locks | Maglev wait/gap · warden_lane · saveKey · no freight toast |
+| Dress layer | gravel / shard / scrub · ≤900 · lat 1.02–3.2× roadHalf · **no collide** |
+| Knocked props | 0.45s tumble → y-scale 0.3 wreck mark |
+| Debris wake | 96 chunks + 64 dust · player wake @0.10s · smash burst |
+| Smash juice | collide SFX · camShake 0.18 · smashKick → motion blur |
+| Hazard freeze | clearFrac 0.44 · maxInstances 400 · step 0.0032 · hpChip/hitCd unchanged |
+| Locks | Maglev wait/gap · warden_lane · saveKey |
 
 ## Don’t regress
 - Gauntlet VFX · maglev wait/gap · soft hazards · lip-only steer  
@@ -23,10 +23,10 @@
 - District index `0` is real (INTAKE ROW) — never falsy-skip  
 
 ## Next (from roadmap)
-**P2.3** Finish ceremony polish (Parole Arch) as story punctuation.
+**P2.3** Finish ceremony polish (Parole Arch) as story punctuation — or further Turbo Sloths feel (thruster read / impact polish) if director keeps quality push.
 
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=441  → BUILD 441
+# http://127.0.0.1:8765/?v=442  → BUILD 442
 ```

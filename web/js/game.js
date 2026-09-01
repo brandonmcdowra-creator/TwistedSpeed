@@ -407,6 +407,9 @@
     state.meta.quality = nq;
     saveMeta();
     applyQualityFromMeta();
+    if (state.debris && GAME.debris && GAME.debris.setLow) {
+      GAME.debris.setLow(state.debris, nq === 'low');
+    }
     if (particles) {
       if (nq === 'low' && particles.rainStop) particles.rainStop();
       else if (nq === 'high' && particles.rainStart && state.mode === 'race' && !state._mapOverview) {
@@ -1312,6 +1315,8 @@
     state.wardenLane = null;
     if (GAME.scrapLine && GAME.scrapLine.clear) GAME.scrapLine.clear(state.scrapLine, scene);
     state.scrapLine = null;
+    if (GAME.debris && GAME.debris.clear) GAME.debris.clear(state.debris, scene);
+    state.debris = null;
     (state.projectiles || []).forEach(function (pr) {
       recycleProjectileMesh(pr.mesh);
     });
@@ -1473,6 +1478,12 @@
         roadHalf: state.roadHalf || cfg.drive.roadHalf || 11.5,
         stage: state.meta.stage,
       });
+    }
+    if (GAME.debris && GAME.debris.create) {
+      state.debris = GAME.debris.create(scene);
+      if (state.debris && GAME.debris.setLow) {
+        GAME.debris.setLow(state.debris, GAME.qualityLevel === 'low');
+      }
     }
     if (hasMutator('last_mile')) {
       // LAST MILE (Night 7): finish stretch is mean — not a label
@@ -1673,6 +1684,7 @@
     state.pointToPoint = true;
     state.hostile = !!hasMutator('warden_sweep');
     state.camShake = 0;
+    state.smashKick = 0;
     state.camMode = state.camMode || 'chase';
     state._packReToastOnce = false;
     state._openGraceEnded = false;
@@ -3969,12 +3981,25 @@
         cfg: cfg,
         state: state,
         hurtPlayer: hurtPlayer,
+        debris: state.debris,
+        sfx: GAME.sfx,
       };
       GAME.scrapLine.update(state.scrapLine, dt, scrapCtx);
       GAME.scrapLine.collide(state.scrapLine, p, true, scrapCtx);
       (state.rivals || []).forEach(function (rv) {
         if (!rv.dead) GAME.scrapLine.collide(state.scrapLine, rv, false, scrapCtx);
       });
+    }
+    if (GAME.debris && state.debris && GAME.debris.update) {
+      GAME.debris.update(state.debris, dt, {
+        player: p,
+        rivals: state.rivals,
+        camera: camera,
+        cfg: cfg,
+      });
+    }
+    if (state.smashKick > 0) {
+      state.smashKick = Math.max(0, state.smashKick - dt / 0.35);
     }
     if (I.key('j') || I.key('z')) fireMg();
     if (I.pressed('k') || I.pressed('x')) fireRocket();
@@ -6265,6 +6290,7 @@
         mb = Math.max(0, (sn - 0.28) * 0.44);
         if (state.firingMg > 0) mb += 0.1 + sn * 0.24;
         if ((state.camShake || 0) > 0.12) mb += 0.05;
+        if ((state.smashKick || 0) > 0) mb += state.smashKick * 0.55;
         mb = Math.min(0.52, mb);
       }
       postfx.setMotionBlur(mb);
