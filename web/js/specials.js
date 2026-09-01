@@ -1672,6 +1672,7 @@
         probe: probe,
         windupT: windupT,
         marks: active.marks.length,
+        snaps: active.snaps.length,
         chargeActive: !!active.charge,
       };
     },

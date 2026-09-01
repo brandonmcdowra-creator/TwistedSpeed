@@ -1047,7 +1047,8 @@
       var scd = Math.max(0, p.specialCd || 0);
       ctx.fillStyle = '#c8b0b8';
       ctx.fillText('READY IN ' + scd.toFixed(1) + 's', w / 2 + 78, h - 30);
-      var cdMax = p.specialCdMax > 0 ? p.specialCdMax : ((GAME.config.combat && GAME.config.combat.specialCd) || 8);
+      var _cfgCombat = (GAME.cfg && GAME.cfg.combat) || (GAME.config && GAME.config.combat) || {};
+      var cdMax = p.specialCdMax > 0 ? p.specialCdMax : (_cfgCombat.specialCd || 8);
       var cdFrac = cdMax > 0 ? (1 - scd / cdMax) : 0;
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.fillRect(chipX, chipY + chipH - 4, chipW, 4);
