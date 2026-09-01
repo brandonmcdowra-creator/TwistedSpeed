@@ -342,6 +342,7 @@
         if (!hk || hk.rival && hk.rival._hulkHidden) continue;
         if (Math.abs(hk.progress - progress) > hitRadT * 1.5) continue;
         if (Math.abs(lat - hk.lat) > 2.8) continue;
+        if (isPlayer && handle.hitCd > 0) continue;
         applyHit(handle, body, isPlayer, ctx, hk.pos);
         hits++;
       }
