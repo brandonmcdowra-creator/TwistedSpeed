@@ -260,6 +260,59 @@
       noisePlay(0.12, 0.1, 1800);
     } catch (e) {}
   };
+  // Maglev freight — approach klaxon (under wardenWarn; industrial two-tone)
+  S.maglevApproach = function () {
+    if (!gate('mglA', 400)) return;
+    try {
+      var a = ac(); if (!a) return;
+      var t0 = a.currentTime;
+      osc('square', 140, 95, t0, 0.22, 0.11);
+      osc('square', 95, 70, t0 + 0.12, 0.2, 0.09);
+      noisePlay(0.18, 0.08, 900);
+    } catch (e) {}
+  };
+  // Maglev gap release — rising go cue
+  S.maglevGap = function () {
+    if (!gate('mglG', 350)) return;
+    try {
+      var a = ac(); if (!a) return;
+      var t0 = a.currentTime;
+      osc('sine', 520, 780, t0, 0.1, 0.1);
+      osc('sine', 780, 1040, t0 + 0.08, 0.09, 0.08);
+    } catch (e) {}
+  };
+  // Maglev freight body hit — heavier than collide, nearer ram
+  S.maglevHit = function () {
+    if (!gate('mglH', 280)) return;
+    try {
+      var a = ac(); if (!a) return;
+      osc('sawtooth', 70, 28, a.currentTime, 0.32, 0.16);
+      osc('square', 110, 40, a.currentTime, 0.22, 0.1);
+      noisePlay(0.2, 0.14, 700);
+      S.thump(48, 0.28);
+    } catch (e) {}
+  };
+  // Shield absorb (cyan ping) — not hurt thump
+  S.shieldAbsorb = function () {
+    if (!gate('shab', 90)) return;
+    try {
+      var a = ac(); if (!a) return;
+      osc('sine', 640, 1180, a.currentTime, 0.1, 0.09);
+      osc('triangle', 420, 880, a.currentTime, 0.12, 0.06);
+      noisePlay(0.05, 0.04, 4000);
+    } catch (e) {}
+  };
+  // Shield break — one sting when shield crosses to 0 into HP
+  S.shieldBreak = function () {
+    if (!gate('shbk', 220)) return;
+    try {
+      var a = ac(); if (!a) return;
+      osc('sawtooth', 380, 90, a.currentTime, 0.18, 0.11);
+      osc('square', 220, 60, a.currentTime + 0.04, 0.16, 0.08);
+      noisePlay(0.12, 0.09, 1600);
+      S.thump(70, 0.14);
+    } catch (e) {}
+  };
   // Late hunter remount — was silent under toast (v288)
   S.lateHunter = function (wave) {
     if (!gate('lhunt', 280)) return;

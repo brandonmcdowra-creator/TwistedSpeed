@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-01 — Web v436: maglev audio + shield readability
+
+- **P0.4** Maglev approach / gap / hit WebAudio stings (`sfx.maglev*`); timing/hit volumes unchanged; `audioProbe` counters for structural proof.
+- **P1.1** Shield absorb/break feedback: cyan absorb ring + SFX, break sting when shield hits 0 into HP, HUD bar pulse/dim (empty shield still reads when `maxShield > 0`).
+- Director lock: plan with Other Models → implement with Cursor Models (`AGENTS.md` / `.cursor/rules/model-workflow.mdc`).
+
+Hard-refresh `?v=436`.
+
+---
+
 ## 2026-09-01 — Web v434: living Neon warden (maglev yard + lane sweep)
 
 - Added `docs/AAA-ROADMAP.md` so agents keep moving P0→P3 without re-asking.

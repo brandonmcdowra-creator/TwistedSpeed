@@ -3,6 +3,7 @@
  * v407: real gap (full road clears), visible motion.
  * v412: dress the same junction (gantry, freight silhouette, wet cue, haze).
  * v434: prison freight yard ID — container codes, WARDEN FREIGHT board, approach chevrons.
+ * v435: approach / gap / hit audio stings (WebAudio; timing unchanged).
  * Hit volumes / wait-red / gap-green logic unchanged.
  */
 (function () {
@@ -419,6 +420,8 @@
         warned: false,
         gapSaid: false,
         hitCd: 0,
+        // Structural audio probe (one approach + one gap per sync; hit ≤1 per hitCd)
+        audioProbe: { approach: 0, gap: 0, hit: 0 },
       };
     },
 
@@ -441,6 +444,8 @@
         ml.phase = 0;
         if (ctx.toast) ctx.toast('FREIGHT AHEAD — WAIT THE GAP', 2.8, 2);
         ml.warned = true;
+        if (GAME.sfx && GAME.sfx.maglevApproach) GAME.sfx.maglevApproach();
+        if (ml.audioProbe) ml.audioProbe.approach = (ml.audioProbe.approach | 0) + 1;
       }
       if (ml.mode === 'wall') {
         ml.phase = mod(ml.phase + 8 * dt, CAR_PITCH);
@@ -449,6 +454,8 @@
           ml.phase = 40;
           if (ctx.toast) ctx.toast('GAP — GO', 1.8, 2);
           ml.gapSaid = true;
+          if (GAME.sfx && GAME.sfx.maglevGap) GAME.sfx.maglevGap();
+          if (ml.audioProbe) ml.audioProbe.gap = (ml.audioProbe.gap | 0) + 1;
         }
       } else if (ml.mode === 'gap') {
         ml.phase = 40;
@@ -526,6 +533,8 @@
           if (isPlayer && ml.hitCd > 0) return;
           if (isPlayer) {
             ml.hitCd = 0.55;
+            if (GAME.sfx && GAME.sfx.maglevHit) GAME.sfx.maglevHit();
+            if (ml.audioProbe) ml.audioProbe.hit = (ml.audioProbe.hit | 0) + 1;
             if (ctx.hurtPlayer) ctx.hurtPlayer(28, car.mesh.position, 'maglev');
             if (ctx.toast) ctx.toast('FREIGHT HIT', 0.9, 2);
             body.speed *= 0.35;

@@ -14,11 +14,11 @@ Mark items done in this file + `PROGRESS.md` when shipped. Do not invent paralle
 - [x] **P0.1** Maglev junction dress pass — prison freight yard identity (signage, chevrons, container codes, gantry sync). Logic wait/gap unchanged.
 - [x] **P0.2** Neon living hazard: **Warden Lane Sweep** (~40–55% progress) — telegraph + soft punish, center line stays open half the cycle.
 - [x] **P0.3** Playtest Neon maglev + sweep; confirm REACH unchanged; bump BUILD.
-- [ ] **P0.4** Maglev junction *audio* sting (approach / gap / hit) if SFX hooks exist without new assets.
+- [x] **P0.4** Maglev junction *audio* sting (approach / gap / hit) — WebAudio synth, no new assets.
 
 ## Next (P1) — Combat rhythm (after Neon feels alive)
 
-- [ ] **P1.1** Shield energy before HP (readable bar + absorb FX).
+- [x] **P1.1** Shield energy before HP (readable bar + absorb FX) — absorb/break sting + HUD pulse (v436).
 - [ ] **P1.2** Signature special readability pass (wind-up, impact, cooldown HUD) for 2–3 roster cars.
 - [ ] **P1.3** Wreck → scrap loop that changes the *next* night (one meaningful upgrade beat).
 
