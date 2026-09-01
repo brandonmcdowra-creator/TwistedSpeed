@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-01 — Web v445: Scrap Line LOD window (chase-cam density fix)
+
+- World scale ≈45m / 0.01 t; prior LOD radii (130–165m) zeroed almost all shoulder instances.
+- LOD hit 320m / dress 480m; near instances always rewritten each LOD tick (fixes early origin wipe).
+- Night-readable silhouettes from v444 retained. Hazard count still frozen.
+
+Hard-refresh `?v=445`.
+
+---
 ## 2026-09-01 — Web v444: Scrap Line night-readable silhouettes
 
 - Dress + freight materials lifted (warm grey / desert scrap, not dark-on-asphalt vanish).
