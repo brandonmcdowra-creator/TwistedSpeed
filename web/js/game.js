@@ -2903,6 +2903,9 @@
     }
     var p = state.player;
     if (!p) return;
+    if (p._specialWindup > 0) state._specialHudState = 'charging';
+    else if (p.specialCd > 0) state._specialHudState = 'cooldown';
+    else state._specialHudState = 'ready';
     // Soft-lock guard: any path that zeros HP must land results (v322)
     if (p.hp <= 0 && !p.finished) {
       p.hp = 0;
@@ -4050,13 +4053,19 @@
               // v390: named bone hit when target known
               var hitToast = 'DIRECT HIT';
               if (pr.type === 'bone') {
+                if (GAME.specials && GAME.specials.noteBoneHit) GAME.specials.noteBoneHit();
                 var bn = pr.boneName;
                 if (!bn && rv.defId && cfg.cars) {
                   for (var bi = 0; bi < cfg.cars.length; bi++) {
                     if (cfg.cars[bi].id === rv.defId) { bn = cfg.cars[bi].name; break; }
                   }
                 }
-                hitToast = bn ? ('BONE HIT · ' + String(bn).toUpperCase()) : 'BONE HIT';
+                var volley = state._boneVolley;
+                if (volley) {
+                  hitToast = 'BONE HARVEST · ' + volley.hits + '/' + volley.fired + ' HIT';
+                } else {
+                  hitToast = bn ? ('BONE HIT · ' + String(bn).toUpperCase()) : 'BONE HIT';
+                }
               }
               toast(hitToast, pr.type === 'bone' ? 0.95 : 0.6, pr.type === 'bone' ? 2 : 0);
             }

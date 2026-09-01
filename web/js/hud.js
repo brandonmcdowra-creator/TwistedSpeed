@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 436', w / 2, h * 0.395);
+    ctx.fillText('BUILD 437', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -986,7 +986,7 @@
     ctx.fillText('K ' + (W.rocket ? (W.rocketLabel || 'ROCKET') : '—'), w / 2 - 72, h - 32);
     ctx.fillStyle = wepCol(W.mine, p.mineCd) || '#4af0ff';
     ctx.fillText('L ' + (W.mine ? (W.mineLabel || 'MINE') : '—'), w / 2 + 28, h - 32);
-    // Special: name + ready/CD — high contrast; ready pulse so I-key isn't missed (v294/v303)
+    // Special: name + ready/CD/charging — high contrast; ready pulse so I-key isn't missed (v294/v303/v437)
     var specName = (p.def && p.def.special) ? String(p.def.special) : 'SPECIAL';
     if (p.def && p.def.id === 'needle') specName = 'VEIN';
     else if (p.def && p.def.id === 'choir') specName = 'SERMON';
@@ -995,7 +995,18 @@
     else if (p.def && p.def.id === 'razorback') specName = 'TIRES';
     else if (p.def && p.def.id === 'marrow') specName = 'BONES';
     else if (specName.length > 12) specName = specName.slice(0, 11) + '…';
-    var specReady = !(p.specialCd > 0) && !(p._specialWindup > 0);
+    var specCharging = p._specialWindup > 0;
+    var specCd = p.specialCd > 0;
+    var specReady = !specCd && !specCharging;
+    var carId = p.def && p.def.id;
+    var specBarTint = '#ff6bb5';
+    if (carId === 'marrow') specBarTint = '#ff5a2a';
+    else if (carId === 'needle') specBarTint = '#00e5ff';
+    else if (carId === 'vesper') specBarTint = '#b44dff';
+    var chipX = w / 2 + 88;
+    var chipY = h - 48;
+    var chipW = 92;
+    var chipH = 28;
     // v366: brighter pulse when pack is in special theater
     var packNear = false;
     if (specReady && state.rivals) {
@@ -1015,17 +1026,33 @@
       ctx.fillStyle = packNear
         ? 'rgba(255,45,85,' + (0.35 + 0.15 * Math.sin((state.raceTime || 0) * 10)) + ')'
         : 'rgba(255,45,130,' + (0.22 + 0.12 * Math.sin((state.raceTime || 0) * 7)) + ')';
-      ctx.fillRect(w / 2 + 88, h - 48, 92, 28);
+      ctx.fillRect(chipX, chipY, chipW, chipH);
     }
     ctx.fillStyle = specReady ? (packNear ? '#ffd0a8' : '#ff6bb5') : '#d0c0c8';
     ctx.font = specReady ? 'bold 13px monospace' : 'bold 11px monospace';
     ctx.globalAlpha = specPulse;
     if (specReady) {
       ctx.fillText('I ' + specName + (packNear ? '!' : ''), w / 2 + 96, h - 30);
+    } else if (specCharging) {
+      ctx.fillStyle = '#d0c0c8';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText('I CHARGING', w / 2 + 78, h - 30);
+      var wMax = p._specialWindupMax > 0 ? p._specialWindupMax : 0.14;
+      var wFrac = wMax > 0 ? (1 - (p._specialWindup || 0) / wMax) : 1;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW, 4);
+      ctx.fillStyle = specBarTint;
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW * Math.max(0, Math.min(1, wFrac)), 4);
     } else {
       var scd = Math.max(0, p.specialCd || 0);
       ctx.fillStyle = '#c8b0b8';
       ctx.fillText('READY IN ' + scd.toFixed(1) + 's', w / 2 + 78, h - 30);
+      var cdMax = p.specialCdMax > 0 ? p.specialCdMax : ((GAME.config.combat && GAME.config.combat.specialCd) || 8);
+      var cdFrac = cdMax > 0 ? (1 - scd / cdMax) : 0;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW, 4);
+      ctx.fillStyle = specBarTint;
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW * Math.max(0, Math.min(1, cdFrac)), 4);
     }
     ctx.globalAlpha = 1;
 

@@ -19,7 +19,7 @@ Mark items done in this file + `PROGRESS.md` when shipped. Do not invent paralle
 ## Next (P1) — Combat rhythm (after Neon feels alive)
 
 - [x] **P1.1** Shield energy before HP (readable bar + absorb FX) — absorb/break sting + HUD pulse (v436).
-- [ ] **P1.2** Signature special readability pass (wind-up, impact, cooldown HUD) for 2–3 roster cars.
+- [x] **P1.2** Signature special readability pass (wind-up, impact, cooldown HUD) for 2–3 roster cars.
 - [ ] **P1.3** Wreck → scrap loop that changes the *next* night (one meaningful upgrade beat).
 
 ## Then (P2) — Diegetic story

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-01 — Web v437: P1.2 special readability (Marrow / Needle / Vesper)
+
+- **P1.2** Signature special readability: pooled charge rings under player during windup, target marks on rivals (Marrow aim, Needle tether, Vesper EMP), needle-miss cable stub; probe counters for playtest.
+- HUD special chip three states: **I CHARGING** (windup fill bar), **READY IN** (cooldown fill bar), ready pulse — per-car tints (marrow/needle/vesper).
+- Bone volley toast: `BONE HARVEST · n/3 HIT` on player special bone hits; `specialCdMax` set on CD start for HUD denominator.
+- Locks: windup 0.14/0.20, damage, range, maglev, Mausoleum/Choir/Razorback untouched; toast substrings preserved.
+
+Hard-refresh `?v=437`.
+
+---
+
 ## 2026-09-01 — Web v436: maglev audio + shield readability
 
 - **P0.4** Maglev approach / gap / hit WebAudio stings (`sfx.maglev*`); timing/hit volumes unchanged; `audioProbe` counters for structural proof.

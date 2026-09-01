@@ -10,10 +10,13 @@
   var boneGeo = null;
   var boneMat = null;
   var markGeo = null;
+  var chargeRingGeo = null;
   var craterGeo = null;
   var domeGeo = null;
   var torusGeo = null;
   var cableGeo = null;
+
+  var probe = { windups: 0, fired: {}, marks: 0, chargeActive: false, boneFired: 0, boneHits: 0 };
 
   var active = {
     bones: [],
@@ -23,6 +26,9 @@
     tether: null,
     decals: [],
     caltrops: [],
+    marks: [],
+    charge: null,
+    snaps: [],
   };
 
   var tmp = new THREE.Vector3();
@@ -35,6 +41,7 @@
     boneGeo = new THREE.Group();
     // Shared geos cloned into groups via makeBoneMesh
     markGeo = new THREE.RingGeometry(0.9, 1.35, 28);
+    chargeRingGeo = new THREE.RingGeometry(0.35, 0.55, 24);
     craterGeo = new THREE.RingGeometry(0.6, 3.2, 32);
     domeGeo = new THREE.SphereGeometry(1, 20, 14);
     // Choir sermon ring — thicker tube so it isn't a thin reskin of EMP dome
@@ -95,6 +102,207 @@
     mesh.visible = false;
   }
 
+  function carTint(id, rear) {
+    if (id === 'marrow') return 0xff5a2a;
+    if (id === 'needle') return rear ? 0xff66aa : 0x00e5ff;
+    if (id === 'vesper') return 0xb44dff;
+    return 0xff6bb5;
+  }
+
+  function disposeCharge() {
+    if (!active.charge) return;
+    var ch = active.charge;
+    if (ch.mesh) {
+      disposeMesh(ch.mesh);
+      if (ch.mesh.material) {
+        try { ch.mesh.material.dispose(); } catch (e) {}
+      }
+    }
+    active.charge = null;
+  }
+
+  function disposeMark(mk) {
+    if (!mk) return;
+    if (mk.mesh) {
+      disposeMesh(mk.mesh);
+      if (mk.mesh.material) {
+        try { mk.mesh.material.dispose(); } catch (e) {}
+      }
+    }
+  }
+
+  function spawnChargeRing(ctx, color) {
+    ensureGeos();
+    disposeCharge();
+    var mat = new THREE.MeshBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    var mesh = new THREE.Mesh(chargeRingGeo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    var p = ctx.player;
+    mesh.position.copy(p.pos);
+    mesh.position.y = p.pos.y + 0.08;
+    mesh.scale.setScalar(0.4);
+    ctx.scene.add(mesh);
+    var windupMax = p._specialWindupMax || p._specialWindup || 0.14;
+    active.charge = {
+      mesh: mesh,
+      life: windupMax,
+      maxLife: windupMax,
+      phase: 'windup',
+      afterLife: 0.12,
+    };
+    probe.chargeActive = true;
+  }
+
+  function kickChargeAfterglow() {
+    if (!active.charge || active.charge.phase !== 'windup') return;
+    active.charge.phase = 'after';
+    active.charge.life = 0.12;
+    active.charge.maxLife = 0.12;
+  }
+
+  function spawnTargetMark(ctx, rival, color, life, opts) {
+    opts = opts || {};
+    ensureGeos();
+    while (active.marks.length >= 6) {
+      var old = active.marks.shift();
+      disposeMark(old);
+    }
+    var mat = new THREE.MeshBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    var mesh = new THREE.Mesh(markGeo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    if (rival && rival.pos) {
+      mesh.position.copy(rival.pos);
+      mesh.position.y = rival.pos.y + 0.1;
+    }
+    ctx.scene.add(mesh);
+    active.marks.push({
+      mesh: mesh,
+      rival: rival,
+      life: life,
+      untilDisabled: !!opts.untilDisabled,
+    });
+    probe.marks++;
+  }
+
+  function spawnSnapStub(ctx, fromPos, fwd) {
+    ensureGeos();
+    var mat = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    var mesh = new THREE.Mesh(cableGeo, mat);
+    var end = fromPos.clone().addScaledVector(fwd, 3.5);
+    var mid = fromPos.clone().lerp(end, 0.5);
+    tmp3.subVectors(end, fromPos);
+    var len = tmp3.length();
+    mesh.position.copy(mid);
+    if (len > 0.01) {
+      tmp3.multiplyScalar(1 / len);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tmp3);
+    }
+    mesh.scale.set(1.2, Math.max(0.08, len), 1.2);
+    ctx.scene.add(mesh);
+    active.snaps.push({
+      mesh: mesh,
+      life: 0.35,
+      maxLife: 0.35,
+    });
+  }
+
+  function updateCharge(ctx, dt) {
+    var ch = active.charge;
+    if (!ch) {
+      probe.chargeActive = false;
+      return;
+    }
+    var p = ctx.player;
+    probe.chargeActive = true;
+    if (ch.phase === 'windup') {
+      if (p && p.pos && ch.mesh) {
+        ch.mesh.position.x = p.pos.x;
+        ch.mesh.position.z = p.pos.z;
+        ch.mesh.position.y = p.pos.y + 0.08;
+      }
+      var wMax = (p && p._specialWindupMax > 0) ? p._specialWindupMax : ch.maxLife;
+      var wLeft = (p && p._specialWindup > 0) ? p._specialWindup : 0;
+      var t = wMax > 0 ? (1 - wLeft / wMax) : 1;
+      var sc = 0.4 + t * 1.2;
+      ch.mesh.scale.setScalar(sc);
+      if (ch.mesh.material) {
+        ch.mesh.material.opacity = 0.55 + 0.35 * t;
+      }
+    } else if (ch.phase === 'after') {
+      ch.life -= dt;
+      var tA = 1 - Math.max(0, ch.life) / Math.max(0.01, ch.maxLife);
+      var scA = 1.6 + tA * 0.6;
+      if (ch.mesh) {
+        ch.mesh.scale.setScalar(scA);
+        if (ch.mesh.material) {
+          ch.mesh.material.opacity = Math.max(0, 0.85 * (1 - tA));
+        }
+      }
+      if (ch.life <= 0) {
+        disposeCharge();
+        probe.chargeActive = false;
+      }
+    }
+  }
+
+  function updateMarks(ctx, dt) {
+    for (var i = active.marks.length - 1; i >= 0; i--) {
+      var mk = active.marks[i];
+      mk.life -= dt;
+      var r = mk.rival;
+      if (!r || r.dead || mk.life <= 0 || (mk.untilDisabled && (r.disabledT || 0) <= 0)) {
+        disposeMark(mk);
+        active.marks.splice(i, 1);
+        continue;
+      }
+      if (r.pos && mk.mesh) {
+        mk.mesh.position.x = r.pos.x;
+        mk.mesh.position.z = r.pos.z;
+        mk.mesh.position.y = r.pos.y + 0.1;
+        var pulse = 1 + 0.1 * Math.sin((ctx.state.raceTime || 0) * 12);
+        mk.mesh.scale.setScalar(pulse);
+      }
+    }
+  }
+
+  function updateSnaps(ctx, dt) {
+    for (var i = active.snaps.length - 1; i >= 0; i--) {
+      var sn = active.snaps[i];
+      sn.life -= dt;
+      if (sn.life <= 0) {
+        disposeMesh(sn.mesh);
+        if (sn.mesh && sn.mesh.material) {
+          try { sn.mesh.material.dispose(); } catch (e) {}
+        }
+        active.snaps.splice(i, 1);
+        continue;
+      }
+      if (sn.mesh && sn.mesh.material) {
+        sn.mesh.material.opacity = 0.85 * (sn.life / (sn.maxLife || 0.35));
+      }
+    }
+  }
+
   function canFire(player) {
     if (!player || player.hp <= 0 || player.finished) return false;
     if (player.specialCd > 0) return false;
@@ -110,6 +318,7 @@
     } else {
       p.specialCd = base / (p.mul.specialCool || 1);
     }
+    p.specialCdMax = p.specialCd;
   }
 
   function fireMul(ctx) {
@@ -193,9 +402,13 @@
     // Windup tell — slightly longer when pack in range so fight read lands (v366)
     var near0 = packInRange(ctx, 50);
     p._specialWindup = near0 > 0 ? 0.2 : 0.14;
+    p._specialWindupMax = p._specialWindup;
     p._specialPending = id;
     p._specialCtxReady = true;
     p._specialNearAtFire = near0;
+    probe.windups++;
+    spawnChargeRing(ctx, carTint(id, false));
+    probe.chargeActive = true;
     // charge tell
     ctx.state.camShake = Math.max(ctx.state.camShake || 0, near0 > 0 ? 0.12 : 0.08);
     if (ctx.sfx) {
@@ -213,6 +426,7 @@
   }
 
   function executeSpecial(ctx, id) {
+    probe.fired[id] = (probe.fired[id] | 0) + 1;
     if (id === 'marrow') fireMarrow(ctx);
     else if (id === 'needle') fireNeedle(ctx);
     else if (id === 'mausoleum') fireMausoleum(ctx);
@@ -346,25 +560,28 @@
     side(ctx, tmp2);
     var aimBias = nearestRivalDir(ctx, 58);
     var aimName = null;
-    if (aimBias) {
-      // name nearest for toast
-      var listM = ctx.rivals || [];
-      var bestD = 58, bestR = null;
-      for (var mi = 0; mi < listM.length; mi++) {
-        var mr = listM[mi];
-        if (!mr || mr.dead || !mr.pos) continue;
-        var md = mr.pos.distanceTo(p.pos);
-        if (md < bestD && md > 3) { bestD = md; bestR = mr; }
-      }
-      if (bestR && bestR.defId && ctx.cfg && ctx.cfg.cars) {
-        for (var mc = 0; mc < ctx.cfg.cars.length; mc++) {
-          if (ctx.cfg.cars[mc].id === bestR.defId) {
-            aimName = ctx.cfg.cars[mc].name || bestR.defId;
-            break;
-          }
+    var bestR = null;
+    var listM = ctx.rivals || [];
+    var bestD = 58;
+    for (var mi = 0; mi < listM.length; mi++) {
+      var mr = listM[mi];
+      if (!mr || mr.dead || !mr.pos) continue;
+      var md = mr.pos.distanceTo(p.pos);
+      if (md < bestD && md > 3) { bestD = md; bestR = mr; }
+    }
+    if (bestR && bestR.defId && ctx.cfg && ctx.cfg.cars) {
+      for (var mc = 0; mc < ctx.cfg.cars.length; mc++) {
+        if (ctx.cfg.cars[mc].id === bestR.defId) {
+          aimName = ctx.cfg.cars[mc].name || bestR.defId;
+          break;
         }
       }
     }
+    if (bestR) {
+      spawnTargetMark(ctx, bestR, 0xff5a2a, 2.5);
+    }
+    probe.boneFired += 3;
+    ctx.state._boneVolley = { hits: 0, fired: 3, aimName: aimName };
     for (var i = -1; i <= 1; i++) {
       var o = p.pos.clone().addScaledVector(tmp, 2.5).addScaledVector(tmp2, i * 0.55);
       o.y += 0.8;
@@ -449,6 +666,10 @@
         ctx.toast('VEIN MISS · SPEED STEAL', 0.9, 2);
         p._veinMissToastT = 2.4;
       }
+      forward(ctx, tmp);
+      var stubPos = p.pos.clone();
+      stubPos.y += 0.7;
+      spawnSnapStub(ctx, stubPos, tmp.clone());
       if (ctx.sfx && ctx.sfx.specialNeedleMiss) ctx.sfx.specialNeedleMiss();
       else if (ctx.sfx && ctx.sfx.deny) ctx.sfx.deny();
       return;
@@ -510,6 +731,7 @@
       life: isRear ? 1.5 : 2.2,
       humT: 0,
     };
+    spawnTargetMark(ctx, best, isRear ? 0xff66aa : 0x00e5ff, isRear ? 1.5 : 2.2);
     ctx.state.camShake = Math.max(ctx.state.camShake || 0, 0.24);
     ctx.state._hitStopT = Math.max(ctx.state._hitStopT || 0, 0.1);
     ctx.state._fovPunch = Math.max(ctx.state._fovPunch || 0, 7);
@@ -858,6 +1080,7 @@
           count: 8, speed: 9, life: 0.3, gravity: 1,
         });
       }
+      spawnTargetMark(ctx, r, 0xb44dff, empT, { untilDisabled: true });
     }
     if (active.domes[0]) active.domes[0].maxR = 42;
     juiceSpecialInFight(ctx, hitN > 0 ? hitN : packInRange(ctx, 55));
@@ -1056,11 +1279,16 @@
       p._specialWindup -= dt;
       if (p._specialWindup <= 0) {
         p._specialWindup = 0;
+        kickChargeAfterglow();
         var id = p._specialPending;
         p._specialPending = null;
         if (id) executeSpecial(ctx, id);
       }
     }
+
+    updateCharge(ctx, dt);
+    updateMarks(ctx, dt);
+    updateSnaps(ctx, dt);
 
     // Tether boost
     if (p._tetherBoostT > 0) p._tetherBoostT -= dt;
@@ -1379,6 +1607,21 @@
     }
   }
 
+  function resetProbe() {
+    probe.windups = 0;
+    probe.fired = {};
+    probe.marks = 0;
+    probe.chargeActive = false;
+    probe.boneFired = 0;
+    probe.boneHits = 0;
+  }
+
+  function noteBoneHit() {
+    probe.boneHits++;
+    var st = GAME.state;
+    if (st && st._boneVolley) st._boneVolley.hits++;
+  }
+
   function reset() {
     // Hard clear FX (new race)
     if (active.tether) {
@@ -1391,12 +1634,23 @@
     active.domes.forEach(function (d) { disposeMesh(d.mesh); });
     active.rings.forEach(function (r) { disposeMesh(r.mesh); });
     active.decals.forEach(function (d) { disposeMesh(d.mesh); });
+    active.marks.forEach(function (m) { disposeMark(m); });
+    disposeCharge();
+    active.snaps.forEach(function (s) {
+      disposeMesh(s.mesh);
+      if (s.mesh && s.mesh.material) {
+        try { s.mesh.material.dispose(); } catch (e) {}
+      }
+    });
     active.mortars = [];
     active.domes = [];
     active.rings = [];
     active.decals = [];
+    active.marks = [];
+    active.snaps = [];
     (active.caltrops || []).forEach(function (c) { disposeMesh(c.mesh); });
     active.caltrops = [];
+    resetProbe();
   }
 
   GAME.specials = {
@@ -1404,11 +1658,21 @@
     fire: fire,
     update: update,
     reset: reset,
-    /** Playtest peek — caltrop count / shred */
+    resetProbe: resetProbe,
+    noteBoneHit: noteBoneHit,
+    /** Playtest peek — caltrop count / shred / special probe */
     _debug: function () {
+      var windupT = 0;
+      if (GAME.state && GAME.state.player) {
+        windupT = GAME.state.player._specialWindup || 0;
+      }
       return {
         caltrops: (active.caltrops || []).length,
         armed: (active.caltrops || []).filter(function (c) { return c.arm <= 0; }).length,
+        probe: probe,
+        windupT: windupT,
+        marks: active.marks.length,
+        chargeActive: !!active.charge,
       };
     },
   };
