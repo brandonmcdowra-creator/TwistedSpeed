@@ -282,6 +282,34 @@
     });
   };
 
+  /** Shield fully absorbs a hit — soft cyan ring + sparks (~0.3s) */
+  Particles.prototype.shieldAbsorb = function (pos) {
+    if (this.items.length > 140) return;
+    if (!this._shieldAbsorbMats) {
+      this._shieldAbsorbMats = {
+        ring: new THREE.MeshBasicMaterial({
+          color: 0x00e5ff, transparent: true, opacity: 0.58,
+          depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        }),
+        ringGeo: new THREE.RingGeometry(0.35, 0.55, 16),
+      };
+    }
+    var M = this._shieldAbsorbMats;
+    var ring = new THREE.Mesh(M.ringGeo, M.ring);
+    ring.position.copy(pos);
+    ring.position.y = 0.12;
+    ring.rotation.x = -Math.PI / 2;
+    ring.scale.setScalar(0.55);
+    this.scene.add(ring);
+    this.items.push({
+      mesh: ring, vel: new THREE.Vector3(), life: 0.3, maxLife: 0.3,
+      drag: 1, gravity: 0, kind: 'ring', noPool: true, expand: 14,
+    });
+    this.spawn('cyan', pos, { count: 4, speed: 10, life: 0.22, scale: 0.26, gravity: 5 });
+    this.burstLight(pos, 0x00e5ff, 5.5, 0.12);
+    this._cullIfHeavy();
+  };
+
   /** MG / light hit — orange puff between spark and full kill boom */
   Particles.prototype.hitBurst = function (pos) {
     if (this.items.length > 140) return;

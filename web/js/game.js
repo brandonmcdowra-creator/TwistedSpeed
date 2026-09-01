@@ -1931,12 +1931,15 @@
       }
       if (amt > tRoom) amt = tRoom;
     }
+    var shieldBefore = p.shield;
     var shieldHit = 0;
     if (p.shield > 0) {
       shieldHit = Math.min(p.shield, amt);
       p.shield -= shieldHit;
       amt -= shieldHit;
     }
+    var fullyAbsorbed = shieldHit > 0 && amt <= 0;
+    var brokeShield = shieldHit > 0 && shieldBefore > 0 && p.shield <= 0 && amt > 0;
     // v354: juice even when shield eats the hit (was silent return)
     var felt = shieldHit + Math.max(0, amt);
     if (felt <= 0) return;
@@ -1948,7 +1951,21 @@
     p.inv = cfg.combat.invuln;
     state.camShake = Math.max(state.camShake, 0.22 + felt * 0.012);
     state.hitFlash = Math.min(1.2, (state.hitFlash || 0) + 0.4 + felt * 0.015);
-    if (GAME.sfx) GAME.sfx.hurt();
+    if (fullyAbsorbed) {
+      state.shieldAbsorbFlash = Math.max(state.shieldAbsorbFlash || 0, 0.4);
+      if (GAME.sfx) {
+        if (GAME.sfx.shieldAbsorb) GAME.sfx.shieldAbsorb();
+        else GAME.sfx.hurt();
+      }
+    } else if (brokeShield) {
+      state.shieldBreakFlash = 0.45;
+      if (GAME.sfx) {
+        if (GAME.sfx.shieldBreak) GAME.sfx.shieldBreak();
+        else GAME.sfx.hurt();
+      }
+    } else if (GAME.sfx) {
+      GAME.sfx.hurt();
+    }
     // Gated under-fire toast so return fire reads on HUD
     // v356: longer gate so UNDER FIRE doesn't chatter over wreck/warden
     if (kind !== 'ram' && (!p._underFireToastT || p._underFireToastT <= 0)) {
@@ -1969,7 +1986,13 @@
         p.pos.add(tmpV);
       }
     }
-    if (particles) particles.sparks(p.pos.clone().setY(p.pos.y + 0.5), tmpV);
+    if (particles) {
+      if (fullyAbsorbed && particles.shieldAbsorb) {
+        particles.shieldAbsorb(p.pos.clone().setY(p.pos.y + 0.5));
+      } else {
+        particles.sparks(p.pos.clone().setY(p.pos.y + 0.5), tmpV);
+      }
+    }
     if (p.hp <= 0) {
       p.hp = 0;
       if (particles) particles.explosion(p.pos.clone(), true);
@@ -2823,6 +2846,8 @@
   function updateRace(dt) {
     state.raceTime += dt;
     if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 2.8);
+    if (state.shieldAbsorbFlash > 0) state.shieldAbsorbFlash = Math.max(0, state.shieldAbsorbFlash - dt);
+    if (state.shieldBreakFlash > 0) state.shieldBreakFlash = Math.max(0, state.shieldBreakFlash - dt);
     if (state.muzzleFlash > 0) state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 4.0);
     if (state.firingMg > 0) state.firingMg = Math.max(0, state.firingMg - dt);
     if (state.hitDirT > 0) state.hitDirT = Math.max(0, state.hitDirT - dt);

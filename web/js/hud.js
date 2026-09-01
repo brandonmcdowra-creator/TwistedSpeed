@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 434', w / 2, h * 0.395);
+    ctx.fillText('BUILD 436', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -868,7 +868,39 @@
       ctx.fillStyle = '#00e5ff';
       ctx.font = 'bold 10px monospace';
       ctx.fillText('SHIELD', 24, 66);
-      this.bar(80, 58, 144, 8, p.maxShield > 0 ? p.shield / p.maxShield : 0, '#00e5ff');
+      var sBarX = 80, sBarY = 58, sBarW = 144, sBarH = 8;
+      var sFrac = p.maxShield > 0 ? p.shield / p.maxShield : 0;
+      var sCol = '#00e5ff';
+      var sBg = 'rgba(30,24,40,0.9)';
+      var sAbsorb = state.shieldAbsorbFlash || 0;
+      var sBreak = state.shieldBreakFlash || 0;
+      if (sAbsorb > 0) {
+        var ap = Math.min(1, sAbsorb / 0.4);
+        var pulse = 0.65 + 0.35 * Math.sin(performance.now() * 0.04);
+        sCol = '#e8ffff';
+        sBg = 'rgba(0,160,200,0.38)';
+        this.bar(sBarX, sBarY, sBarW, sBarH, sFrac, sCol, sBg);
+        ctx.fillStyle = 'rgba(180,255,255,' + (0.5 * ap * pulse) + ')';
+        ctx.fillRect(sBarX, sBarY, sBarW * U.clamp(sFrac, 0, 1), sBarH);
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.32 * ap) + ')';
+        ctx.fillRect(sBarX, sBarY, sBarW, sBarH);
+      } else if (sBreak > 0) {
+        var bp = Math.min(1, sBreak / 0.45);
+        sCol = bp > 0.45 ? '#fff0d8' : '#ff8844';
+        sBg = 'rgba(36,18,10,0.88)';
+        this.bar(sBarX, sBarY, sBarW, sBarH, sFrac, sCol, sBg);
+        ctx.fillStyle = 'rgba(255,190,110,' + (0.45 * bp) + ')';
+        ctx.fillRect(sBarX, sBarY, sBarW, sBarH);
+      } else if (p.maxShield > 0 && p.shield <= 0) {
+        sCol = 'rgba(0,120,140,0.5)';
+        sBg = 'rgba(10,16,20,0.92)';
+        this.bar(sBarX, sBarY, sBarW, sBarH, 0, sCol, sBg);
+        ctx.strokeStyle = 'rgba(0,229,255,0.24)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sBarX + 0.5, sBarY + 0.5, sBarW - 1, sBarH - 1);
+      } else {
+        this.bar(sBarX, sBarY, sBarW, sBarH, sFrac, sCol, sBg);
+      }
     }
     ctx.fillStyle = '#ffc857';
     ctx.font = 'bold 12px monospace';
