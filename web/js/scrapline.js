@@ -554,8 +554,9 @@
       if (handle._lodTick % 4 !== 0) return;
       var px = ctx.player.pos.x;
       var pz = ctx.player.pos.z;
-      var lodHit = 130;
-      var lodDress = 165;
+      // World ≈45m per 0.01 t — prior 130–165m wiped almost all chase-cam clutter.
+      var lodHit = 320;
+      var lodDress = 480;
       var low = !!(GAME.qualityLevel === 'low');
 
       function lodList(list, radius) {
@@ -574,11 +575,15 @@
             // Low quality: drop half of dress via LOD bias
             if ((it.matrixIndex | 0) % 2 === 1) far = true;
           }
-          if (far && !it._lodHidden) {
-            pl.mesh.setMatrixAt(it.matrixIndex, _zeroMat);
-            it._lodHidden = true;
-            pl.mesh.instanceMatrix.needsUpdate = true;
-          } else if (!far && it._lodHidden) {
+          if (far) {
+            if (!it._lodHidden) {
+              pl.mesh.setMatrixAt(it.matrixIndex, _zeroMat);
+              it._lodHidden = true;
+              pl.mesh.instanceMatrix.needsUpdate = true;
+            }
+          } else {
+            // Always rewrite near matrices — early LOD (player at origin) can
+            // zero everything before the car is on-ribbon.
             it._lodHidden = false;
             if (it.settled) placeMatrix(ctx.path, it, pl, { settle: true, yScale: 0.3 });
             else placeMatrix(ctx.path, it, pl);
