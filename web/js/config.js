@@ -549,6 +549,7 @@ GAME.config = {
     hpChip: 3,
     maxDress: 900,
     dressStep: 0.0011,
+    // Dress sits on the visible shoulder lip (0.92–1.87× roadHalf), past collidable 0.90 cap.
   },
 
   /** v442 — ballistic scrap + dust wake (InstancedMesh). */

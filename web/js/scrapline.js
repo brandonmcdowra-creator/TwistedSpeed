@@ -301,7 +301,7 @@
           var drv = U.seeded(seed + dSlot * 7.13 + p * 0.37);
           if (thin && drv > 0.72) { dSlot++; continue; }
           dressSide = -dressSide;
-          var latMul = 1.02 + U.seeded(seed + dSlot * 4.4) * 2.18; // 1.02–3.2 × roadHalf
+          var latMul = 0.92 + U.seeded(seed + dSlot * 4.4) * 0.95; // 0.92–1.87 × roadHalf (chase-cam lip)
           var dk = DRESS_KINDS[Math.floor(U.seeded(seed + dSlot * 11.2) * 3)];
           dress.push({
             alive: true,
