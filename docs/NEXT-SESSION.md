@@ -1,6 +1,6 @@
 # Next session pickup
 
-**Canonical build:** web **v443** (Wreck Wake — dress + smash juice toward Turbo Sloths).  
+**Canonical build:** web **v443** (Wreck Wake — dress on chase-cam lip toward Turbo Sloths).  
 Follow **`docs/AAA-ROADMAP.md`** — pick the top unchecked item (or continue quality if director overrides).
 
 ## Model workflow (director)
@@ -15,7 +15,7 @@ cd web && python3 serve.py
 Title / boot must say **BUILD 443**.
 
 ## Just shipped
-- Scrap Line dress layer (≤900 non-hit gravel/shard/scrub to horizon).
+- Scrap Line dress layer (≤900 non-hit gravel/shard/scrub on shoulder lip 0.92–1.87×).
 - Knocked props settle as wreck marks; debris.js chunks + dust wake; smashKick blur.
 - Quality north star: Turbo Sloths Mad Max density *felt* at chase-cam speed — not photoreal UE5.
 
