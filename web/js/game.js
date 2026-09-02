@@ -4039,6 +4039,7 @@
         hurtPlayer: hurtPlayer,
         debris: state.debris,
         sfx: GAME.sfx,
+        camera: camera,
       };
       GAME.scrapLine.update(state.scrapLine, dt, scrapCtx);
       GAME.scrapLine.collide(state.scrapLine, p, true, scrapCtx);

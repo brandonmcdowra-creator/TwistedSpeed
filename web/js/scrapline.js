@@ -14,7 +14,26 @@
   var T_MIN = 0.15;
   var T_MAX = 0.90;
   var KINDS = ['drum', 'ballast', 'spool', 'crate', 'glow'];
-  var DRESS_KINDS = ['gravel', 'shard', 'scrub', 'hulk', 'hulkStripe'];
+  var DRESS_KINDS = ['gravel', 'shard', 'scrub', 'hulk', 'hulkStripe', 'fireDrum', 'flame', 'fireGlow'];
+  var _fireTex = null;
+  function fireTexture() {
+    if (_fireTex || typeof document === 'undefined') return _fireTex;
+    var S = 64;
+    var c = document.createElement('canvas');
+    c.width = c.height = S;
+    var ctx = c.getContext('2d');
+    if (!ctx) return null;
+    // Teardrop flame: bright core low, feathering upward
+    var g = ctx.createRadialGradient(S / 2, S * 0.68, 2, S / 2, S * 0.55, S * 0.5);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.3, 'rgba(255,255,255,0.6)');
+    g.addColorStop(0.65, 'rgba(255,255,255,0.14)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, S, S);
+    _fireTex = new THREE.CanvasTexture(c);
+    return _fireTex;
+  }
   var HULK_LO = 1.135; // × roadHalf — 2.6m box must sit inside deck 11.56–14.76
   var HULK_HI = 1.185;
   // Mirror world._buildSidewalks: deck hugs asphalt edge (gap 0.06, width 3.2, y 0.16; curb 0.34 @ 0.22)
@@ -38,6 +57,7 @@
   var _qSpool = new THREE.Quaternion().setFromAxisAngle(_axisX, Math.PI / 2);
   var _qFlat = new THREE.Quaternion().setFromAxisAngle(_axisX, -Math.PI / 2);
   var _qKnockY = new THREE.Quaternion();
+  var _tmpC = new THREE.Color();
 
   function geos() {
     if (_geo) return _geo;
@@ -50,6 +70,9 @@
       gantryPost: new THREE.BoxGeometry(0.75, 14, 0.75),
       gantryBeam: new THREE.BoxGeometry(26, 0.65, 1.15),
       hulk: new THREE.BoxGeometry(2.6, 2.0, 5.5),
+      fireDrum: new THREE.CylinderGeometry(0.5, 0.56, 1.0, 8),
+      flame: new THREE.PlaneGeometry(1.9, 2.8),
+      fireGlow: new THREE.PlaneGeometry(6.5, 6.5),
       hulkStripe: new THREE.BoxGeometry(2.66, 0.14, 0.9),
       gravel: new THREE.IcosahedronGeometry(0.55, 0),
       shard: new THREE.BoxGeometry(1.35, 0.12, 0.85),
@@ -94,6 +117,15 @@
     if (kind === 'hulk') {
       // Dark base × per-instance palette tint (instanceColor multiplies)
       return new THREE.MeshBasicMaterial({ color: 0x5a4c44 });
+    }
+    if (kind === 'fireDrum') {
+      return new THREE.MeshBasicMaterial({ color: 0x2a2220 });
+    }
+    if (kind === 'flame' || kind === 'fireGlow') {
+      return new THREE.MeshBasicMaterial({
+        color: 0xffffff, map: fireTexture(), transparent: true, opacity: 1,
+        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      });
     }
     if (kind === 'hulkStripe') {
       return new THREE.MeshBasicMaterial({
@@ -151,6 +183,14 @@
       _tmpP.y += 0.09;
     } else if (item.kind === 'scrub') {
       _tmpP.y += 0.55;
+    } else if (item.kind === 'fireDrum') {
+      _tmpP.y += 0.5 * (item.scale || 1);
+    } else if (item.kind === 'flame') {
+      _tmpP.y += 1.0 * (item.scale || 1) + 1.15;
+      if (opts.camYaw != null) _tmpQ.setFromAxisAngle(_axisY, opts.camYaw);
+    } else if (item.kind === 'fireGlow') {
+      _tmpP.y += 0.06;
+      _tmpQ.multiply(_qFlat);
     } else if (item.kind === 'hulk') {
       _tmpP.y += 1.0 * (item.scale || 1);
     } else if (item.kind === 'hulkStripe') {
@@ -171,12 +211,13 @@
 
     var sc = item.scale || 1;
     if (opts.yScale != null) _tmpS.set(sc, sc * opts.yScale, sc);
+    else if (opts.flicker != null) _tmpS.set(sc * (0.8 + opts.flicker * 0.4), sc * (0.7 + opts.flicker * 0.6), sc);
     else _tmpS.set(sc, sc, sc);
     _tmpM.compose(_tmpP, _tmpQ, _tmpS);
     pool.mesh.setMatrixAt(item.matrixIndex, _tmpM);
 
     // Cache static transform for LOD restore (no curve re-eval for ~1000 props)
-    if (!opts.knock) {
+    if (!opts.knock && opts.flicker == null) {
       if (!item._mat) item._mat = new THREE.Matrix4();
       item._mat.copy(_tmpM);
       item._wx = _tmpP.x;
@@ -246,6 +287,11 @@
     // Ember flash on the hero body (lit materials only; throttled by hitCd)
     if (isPlayer && ctx && ctx.particles && ctx.particles.burstLight && hitPos && handle.hitCd <= 0) {
       ctx.particles.burstLight(hitPos.clone().setY(hitPos.y + 0.8), 0xffa040, 6, 0.12);
+    }
+
+    // Body hop — the chassis bucks over the wreckage (reuses curb-hop ride height)
+    if (isPlayer && body._hopLift != null && (kind === 'ballast' || kind === 'crate' || kind === 'drum')) {
+      body._hopLift = Math.max(body._hopLift || 0, 0.07);
     }
 
     if (isPlayer && ctx && ctx.hurtPlayer && handle.hitCd <= 0) {
@@ -389,12 +435,23 @@
         var hSpin = (U.seeded(seed + hSlot * 12.7) - 0.5) * 0.5;
         dress.push({ alive: true, t: hj, lat: hulkSide * hLat, yBase: DECK_Y, kind: 'hulk', spin: hSpin, scale: hScale });
         dress.push({ alive: true, t: hj, lat: hulkSide * hLat, yBase: DECK_Y, kind: 'hulkStripe', spin: hSpin, scale: hScale });
+        // Every other hulk gets a burning drum on the opposite deck — Mad Max fire barrels
+        if (hSlot % 2 === 0) {
+          var fLat = -hulkSide * roadHalf * (1.10 + U.seeded(seed + hSlot * 2.2) * 0.12);
+          var fT = hj + 0.004;
+          if (!skipT(fT)) {
+            dress.push({ alive: true, t: fT, lat: fLat, yBase: DECK_Y, kind: 'fireDrum', spin: 0, scale: 1 });
+            var fPhase = U.seeded(seed + hSlot * 9.9) * 6.28;
+            dress.push({ alive: true, t: fT, lat: fLat, yBase: DECK_Y, kind: 'flame', spin: 0, scale: 1, phase: fPhase });
+            dress.push({ alive: true, t: fT, lat: fLat, yBase: DECK_Y, kind: 'fireGlow', spin: 0, scale: 1, phase: fPhase });
+          }
+        }
         hSlot++;
       }
 
       var counts = { drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0 };
       placements.forEach(function (it) { counts[it.kind]++; });
-      var dressCounts = { gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0 };
+      var dressCounts = { gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0, fireDrum: 0, flame: 0, fireGlow: 0 };
       dress.forEach(function (it) { dressCounts[it.kind]++; });
 
       var group = new THREE.Group();
@@ -418,7 +475,7 @@
 
       var perKindIdx = {
         drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0,
-        gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0,
+        gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0, fireDrum: 0, flame: 0, fireGlow: 0,
       };
       placements.forEach(function (item) {
         var pool = pools[item.kind];
@@ -606,6 +663,41 @@
           poolK.mesh.instanceMatrix.needsUpdate = true;
         }
         if (k.age >= k.life) settleKnock(handle, kn);
+      }
+
+      // Fire barrels — flicker scale + colour, billboard to camera yaw (≤ ~12 instances)
+      var flamePool = handle.pools && handle.pools.flame;
+      if (flamePool && flamePool.mesh && ctx && ctx.path) {
+        var camYaw = handle._camYaw || 0;
+        if (ctx.camera) {
+          ctx.camera.getWorldDirection(_tmpTan);
+          camYaw = Math.atan2(_tmpTan.x, _tmpTan.z) + Math.PI;
+          handle._camYaw = camYaw;
+        }
+        handle._fireT = (handle._fireT || 0) + dt;
+        var ft = handle._fireT;
+        for (var fi = 0; fi < handle.dress.length; fi++) {
+          var fl = handle.dress[fi];
+          if (fl.kind !== 'flame' || fl._lodHidden) continue;
+          var fk = 0.5 + 0.5 * Math.sin(ft * 9.7 + fl.phase) * Math.sin(ft * 5.3 + fl.phase * 1.7);
+          placeMatrix(ctx.path, fl, flamePool, { flicker: fk, camYaw: camYaw });
+          if (flamePool.mesh.setColorAt) {
+            flamePool.mesh.setColorAt(fl.matrixIndex, _tmpC.setRGB(1.0, 0.5 + fk * 0.3, 0.1 + fk * 0.1));
+          }
+        }
+        flamePool.mesh.instanceMatrix.needsUpdate = true;
+        if (flamePool.mesh.instanceColor) flamePool.mesh.instanceColor.needsUpdate = true;
+        // Ground glow under each barrel — colour flicker only (matrix static)
+        var glowPool = handle.pools.fireGlow;
+        if (glowPool && glowPool.mesh && glowPool.mesh.setColorAt) {
+          for (var gi2 = 0; gi2 < handle.dress.length; gi2++) {
+            var gl = handle.dress[gi2];
+            if (gl.kind !== 'fireGlow' || gl._lodHidden) continue;
+            var gk = 0.5 + 0.5 * Math.sin(ft * 9.7 + gl.phase) * Math.sin(ft * 5.3 + gl.phase * 1.7);
+            glowPool.mesh.setColorAt(gl.matrixIndex, _tmpC.setRGB(0.55 + gk * 0.2, 0.22 + gk * 0.1, 0.04));
+          }
+          if (glowPool.mesh.instanceColor) glowPool.mesh.instanceColor.needsUpdate = true;
+        }
       }
 
       // Hulk smoke
