@@ -266,6 +266,7 @@
       if (ctx.camera) {
         ctx.camera.getWorldDirection(_fwd);
         handle.camYaw = Math.atan2(_fwd.x, _fwd.z) + Math.PI;
+        handle.camPos = ctx.camera.position;
       }
 
       // Player rooster tails — one puff behind each rear wheel
@@ -306,22 +307,24 @@
         if (handle.rivalWakeAcc >= rInt) {
           handle.rivalWakeAcc = 0;
           var cam = ctx.camera.position;
-          var best = null;
-          var bestD = 90 * 90;
+          // Two nearest fast rivals within 90m get a puff — pack dust, not a lone trail
+          var best = null, best2 = null;
+          var bestD = 90 * 90, bestD2 = 90 * 90;
           for (var ri = 0; ri < ctx.rivals.length; ri++) {
             var rv = ctx.rivals[ri];
             if (!rv || rv.dead || !rv.pos) continue;
             var dx = rv.pos.x - cam.x;
             var dz = rv.pos.z - cam.z;
             var d2 = dx * dx + dz * dz;
-            if (d2 > bestD) continue;
+            if (d2 > bestD2) continue;
             var maxR = 54;
             if (ctx.cfg && ctx.cfg.drive) maxR = ctx.cfg.drive.maxSpeed * ((rv.mul && rv.mul.speed) || 1);
             if (Math.abs(rv.speed || 0) / Math.max(1, maxR) < speedNormGate) continue;
-            best = rv;
-            bestD = d2;
+            if (d2 < bestD) { best2 = best; bestD2 = bestD; best = rv; bestD = d2; }
+            else { best2 = rv; bestD2 = d2; }
           }
           if (best) this.puff(handle, best.pos, 1.0);
+          if (best2 && !handle.low) this.puff(handle, best2.pos, 0.9);
         }
       }
 
