@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-02 (mid-session — see Done list)  
 **Branch:** `cursor/living-warden-neon-b53d` · **PR:** https://github.com/brandonmcdowra-creator/TwistedSpeed/pull/7 (base `main`)  
-**Canonical build:** web **v450** — title/boot/HUD all say BUILD 450. One SoT; do not fork a second version.  
-**Run:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=450` (`&shot=1` auto-starts a Neon race for testing)
+**Canonical build:** web **v452** — title/boot/HUD all say BUILD 452. One SoT; do not fork a second version.  
+**Run:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=452` (`&shot=1` auto-starts a Neon race for testing)
 
 ## End goal (director)
 Get gameplay / environment / props toward **Turbo Sloths** (UE5 Mad Max combat-racer):
@@ -50,8 +50,11 @@ v441 Scrap Line · v442 Wreck Wake · v443 lip · v444 night silhouettes · v445
 - **v449** SL-05: ~22 `hulk` + `hulkStripe` dress instances (2.6×2.0×5.5 on deck, amber marking, skip maglev/warden bands). Dust → AdditiveBlending + radial canvas sprite (NormalBlending drew faded puffs as dark smudges). `burstCd 0.12` so multi-prop hits share one puff.
 - **v450** VX-02: `userData.tailMats` (+`baseEmissive`) on procedural + GLB paths; GLB rigs without tail lamps get a red LED bar pair; emissive damps to 2× on brake / lift-off at speed.
 
+- **v451** FX-02: `web/js/streaks.js` — 48 additive strips ring the view axis 14–26m ahead and rush past above ~52% max speed; hooked into spawn/tick/clear + low-quality.
+- **v452**: curb-grind sparks + grit off the outer flank while on the raised lip/sidewalk (`p._scrapeFxT`, 0.11/0.18s throttle); hard-rail wall sparks; hulk per-instance palette.
+
 ## Not done / next for Grok (in priority order)
-1. **FX-02 near-camera speed streaks** — new `streaks.js` (~150 lines) modelled on `particles.js` rain; only if budget allows. Biggest remaining speed lever.
+1. **Fire barrels** (Mad Max read) — flickering additive flame billboards on some deck hulks; needs per-frame matrix/colour for ~16 instances in `scrapline.update`.
 2. **Collidable freight count** — only 184 of the 400 cap spawn (`density 1`, `step 0.0032`, skip bands). Raising toward ~300 changes hazard feel → director call, ship alone as its own build.
 3. **Chase-cam auto test** — `.playwright-mcp/chase.js` path: Enter×3 from title reaches race; car drifts left with no steering and hits the wall after ~2s, so keep W holds ≤1.5s or add steer.
 4. Perf pass (P3.3): `collide()` is O(items) per body per frame and evaluates curve twice per hit; items are sorted by `t` so a windowed scan is easy. `hitRadT 0.012` (~54m) is generous — leave unless director asks (hazard lock).
