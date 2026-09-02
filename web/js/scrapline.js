@@ -14,7 +14,9 @@
   var T_MIN = 0.15;
   var T_MAX = 0.90;
   var KINDS = ['drum', 'ballast', 'spool', 'crate', 'glow'];
-  var DRESS_KINDS = ['gravel', 'shard', 'scrub'];
+  var DRESS_KINDS = ['gravel', 'shard', 'scrub', 'hulk', 'hulkStripe'];
+  var HULK_LO = 1.135; // × roadHalf — 2.6m box must sit inside deck 11.56–14.76
+  var HULK_HI = 1.185;
   // Mirror world._buildSidewalks: deck hugs asphalt edge (gap 0.06, width 3.2, y 0.16; curb 0.34 @ 0.22)
   var DECK_GAP = 0.06;
   var DECK_W = 3.2;
@@ -47,6 +49,8 @@
       glow: new THREE.RingGeometry(0.32, 0.52, 14),
       gantryPost: new THREE.BoxGeometry(0.75, 14, 0.75),
       gantryBeam: new THREE.BoxGeometry(26, 0.65, 1.15),
+      hulk: new THREE.BoxGeometry(2.6, 2.0, 5.5),
+      hulkStripe: new THREE.BoxGeometry(2.66, 0.14, 0.9),
       gravel: new THREE.IcosahedronGeometry(0.55, 0),
       shard: new THREE.BoxGeometry(1.35, 0.12, 0.85),
       scrub: new THREE.PlaneGeometry(1.85, 1.85),
@@ -86,6 +90,14 @@
     }
     if (kind === 'gravel') {
       return new THREE.MeshBasicMaterial({ color: 0x6a5a48 });
+    }
+    if (kind === 'hulk') {
+      return new THREE.MeshBasicMaterial({ color: 0x3d322c });
+    }
+    if (kind === 'hulkStripe') {
+      return new THREE.MeshBasicMaterial({
+        color: 0xff9f1c, transparent: true, opacity: 0.85, depthWrite: false,
+      });
     }
     if (kind === 'shard') {
       return new THREE.MeshBasicMaterial({ color: 0x8a7a62 });
@@ -138,6 +150,11 @@
       _tmpP.y += 0.09;
     } else if (item.kind === 'scrub') {
       _tmpP.y += 0.55;
+    } else if (item.kind === 'hulk') {
+      _tmpP.y += 1.0 * (item.scale || 1);
+    } else if (item.kind === 'hulkStripe') {
+      _tmpP.y += 2.02 * (item.scale || 1);
+      _tmpP.addScaledVector(_tmpTan, 1.9 * (item.scale || 1)); // marking near the front face
     } else {
       _tmpP.y += 0.45;
     }
@@ -356,9 +373,27 @@
         }
       }
 
+      // v449 hero hulks — burnt-out freight on the deck. Skip maglev + warden bands.
+      var hulkStep = cfgSl.hulkStep != null ? cfgSl.hulkStep : 0.021;
+      var hulkSide = 1;
+      var hSlot = 0;
+      for (var ht = T_MIN + 0.01; ht <= T_MAX; ht += hulkStep) {
+        if (skipT(ht)) continue;
+        if (ht >= WARDEN_LO - 0.01 && ht <= WARDEN_HI + 0.01) continue;
+        var hj = ht + (U.seeded(seed + hSlot * 3.9) - 0.5) * hulkStep * 0.5;
+        if (skipT(hj)) { hSlot++; continue; }
+        hulkSide = -hulkSide;
+        var hLat = roadHalf * (HULK_LO + U.seeded(seed + hSlot * 6.1) * (HULK_HI - HULK_LO));
+        var hScale = 0.8 + U.seeded(seed + hSlot * 8.3) * 0.45;
+        var hSpin = (U.seeded(seed + hSlot * 12.7) - 0.5) * 0.5;
+        dress.push({ alive: true, t: hj, lat: hulkSide * hLat, yBase: DECK_Y, kind: 'hulk', spin: hSpin, scale: hScale });
+        dress.push({ alive: true, t: hj, lat: hulkSide * hLat, yBase: DECK_Y, kind: 'hulkStripe', spin: hSpin, scale: hScale });
+        hSlot++;
+      }
+
       var counts = { drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0 };
       placements.forEach(function (it) { counts[it.kind]++; });
-      var dressCounts = { gravel: 0, shard: 0, scrub: 0 };
+      var dressCounts = { gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0 };
       dress.forEach(function (it) { dressCounts[it.kind]++; });
 
       var group = new THREE.Group();
@@ -382,7 +417,7 @@
 
       var perKindIdx = {
         drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0,
-        gravel: 0, shard: 0, scrub: 0,
+        gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0,
       };
       placements.forEach(function (item) {
         var pool = pools[item.kind];
@@ -607,8 +642,8 @@
           var dx = it._wx - px;
           var dz = it._wz - pz;
           var far = (dx * dx + dz * dz) > radius * radius;
-          if (low && DRESS_KINDS.indexOf(it.kind) >= 0) {
-            // Low quality: drop half of dress via LOD bias
+          if (low && (it.kind === 'gravel' || it.kind === 'shard' || it.kind === 'scrub')) {
+            // Low quality: drop half of small dress via LOD bias (hulks stay — they're the silhouette)
             if ((it.matrixIndex | 0) % 2 === 1) far = true;
           }
           if (far) {

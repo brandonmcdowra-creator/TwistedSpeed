@@ -21,17 +21,39 @@
 
   var CHUNK_COUNTS = { ballast: 9, crate: 8, drum: 7, spool: 6, glow: 4 };
 
+  var _dustTex = null;
+  function dustTexture() {
+    if (_dustTex || typeof document === 'undefined') return _dustTex;
+    var S = 64;
+    var c = document.createElement('canvas');
+    c.width = c.height = S;
+    var ctx = c.getContext('2d');
+    if (!ctx) return null;
+    var g = ctx.createRadialGradient(S / 2, S / 2, 2, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.55)');
+    g.addColorStop(0.7, 'rgba(255,255,255,0.16)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, S, S);
+    _dustTex = new THREE.CanvasTexture(c);
+    return _dustTex;
+  }
+
   function makeHandle(scene) {
     var chunkGeo = new THREE.BoxGeometry(0.55, 0.22, 0.4);
     var dustGeo = new THREE.PlaneGeometry(1.4, 1.4);
     var chunkMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // tinted per instance
+    // Additive: per-instance colour carries the fade (colour→black = invisible).
+    // NormalBlending here drew faded puffs as dark 0.7-opacity smudges.
     var dustMat = new THREE.MeshBasicMaterial({
-      color: 0xc4a882,
+      color: 0xffffff,
+      map: dustTexture(),
       transparent: true,
-      opacity: 0.7,
+      opacity: 1,
       depthWrite: false,
       side: THREE.DoubleSide,
-      blending: THREE.NormalBlending,
+      blending: THREE.AdditiveBlending,
     });
 
     var chunkMesh = new THREE.InstancedMesh(chunkGeo, chunkMat, CHUNK_CAP);
@@ -97,8 +119,8 @@
     mesh.setMatrixAt(idx, _tmpM);
     if (mesh.setColorAt) {
       var a = alpha < 0 ? 0 : alpha;
-      // Night grit — sodium-lit grey, not daylight sand
-      mesh.setColorAt(idx, _tmpC.setRGB(0.5 * a, 0.44 * a, 0.36 * a));
+      // Night grit — sodium-lit grey, not daylight sand (additive, so keep it modest)
+      mesh.setColorAt(idx, _tmpC.setRGB(0.34 * a, 0.29 * a, 0.22 * a));
     }
   }
 
@@ -156,6 +178,11 @@
       if (!handle || !pos) return;
       var n = CHUNK_COUNTS[kind] || 6;
       if (handle.low) n = Math.max(3, Math.floor(n * 0.5));
+      // Several props can be struck in one frame (hit window ≈54m); only the first
+      // gets the full burst + puff so stacked additive dust can't white out the cam.
+      var throttled = (handle.burstCd || 0) > 0;
+      if (throttled) n = Math.min(n, 3);
+      handle.burstCd = 0.12;
       var base = dir && dir.lengthSq() > 1e-6 ? dir.clone().normalize() : new THREE.Vector3(0, 0, 1);
       var up = new THREE.Vector3(0, 1, 0);
       var side = new THREE.Vector3().crossVectors(up, base).normalize();
@@ -195,7 +222,7 @@
         writeChunk(handle.chunkMesh, idx, cpos, euler, scale);
       }
       handle.chunkMesh.instanceMatrix.needsUpdate = true;
-      this.puff(handle, pos, 1.4);
+      if (!throttled) this.puff(handle, pos, 1.1);
     },
 
     puff: function (handle, pos, scale0) {
@@ -225,6 +252,8 @@
       var rivalWake = cfgD.rivalWake != null ? cfgD.rivalWake : 0.22;
       var speedNormGate = cfgD.speedNormGate != null ? cfgD.speedNormGate : 0.45;
 
+      if (handle.burstCd > 0) handle.burstCd -= dt;
+
       // Camera yaw for upright dust billboards
       if (ctx.camera) {
         ctx.camera.getWorldDirection(_fwd);
@@ -252,7 +281,7 @@
               _fwd.set(0, 0, -1);
             }
             _side.set(-_fwd.z, 0, _fwd.x);
-            var wakeScale = 0.7 + sn * 1.1;
+            var wakeScale = 0.55 + sn * 0.75;
             for (var w = -1; w <= 1; w += 2) {
               _emit.copy(ctx.player.pos).addScaledVector(_fwd, -2.6).addScaledVector(_side, w * 0.85);
               _emit.y = ctx.player.pos.y;
@@ -331,14 +360,14 @@
           continue;
         }
         var u = du.age / du.life;
-        var scD = du.scale0 * (1 + u * 2.6);
-        var alpha = (1 - u) * 0.62;
+        var scD = du.scale0 * (1 + u * 1.7);
+        var alpha = (1 - u) * 0.7;
         // Never let a puff sit as a wall between chase cam and the hero
         if (camPos) {
           var cdx = du.pos.x - camPos.x;
           var cdz = du.pos.z - camPos.z;
           var cd = Math.sqrt(cdx * cdx + cdz * cdz);
-          var near = (cd - 5) / 6;
+          var near = (cd - 6) / 8;
           alpha *= near < 0 ? 0 : near > 1 ? 1 : near;
         }
         du.pos.y += dt * 1.1;
