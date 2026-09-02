@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-02 (mid-session — see Done list)  
 **Branch:** `cursor/living-warden-neon-b53d` · **PR:** https://github.com/brandonmcdowra-creator/TwistedSpeed/pull/7 (base `main`)  
-**Canonical build:** web **v448** — title/boot/HUD all say BUILD 448. One SoT; do not fork a second version.  
-**Run:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=448` (`&shot=1` auto-starts a Neon race for testing)
+**Canonical build:** web **v450** — title/boot/HUD all say BUILD 450. One SoT; do not fork a second version.  
+**Run:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=450` (`&shot=1` auto-starts a Neon race for testing)
 
 ## End goal (director)
 Get gameplay / environment / props toward **Turbo Sloths** (UE5 Mad Max combat-racer):
@@ -47,10 +47,13 @@ v441 Scrap Line · v442 Wreck Wake · v443 lip · v444 night silhouettes · v445
 - Census scripts: `.playwright-mcp/census.js`, `t447.js`, `t448.js` (not committed).
 - Do NOT run a browser test in the same tool batch as file edits — it will load a half-edited file.
 
+- **v449** SL-05: ~22 `hulk` + `hulkStripe` dress instances (2.6×2.0×5.5 on deck, amber marking, skip maglev/warden bands). Dust → AdditiveBlending + radial canvas sprite (NormalBlending drew faded puffs as dark smudges). `burstCd 0.12` so multi-prop hits share one puff.
+- **v450** VX-02: `userData.tailMats` (+`baseEmissive`) on procedural + GLB paths; GLB rigs without tail lamps get a red LED bar pair; emissive damps to 2× on brake / lift-off at speed.
+
 ## Not done / next for Grok (in priority order)
-1. **SL-05 hero hulk silhouettes** — new `hulk` dress kind (box 4.0×2.2×6.5 + slanted plane), ~24 instances at 1.20–1.32× roadHalf on the deck, one draw call. Watch corner-apex occlusion.
-2. **VX-02 brake taillight surge** — collect `userData.tails` in `vehicles.js` (procedural + GLB paths), drive emissive 3.5→7 on brake in `game.js`.
-3. **FX-02 near-camera speed streaks** — new `streaks.js` (~150 lines) modelled on `particles.js` rain; only if budget allows.
+1. **FX-02 near-camera speed streaks** — new `streaks.js` (~150 lines) modelled on `particles.js` rain; only if budget allows. Biggest remaining speed lever.
+2. **Collidable freight count** — only 184 of the 400 cap spawn (`density 1`, `step 0.0032`, skip bands). Raising toward ~300 changes hazard feel → director call, ship alone as its own build.
+3. **Chase-cam auto test** — `.playwright-mcp/chase.js` path: Enter×3 from title reaches race; car drifts left with no steering and hits the wall after ~2s, so keep W holds ≤1.5s or add steer.
 4. Perf pass (P3.3): `collide()` is O(items) per body per frame and evaluates curve twice per hit; items are sorted by `t` so a windowed scan is easy. `hitRadT 0.012` (~54m) is generous — leave unless director asks (hazard lock).
 5. Low-quality tier: `debris.setLow` halves puffs; dress LOD drops odd indices. Re-check FPS on real GPU (this VM is software GL, ~220ms/frame — no perf claims possible here).
 6. Then roadmap **P2.3 Parole Arch** ceremony polish.
