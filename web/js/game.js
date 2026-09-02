@@ -3854,7 +3854,7 @@
     p._thrSm = U.damp(p._thrSm != null ? p._thrSm : thrNow, thrNow, 6, dt);
     var spNorm = Math.abs(p.speed) / Math.max(1, D.maxSpeed * (p.mul.speed || 1));
     function pulseFlame(nf, phase) {
-      if (!nf) return;
+      if (!nf || !nf.scale) return;
       var cruise = p._thrSm * 0.6 + spNorm * 0.4;
       nf.visible = p.nitroActive || cruise > 0.08;
       if (!nf.visible) return;
@@ -4635,6 +4635,37 @@
         }
         // underglow stays off on rivals (set false above) — not a PointLight
         if (r.mesh && r.mesh.userData.headLight) r.mesh.userData.headLight.visible = true;
+        // Rival exhaust heat — the pack runs lit thrusters too (v456).
+        // Rivals are clones: Object3D.copy JSON-serialises userData, so the
+        // userData.nitroFlame refs are dead objects — find the live cones once.
+        if (r.mesh && !r._flames) {
+          r._flames = [];
+          r.mesh.traverse(function (c) {
+            if (c.isMesh && c.geometry && c.geometry.type === 'ConeGeometry' &&
+                Math.abs(Math.abs(c.rotation.x) - Math.PI) < 0.05 && c.position.z < -1.2) {
+              r._flames.push(c);
+            }
+          });
+          // Clones share the source material — give each rival its own so tint/opacity don't fight
+          r._flames.forEach(function (c) { if (c.material && c.material.clone) c.material = c.material.clone(); });
+        }
+        if (r._flames && r._flames.length) {
+          var rMax = cfg.drive.maxSpeed * ((r.mul && r.mul.speed) || 1);
+          var rSn = Math.abs(r.speed || 0) / Math.max(1, rMax);
+          var rHot = rSn > 0.3;
+          var rFl = 0.8 + 0.35 * Math.sin((state.raceTime || 0) * 47 + (r.pos.x || 0));
+          var rS = 0.32 + rSn * 0.42;
+          r._flames.forEach(function (nf) {
+            if (!nf || !nf.scale) return;
+            nf.visible = rHot;
+            if (!rHot) return;
+            nf.scale.set(rFl * rS * 0.7, rFl * rS, rFl * rS * 0.7);
+            if (nf.material) {
+              nf.material.color.setHex(r.nitroActive ? 0x66f0ff : 0xff7a2a);
+              if (nf.material.opacity != null) nf.material.opacity = 0.22 + rSn * 0.3;
+            }
+          });
+        }
       }
       // Path-first AI: face along ribbon so GLB nose stays correct; fire separately.
       var skill = r.skill != null ? r.skill : 0.7;
