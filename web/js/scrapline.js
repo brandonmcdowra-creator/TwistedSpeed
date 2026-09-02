@@ -14,7 +14,9 @@
   var T_MIN = 0.15;
   var T_MAX = 0.90;
   var KINDS = ['drum', 'ballast', 'spool', 'crate', 'glow'];
-  var DRESS_KINDS = ['gravel', 'shard', 'scrub', 'hulk', 'hulkStripe', 'fireDrum', 'flame', 'fireGlow'];
+  var DRESS_KINDS = ['gravel', 'shard', 'scrub', 'hulk', 'hulkStripe', 'fireDrum', 'flame', 'fireGlow', 'shadow'];
+  // Contact-shadow footprint per kind (lateral × along), scaled by item.scale
+  var SHADOW_FOOT = { hulk: [3.3, 6.3], drum: [1.7, 1.7], ballast: [2.0, 2.4], crate: [1.7, 1.7], spool: [1.4, 1.1], fireDrum: [1.6, 1.6] };
   var _fireTex = null;
   function fireTexture() {
     if (_fireTex || typeof document === 'undefined') return _fireTex;
@@ -73,6 +75,7 @@
       fireDrum: new THREE.CylinderGeometry(0.5, 0.56, 1.0, 8),
       flame: new THREE.PlaneGeometry(1.9, 2.8),
       fireGlow: new THREE.PlaneGeometry(6.5, 6.5),
+      shadow: new THREE.PlaneGeometry(1, 1),
       hulkStripe: new THREE.BoxGeometry(2.66, 0.14, 0.9),
       gravel: new THREE.IcosahedronGeometry(0.55, 0),
       shard: new THREE.BoxGeometry(1.35, 0.12, 0.85),
@@ -120,6 +123,12 @@
     }
     if (kind === 'fireDrum') {
       return new THREE.MeshBasicMaterial({ color: 0x2a2220 });
+    }
+    if (kind === 'shadow') {
+      return new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0.5, depthWrite: false,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+      });
     }
     if (kind === 'flame' || kind === 'fireGlow') {
       return new THREE.MeshBasicMaterial({
@@ -191,6 +200,9 @@
     } else if (item.kind === 'fireGlow') {
       _tmpP.y += 0.06;
       _tmpQ.multiply(_qFlat);
+    } else if (item.kind === 'shadow') {
+      _tmpP.y += 0.035;
+      _tmpQ.multiply(_qFlat);
     } else if (item.kind === 'hulk') {
       _tmpP.y += 1.0 * (item.scale || 1);
     } else if (item.kind === 'hulkStripe') {
@@ -210,7 +222,8 @@
     }
 
     var sc = item.scale || 1;
-    if (opts.yScale != null) _tmpS.set(sc, sc * opts.yScale, sc);
+    if (item.kind === 'shadow') _tmpS.set(item.sx * sc, item.sz * sc, 1);
+    else if (opts.yScale != null) _tmpS.set(sc, sc * opts.yScale, sc);
     else if (opts.flicker != null) _tmpS.set(sc * (0.8 + opts.flicker * 0.4), sc * (0.7 + opts.flicker * 0.6), sc);
     else _tmpS.set(sc, sc, sc);
     _tmpM.compose(_tmpP, _tmpQ, _tmpS);
@@ -314,6 +327,8 @@
     var dir = hitDir(body);
     var side = new THREE.Vector3(-dir.z, 0, dir.x);
     item.alive = false;
+    if (item.shadow) item.shadow.alive = false; // shadow lifts with the prop; LOD/markDead hides it
+    item._shadowDrop = true;
     item.knocked = {
       age: 0,
       life: 0.45,
@@ -449,9 +464,23 @@
         hSlot++;
       }
 
+      // v455 contact shadows under freight, hulks and fire drums (grounding)
+      function addShadow(src) {
+        var foot = SHADOW_FOOT[src.kind];
+        if (!foot) return;
+        var sh = { alive: true, t: src.t, lat: src.lat, yBase: src.yBase || 0, kind: 'shadow', spin: src.spin || 0, scale: src.scale || 1, sx: foot[0], sz: foot[1] };
+        src.shadow = sh;
+        dress.push(sh);
+      }
+      placements.forEach(addShadow);
+      for (var di = dress.length - 1; di >= 0; di--) {
+        var dk2 = dress[di].kind;
+        if (dk2 === 'hulk' || dk2 === 'fireDrum') addShadow(dress[di]);
+      }
+
       var counts = { drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0 };
       placements.forEach(function (it) { counts[it.kind]++; });
-      var dressCounts = { gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0, fireDrum: 0, flame: 0, fireGlow: 0 };
+      var dressCounts = { gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0, fireDrum: 0, flame: 0, fireGlow: 0, shadow: 0 };
       dress.forEach(function (it) { dressCounts[it.kind]++; });
 
       var group = new THREE.Group();
@@ -475,7 +504,7 @@
 
       var perKindIdx = {
         drum: 0, ballast: 0, spool: 0, crate: 0, glow: 0,
-        gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0, fireDrum: 0, flame: 0, fireGlow: 0,
+        gravel: 0, shard: 0, scrub: 0, hulk: 0, hulkStripe: 0, fireDrum: 0, flame: 0, fireGlow: 0, shadow: 0,
       };
       placements.forEach(function (item) {
         var pool = pools[item.kind];
@@ -651,6 +680,7 @@
         if (Math.abs(item.t - progress) > hitRadT) continue;
         if (Math.abs(lat - item.lat) > hitRadLat) continue;
         beginKnock(item, body);
+        if (item.shadow) markDead(handle, item.shadow);
         var hitPos = body.pos;
         if (ctx && ctx.path && ctx.path.curve) {
           var pt = ctx.path.curve.getPointAt(item.t);
