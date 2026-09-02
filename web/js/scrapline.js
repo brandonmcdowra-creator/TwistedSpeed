@@ -15,6 +15,13 @@
   var T_MAX = 0.90;
   var KINDS = ['drum', 'ballast', 'spool', 'crate', 'glow'];
   var DRESS_KINDS = ['gravel', 'shard', 'scrub'];
+  // Mirror world._buildSidewalks: deck hugs asphalt edge (gap 0.06, width 3.2, y 0.16; curb 0.34 @ 0.22)
+  var DECK_GAP = 0.06;
+  var DECK_W = 3.2;
+  var DECK_Y = 0.16;
+  var CURB_W = 0.34;
+  var CURB_Y = 0.22;
+  var GLOW_COLORS = [new THREE.Color(0x00e5ff), new THREE.Color(0xff9f1c)];
 
   var _geo = null;
   var _zeroMat = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -26,6 +33,9 @@
   var _tmpTan = new THREE.Vector3();
   var _axisX = new THREE.Vector3(1, 0, 0);
   var _axisY = new THREE.Vector3(0, 1, 0);
+  var _qSpool = new THREE.Quaternion().setFromAxisAngle(_axisX, Math.PI / 2);
+  var _qFlat = new THREE.Quaternion().setFromAxisAngle(_axisX, -Math.PI / 2);
+  var _qKnockY = new THREE.Quaternion();
 
   function geos() {
     if (_geo) return _geo;
@@ -66,7 +76,7 @@
   function kindMat(kind, idx) {
     if (kind === 'glow') {
       return new THREE.MeshBasicMaterial({
-        color: idx % 2 ? 0x00e5ff : 0xff9f1c,
+        color: 0xffffff, // tinted per-instance (cyan / amber)
         transparent: true,
         opacity: 0.72,
         blending: THREE.AdditiveBlending,
@@ -112,10 +122,11 @@
     var yaw = Math.atan2(_tmpTan.x, _tmpTan.z);
     _tmpQ.setFromAxisAngle(_axisY, yaw + (item.spin || 0));
     if (item.kind === 'spool') {
-      _tmpQ.multiply(new THREE.Quaternion().setFromAxisAngle(_axisX, Math.PI / 2));
+      _tmpQ.multiply(_qSpool);
     }
+    _tmpP.y += item.yBase || 0; // sidewalk deck / curb lift (v446)
     if (item.kind === 'glow') {
-      _tmpQ.setFromAxisAngle(_axisX, -Math.PI / 2);
+      _tmpQ.multiply(_qFlat); // keep yaw+spin, then lay flat
       _tmpP.y += 0.12;
     } else if (item.kind === 'drum') {
       _tmpP.y += 0.52;
@@ -124,7 +135,7 @@
     } else if (item.kind === 'gravel') {
       _tmpP.y += 0.18;
     } else if (item.kind === 'shard') {
-      _tmpP.y += 0.04;
+      _tmpP.y += 0.09;
     } else if (item.kind === 'scrub') {
       _tmpP.y += 0.55;
     } else {
@@ -137,7 +148,7 @@
       _tmpQ.multiply(opts.knock.quat);
     }
     if (opts.settle) {
-      _tmpP.y = pt.y + 0.12;
+      _tmpP.y = pt.y + (item.yBase || 0) + 0.12;
     }
 
     var sc = item.scale || 1;
@@ -145,6 +156,14 @@
     else _tmpS.set(sc, sc, sc);
     _tmpM.compose(_tmpP, _tmpQ, _tmpS);
     pool.mesh.setMatrixAt(item.matrixIndex, _tmpM);
+
+    // Cache static transform for LOD restore (no curve re-eval for ~1000 props)
+    if (!opts.knock) {
+      if (!item._mat) item._mat = new THREE.Matrix4();
+      item._mat.copy(_tmpM);
+      item._wx = _tmpP.x;
+      item._wz = _tmpP.z;
+    }
   }
 
   function markDead(handle, item) {
@@ -306,12 +325,24 @@
           var drv = U.seeded(seed + dSlot * 7.13 + p * 0.37);
           if (thin && drv > 0.72) { dSlot++; continue; }
           dressSide = -dressSide;
-          var latMul = 0.92 + U.seeded(seed + dSlot * 4.4) * 0.95; // 0.92–1.87 × roadHalf (chase-cam lip)
+          // v446: lip + sidewalk deck only (0.94–1.32 × roadHalf). Buildings start at
+          // roadHalf + 4.0, so anything wider was buried inside frontage.
+          var latMul = 0.94 + U.seeded(seed + dSlot * 4.4) * 0.38;
+          var latAbs = roadHalf * latMul;
           var dk = DRESS_KINDS[Math.floor(U.seeded(seed + dSlot * 11.2) * 3)];
+          var yBase = 0;
+          if (latAbs < roadHalf + DECK_GAP) {
+            dk = 'shard'; // on asphalt: flat only — no bush you drive through
+          } else if (latAbs < roadHalf + DECK_GAP + CURB_W) {
+            yBase = CURB_Y;
+          } else if (latAbs < roadHalf + DECK_GAP + DECK_W) {
+            yBase = DECK_Y;
+          }
           dress.push({
             alive: true,
             t: dt,
-            lat: dressSide * roadHalf * latMul,
+            lat: dressSide * latAbs,
+            yBase: yBase,
             kind: dk,
             spin: (U.seeded(seed + dSlot * 2.7) - 0.5) * 1.2,
             scale: 1.15 + U.seeded(seed + dSlot * 1.9) * 1.35,
@@ -362,6 +393,13 @@
         placeMatrix(path, item, pool);
         pool.mesh.instanceMatrix.needsUpdate = true;
       });
+      // Glow discs alternate cyan / amber via instanceColor (mat is white)
+      if (pools.glow && pools.glow.mesh.setColorAt) {
+        for (var gi = 0; gi < pools.glow.cap; gi++) {
+          pools.glow.mesh.setColorAt(gi, GLOW_COLORS[gi % 2]);
+        }
+        if (pools.glow.mesh.instanceColor) pools.glow.mesh.instanceColor.needsUpdate = true;
+      }
 
       // District gate gantries (overhead freight frames)
       var gantries = [];
@@ -509,25 +547,14 @@
         }
         k.euler += k.spin * dt;
         k.quat.setFromAxisAngle(_axisX, k.euler * 0.6);
-        k.quat.multiply(new THREE.Quaternion().setFromAxisAngle(_axisY, k.euler));
+        _qKnockY.setFromAxisAngle(_axisY, k.euler);
+        k.quat.multiply(_qKnockY);
         var poolK = handle.pools[kn.kind];
         if (poolK && ctx && ctx.path) {
           placeMatrix(ctx.path, kn, poolK, { knock: k });
           poolK.mesh.instanceMatrix.needsUpdate = true;
         }
         if (k.age >= k.life) settleKnock(handle, kn);
-      }
-
-      // Spin glow discs (alive only)
-      var pool = handle.pools && handle.pools.glow;
-      if (pool && pool.mesh && ctx && ctx.path) {
-        for (var i = 0; i < handle.items.length; i++) {
-          var item = handle.items[i];
-          if (!item.alive || item.kind !== 'glow') continue;
-          item.spin = (item.spin || 0) + dt * 1.2;
-          placeMatrix(ctx.path, item, pool);
-        }
-        pool.mesh.instanceMatrix.needsUpdate = true;
       }
 
       // Hulk smoke
@@ -567,9 +594,13 @@
           var pl = handle.pools[it.kind];
           if (!pl || !pl.mesh) continue;
           if (!ctx.path || !ctx.path.curve) continue;
-          var ptp = ctx.path.curve.getPointAt(it.t);
-          var dx = ptp.x - px;
-          var dz = ptp.z - pz;
+          if (it._wx == null || !it._mat) {
+            // Cache miss (shouldn't happen after spawn) — place once to populate
+            if (it.settled) placeMatrix(ctx.path, it, pl, { settle: true, yScale: 0.3 });
+            else placeMatrix(ctx.path, it, pl);
+          }
+          var dx = it._wx - px;
+          var dz = it._wz - pz;
           var far = (dx * dx + dz * dz) > radius * radius;
           if (low && DRESS_KINDS.indexOf(it.kind) >= 0) {
             // Low quality: drop half of dress via LOD bias
@@ -581,12 +612,11 @@
               it._lodHidden = true;
               pl.mesh.instanceMatrix.needsUpdate = true;
             }
-          } else {
-            // Always rewrite near matrices — early LOD (player at origin) can
-            // zero everything before the car is on-ribbon.
+          } else if (it._lodHidden || handle._lodTick <= 8) {
+            // Restore from cached matrix — no curve eval. First ticks always
+            // rewrite so an early origin cull can't leave the ribbon empty.
             it._lodHidden = false;
-            if (it.settled) placeMatrix(ctx.path, it, pl, { settle: true, yScale: 0.3 });
-            else placeMatrix(ctx.path, it, pl);
+            pl.mesh.setMatrixAt(it.matrixIndex, it._mat);
             pl.mesh.instanceMatrix.needsUpdate = true;
           }
         }
