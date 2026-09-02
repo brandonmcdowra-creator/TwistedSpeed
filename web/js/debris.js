@@ -6,7 +6,11 @@
   var GAME = (window.GAME = window.GAME || {});
 
   var CHUNK_CAP = 96;
-  var DUST_CAP = 64;
+  var DUST_CAP = 96;
+  var _axisY = new THREE.Vector3(0, 1, 0);
+  var _fwd = new THREE.Vector3();
+  var _side = new THREE.Vector3();
+  var _emit = new THREE.Vector3();
   var _tmpM = new THREE.Matrix4();
   var _tmpP = new THREE.Vector3();
   var _tmpQ = new THREE.Quaternion();
@@ -20,11 +24,11 @@
   function makeHandle(scene) {
     var chunkGeo = new THREE.BoxGeometry(0.55, 0.22, 0.4);
     var dustGeo = new THREE.PlaneGeometry(1.4, 1.4);
-    var chunkMat = new THREE.MeshBasicMaterial({ color: 0x5a5048 });
+    var chunkMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // tinted per instance
     var dustMat = new THREE.MeshBasicMaterial({
       color: 0xc4a882,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.7,
       depthWrite: false,
       side: THREE.DoubleSide,
       blending: THREE.NormalBlending,
@@ -33,9 +37,9 @@
     var chunkMesh = new THREE.InstancedMesh(chunkGeo, chunkMat, CHUNK_CAP);
     chunkMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     chunkMesh.frustumCulled = false;
-    if (chunkMesh.instanceColor === undefined && chunkMesh.setColorAt) {
-      for (var ci = 0; ci < CHUNK_CAP; ci++) chunkMesh.setColorAt(ci, _tmpC.setHex(0x5a5048));
-    }
+    // instanceColor starts null in r160 — allocate it so per-chunk heat tint works
+    for (var ci = 0; ci < CHUNK_CAP; ci++) writeChunkColor(chunkMesh, ci, 0);
+    if (chunkMesh.instanceColor) chunkMesh.instanceColor.needsUpdate = true;
 
     var dustMesh = new THREE.InstancedMesh(dustGeo, dustMat, DUST_CAP);
     dustMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -83,16 +87,27 @@
     mesh.setMatrixAt(idx, _tmpM);
   }
 
-  function writeDust(mesh, idx, pos, scale, alpha) {
+  // Dust quads stand upright and yaw to face the chase cam (flat-on-ground read
+  // edge-on from a low camera — the v442 wake was invisible at speed).
+  function writeDust(mesh, idx, pos, scale, alpha, camYaw) {
     _tmpP.set(pos.x, pos.y, pos.z);
-    _tmpQ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
-    _tmpS.set(scale, scale, 1);
+    _tmpQ.setFromAxisAngle(_axisY, camYaw || 0);
+    _tmpS.set(scale, scale * 0.7, 1);
     _tmpM.compose(_tmpP, _tmpQ, _tmpS);
     mesh.setMatrixAt(idx, _tmpM);
     if (mesh.setColorAt) {
-      var a = Math.max(0.05, alpha);
-      mesh.setColorAt(idx, _tmpC.setRGB(0.78 * a, 0.66 * a, 0.5 * a));
+      var a = alpha < 0 ? 0 : alpha;
+      // Night grit — sodium-lit grey, not daylight sand
+      mesh.setColorAt(idx, _tmpC.setRGB(0.5 * a, 0.44 * a, 0.36 * a));
     }
+  }
+
+  // Chunk heat: fresh scrap glows ember-orange at the impact, cools to cold grey.
+  function writeChunkColor(mesh, idx, heat) {
+    if (!mesh.setColorAt) return;
+    var h = heat < 0 ? 0 : heat > 1 ? 1 : heat;
+    _tmpC.setRGB(0.35 + 0.65 * h, 0.31 + 0.25 * h, 0.28 - 0.1 * h);
+    mesh.setColorAt(idx, _tmpC);
   }
 
   function allocChunk(handle) {
@@ -188,15 +203,16 @@
       if (handle.low && Math.random() > 0.55) return;
       var idx = allocDust(handle);
       var dpos = pos.clone();
-      dpos.y += 0.15;
+      dpos.y += 0.35;
       handle.dust.push({
         idx: idx,
         pos: dpos,
         scale0: scale0 || 1.2,
         life: 0.9,
         age: 0,
+        drift: (Math.random() - 0.5) * 0.6,
       });
-      writeDust(handle.dustMesh, idx, dpos, scale0 || 1.2, 0.7);
+      writeDust(handle.dustMesh, idx, dpos, scale0 || 1.2, 0.7, handle.camYaw);
       handle.dustMesh.instanceMatrix.needsUpdate = true;
       if (handle.dustMesh.instanceColor) handle.dustMesh.instanceColor.needsUpdate = true;
     },
@@ -209,7 +225,13 @@
       var rivalWake = cfgD.rivalWake != null ? cfgD.rivalWake : 0.22;
       var speedNormGate = cfgD.speedNormGate != null ? cfgD.speedNormGate : 0.45;
 
-      // Player dust wake
+      // Camera yaw for upright dust billboards
+      if (ctx.camera) {
+        ctx.camera.getWorldDirection(_fwd);
+        handle.camYaw = Math.atan2(_fwd.x, _fwd.z) + Math.PI;
+      }
+
+      // Player rooster tails — one puff behind each rear wheel
       if (ctx.player && ctx.player.pos && !ctx.player.dead) {
         var maxSp = 54;
         if (ctx.cfg && ctx.cfg.drive) {
@@ -221,39 +243,48 @@
           var interval = handle.low ? playerWake * 1.8 : playerWake;
           if (handle.wakeAcc >= interval) {
             handle.wakeAcc = 0;
-            var behind = ctx.player.pos.clone();
             if (ctx.player.mesh && ctx.player.mesh.getWorldDirection) {
-              var fwd = new THREE.Vector3();
-              ctx.player.mesh.getWorldDirection(fwd);
-              behind.addScaledVector(fwd, -1.8);
+              ctx.player.mesh.getWorldDirection(_fwd);
+              _fwd.y = 0;
+              if (_fwd.lengthSq() < 1e-6) _fwd.set(0, 0, 1);
+              _fwd.normalize();
             } else {
-              behind.z += 1.5;
+              _fwd.set(0, 0, -1);
             }
-            behind.y = ctx.player.pos.y;
-            this.puff(handle, behind, 1.1 + sn * 0.8);
+            _side.set(-_fwd.z, 0, _fwd.x);
+            var wakeScale = 0.7 + sn * 1.1;
+            for (var w = -1; w <= 1; w += 2) {
+              _emit.copy(ctx.player.pos).addScaledVector(_fwd, -2.6).addScaledVector(_side, w * 0.85);
+              _emit.y = ctx.player.pos.y;
+              this.puff(handle, _emit, wakeScale);
+            }
           }
         }
       }
 
-      // Rival dust (near cam only)
+      // Rival dust — nearest live rival to camera only
       if (ctx.rivals && ctx.camera) {
         handle.rivalWakeAcc = (handle.rivalWakeAcc || 0) + dt;
         var rInt = handle.low ? rivalWake * 2 : rivalWake;
         if (handle.rivalWakeAcc >= rInt) {
           handle.rivalWakeAcc = 0;
           var cam = ctx.camera.position;
+          var best = null;
+          var bestD = 90 * 90;
           for (var ri = 0; ri < ctx.rivals.length; ri++) {
             var rv = ctx.rivals[ri];
             if (!rv || rv.dead || !rv.pos) continue;
             var dx = rv.pos.x - cam.x;
             var dz = rv.pos.z - cam.z;
-            if (dx * dx + dz * dz > 90 * 90) continue;
+            var d2 = dx * dx + dz * dz;
+            if (d2 > bestD) continue;
             var maxR = 54;
             if (ctx.cfg && ctx.cfg.drive) maxR = ctx.cfg.drive.maxSpeed * ((rv.mul && rv.mul.speed) || 1);
             if (Math.abs(rv.speed || 0) / Math.max(1, maxR) < speedNormGate) continue;
-            this.puff(handle, rv.pos, 1.0);
-            break; // one rival puff per tick
+            best = rv;
+            bestD = d2;
           }
+          if (best) this.puff(handle, best.pos, 1.0);
         }
       }
 
@@ -284,10 +315,13 @@
         var fade = 1 - ch.age / ch.life;
         var sc = ch.scale * (0.35 + 0.65 * fade);
         writeChunk(handle.chunkMesh, ch.idx, ch.pos, ch.euler, sc);
+        writeChunkColor(handle.chunkMesh, ch.idx, 1 - ch.age / 0.45); // ember cools in ~0.45s
       }
       handle.chunkMesh.instanceMatrix.needsUpdate = true;
+      if (handle.chunkMesh.instanceColor) handle.chunkMesh.instanceColor.needsUpdate = true;
 
       // Integrate dust
+      var camPos = ctx.camera ? ctx.camera.position : null;
       for (var d = handle.dust.length - 1; d >= 0; d--) {
         var du = handle.dust[d];
         du.age += dt;
@@ -298,9 +332,18 @@
         }
         var u = du.age / du.life;
         var scD = du.scale0 * (1 + u * 2.6);
-        var alpha = (1 - u) * 0.72;
-        du.pos.y += dt * 0.15;
-        writeDust(handle.dustMesh, du.idx, du.pos, scD, alpha);
+        var alpha = (1 - u) * 0.62;
+        // Never let a puff sit as a wall between chase cam and the hero
+        if (camPos) {
+          var cdx = du.pos.x - camPos.x;
+          var cdz = du.pos.z - camPos.z;
+          var cd = Math.sqrt(cdx * cdx + cdz * cdz);
+          var near = (cd - 5) / 6;
+          alpha *= near < 0 ? 0 : near > 1 ? 1 : near;
+        }
+        du.pos.y += dt * 1.1;
+        du.pos.x += du.drift * dt;
+        writeDust(handle.dustMesh, du.idx, du.pos, scD, alpha, handle.camYaw);
       }
       handle.dustMesh.instanceMatrix.needsUpdate = true;
       if (handle.dustMesh.instanceColor) handle.dustMesh.instanceColor.needsUpdate = true;

@@ -554,7 +554,7 @@ GAME.config = {
 
   /** v442 — ballistic scrap + dust wake (InstancedMesh). */
   debris: {
-    playerWake: 0.1,
+    playerWake: 0.055, // twin rooster tails — pair per emit
     rivalWake: 0.22,
     speedNormGate: 0.45,
   },

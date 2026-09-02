@@ -3818,15 +3818,29 @@
     var bankT = p.steer * (p.drifting ? (D.bankDrift || 0.28) : (D.bankAmount || 0.16));
     bankT += U.clamp(p.slip / 40, -0.12, 0.12);
     p.mesh.rotation.z = U.damp(p.mesh.rotation.z || 0, bankT, 9, dt);
-    // Nitro exhaust cones on the mesh — dual flicker when active
+    // Exhaust heat — always lit while the foot is down (amber cruise), cyan blowtorch on nitro (v447)
+    var thrNow = I.throttle();
+    p._thrSm = U.damp(p._thrSm != null ? p._thrSm : thrNow, thrNow, 6, dt);
+    var spNorm = Math.abs(p.speed) / Math.max(1, D.maxSpeed * (p.mul.speed || 1));
     function pulseFlame(nf, phase) {
       if (!nf) return;
-      nf.visible = !!p.nitroActive;
-      if (!p.nitroActive) return;
+      var cruise = p._thrSm * 0.6 + spNorm * 0.4;
+      nf.visible = p.nitroActive || cruise > 0.08;
+      if (!nf.visible) return;
       var flick = 0.75 + 0.45 * Math.sin((state.raceTime || 0) * 52 + phase + p.speed);
-      nf.scale.set(flick * 0.85, flick * 1.5, flick * 0.9);
-      if (nf.material && nf.material.opacity != null) {
-        nf.material.opacity = 0.65 + Math.random() * 0.35;
+      if (p.nitroActive) {
+        nf.scale.set(flick * 0.85, flick * 1.5, flick * 0.9);
+        if (nf.material) {
+          nf.material.color.setHex(0x66f0ff);
+          if (nf.material.opacity != null) nf.material.opacity = 0.65 + Math.random() * 0.35;
+        }
+      } else {
+        var s = 0.35 + cruise * 0.45;
+        nf.scale.set(flick * s * 0.7, flick * s, flick * s * 0.7);
+        if (nf.material) {
+          nf.material.color.setHex(0xff7a2a);
+          if (nf.material.opacity != null) nf.material.opacity = 0.18 + cruise * 0.32 + (flick - 0.75) * 0.1;
+        }
       }
     }
     pulseFlame(p.mesh.userData.nitroFlame, 0);
