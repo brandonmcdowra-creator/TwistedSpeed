@@ -509,6 +509,53 @@
         if (pools.glow.mesh.instanceColor) pools.glow.mesh.instanceColor.needsUpdate = true;
       }
 
+      // v454 overhead cable spans + hanging sodium lamps — flick-past parallax
+      var cableStep = cfgSl.cableStep != null ? cfgSl.cableStep : 0.0115;
+      var cableTs = [];
+      var cSlot = 0;
+      for (var ct = T_MIN; ct <= T_MAX; ct += cableStep) {
+        var cj = ct + (U.seeded(seed + cSlot * 5.5) - 0.5) * cableStep * 0.4;
+        cSlot++;
+        if (skipT(cj)) continue;
+        cableTs.push(cj);
+      }
+      var cableMat = new THREE.MeshBasicMaterial({ color: 0x2a2630 });
+      var lampMat = new THREE.MeshBasicMaterial({
+        color: 0xffb347, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending,
+      });
+      matsOwned.push(cableMat, lampMat);
+      var cableGeo = new THREE.BoxGeometry(roadHalf * 2 + 8.5, 0.13, 0.13);
+      var lampGeo = new THREE.BoxGeometry(0.7, 0.3, 0.7);
+      var cableMesh = new THREE.InstancedMesh(cableGeo, cableMat, Math.max(1, cableTs.length));
+      var lampMesh = new THREE.InstancedMesh(lampGeo, lampMat, Math.max(1, cableTs.length));
+      cableMesh.frustumCulled = false;
+      lampMesh.frustumCulled = false;
+      group.add(cableMesh);
+      group.add(lampMesh);
+      cableTs.forEach(function (cT, ci) {
+        var cpt = path.curve.getPointAt(cT);
+        var ctan = path.curve.getTangentAt(cT);
+        _tmpTan.set(ctan.x, 0, ctan.z).normalize();
+        _tmpSide.set(-_tmpTan.z, 0, _tmpTan.x).normalize();
+        var cyaw = Math.atan2(_tmpTan.x, _tmpTan.z);
+        var cy = 6.8 + U.seeded(seed + ci * 3.1) * 2.6;
+        _tmpP.copy(cpt);
+        _tmpP.y = cpt.y + cy;
+        _tmpQ.setFromAxisAngle(_axisY, cyaw);
+        _tmpS.set(1, 1, 1);
+        _tmpM.compose(_tmpP, _tmpQ, _tmpS);
+        cableMesh.setMatrixAt(ci, _tmpM);
+        // Lamp hangs off-centre so it flicks past one side of the cam
+        var lampLat = (U.seeded(seed + ci * 7.7) - 0.5) * roadHalf * 1.1;
+        _tmpP.copy(cpt).addScaledVector(_tmpSide, lampLat);
+        _tmpP.y = cpt.y + cy - 0.55;
+        _tmpM.compose(_tmpP, _tmpQ, _tmpS);
+        lampMesh.setMatrixAt(ci, _tmpM);
+      });
+      cableMesh.instanceMatrix.needsUpdate = true;
+      lampMesh.instanceMatrix.needsUpdate = true;
+      if (!cableTs.length) { cableMesh.visible = false; lampMesh.visible = false; }
+
       // District gate gantries (overhead freight frames)
       var gantries = [];
       var gantryTs = [0.10, 0.26, 0.66, 0.80];

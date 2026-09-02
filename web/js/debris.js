@@ -239,7 +239,15 @@
         age: 0,
         drift: (Math.random() - 0.5) * 0.6,
       });
-      writeDust(handle.dustMesh, idx, dpos, scale0 || 1.2, 0.7, handle.camYaw);
+      // Spawn already camera-faded — otherwise the first frame flashes at full alpha
+      var a0 = 0.7;
+      if (handle.camPos) {
+        var sdx = dpos.x - handle.camPos.x;
+        var sdz = dpos.z - handle.camPos.z;
+        var sn0 = (Math.sqrt(sdx * sdx + sdz * sdz) - 6) / 8;
+        a0 *= sn0 < 0 ? 0 : sn0 > 1 ? 1 : sn0;
+      }
+      writeDust(handle.dustMesh, idx, dpos, scale0 || 1.2, a0, handle.camYaw);
       handle.dustMesh.instanceMatrix.needsUpdate = true;
       if (handle.dustMesh.instanceColor) handle.dustMesh.instanceColor.needsUpdate = true;
     },
