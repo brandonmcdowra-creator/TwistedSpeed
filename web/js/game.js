@@ -3845,6 +3845,17 @@
     }
     pulseFlame(p.mesh.userData.nitroFlame, 0);
     pulseFlame(p.mesh.userData.nitroFlame2, 2.1);
+    // Brake / lift-off taillight surge (v450) — damped so it blooms, not blinks
+    var tails = p.mesh.userData.tailMats;
+    if (tails && tails.length) {
+      var braking = I.brake() > 0.2 || (thrNow < 0.15 && spNorm > 0.35);
+      var surge = braking ? 2.0 : 1.0;
+      for (var tmi = 0; tmi < tails.length; tmi++) {
+        var tm = tails[tmi];
+        var baseE = (tm.userData && tm.userData.baseEmissive) || 3.5;
+        tm.emissiveIntensity = U.damp(tm.emissiveIntensity, baseE * surge, 12, dt);
+      }
+    }
     // Soft LED underglow — steady, slight speed breath (not a strobe)
     var ledBreath = 0.78 + 0.08 * Math.sin((state.raceTime || 0) * 2.2)
       + (p.nitroActive ? 0.1 : 0);
