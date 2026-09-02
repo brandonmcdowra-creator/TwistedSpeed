@@ -92,7 +92,8 @@
       return new THREE.MeshBasicMaterial({ color: 0x6a5a48 });
     }
     if (kind === 'hulk') {
-      return new THREE.MeshBasicMaterial({ color: 0x3d322c });
+      // Dark base × per-instance palette tint (instanceColor multiplies)
+      return new THREE.MeshBasicMaterial({ color: 0x5a4c44 });
     }
     if (kind === 'hulkStripe') {
       return new THREE.MeshBasicMaterial({
@@ -433,6 +434,16 @@
         placeMatrix(path, item, pool);
         pool.mesh.instanceMatrix.needsUpdate = true;
       });
+      // Hulk palette — rust / olive / slate / ash so the freight line isn't one slab
+      if (pools.hulk && pools.hulk.mesh.setColorAt) {
+        var hulkPal = [0xff8a5a, 0x9aa070, 0x6a7a90, 0x8a7a70, 0xc06a40];
+        var hc = new THREE.Color();
+        for (var hci = 0; hci < pools.hulk.cap; hci++) {
+          hc.setHex(hulkPal[Math.floor(U.seeded(seed + hci * 4.7) * hulkPal.length)]);
+          pools.hulk.mesh.setColorAt(hci, hc);
+        }
+        if (pools.hulk.mesh.instanceColor) pools.hulk.mesh.instanceColor.needsUpdate = true;
+      }
       // Glow discs alternate cyan / amber via instanceColor (mat is white)
       if (pools.glow && pools.glow.mesh.setColorAt) {
         for (var gi = 0; gi < pools.glow.cap; gi++) {

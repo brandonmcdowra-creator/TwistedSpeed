@@ -3528,6 +3528,18 @@
       // v346: only treat as "driving out" when steer matches lateral AND not first-curve soft
       var steerOut = (Math.abs(p.steer) > 0.55 && Math.sign(p.steer) * Math.sign(latEdge || 1) > 0);
       var openSoft = (p.progress != null && p.progress < 0.22) ? 0.15 : 1;
+      // Curb grind — sparks + grit off the outer flank while scrubbing raised (v452)
+      p._scrapeFxT = (p._scrapeFxT || 0) - dt;
+      if (p._scrapeFxT <= 0 && Math.abs(p.speed) > 9) {
+        p._scrapeFxT = onLip ? 0.11 : 0.18;
+        var sgnE = Math.sign(latEdge || 1);
+        var cpt = tmpV2.set(
+          p.pos.x + sideEdge.x * sgnE * 1.1, p.pos.y + 0.3, p.pos.z + sideEdge.z * sgnE * 1.1
+        );
+        if (particles && particles.sparks && onLip) particles.sparks(cpt.clone());
+        if (state.debris && GAME.debris && GAME.debris.puff) GAME.debris.puff(state.debris, cpt, onLip ? 0.55 : 0.8);
+        state.smashKick = Math.max(state.smashKick || 0, 0.1);
+      }
       if (onLip) {
         if (openSoft < 1) {
           maxSp = Math.min(maxSp, 52);
@@ -3737,6 +3749,14 @@
           if (overA > 0.8) {
             state.camShake = Math.max(state.camShake || 0, 0.1);
             if (GAME.sfx && GAME.sfx.scrape) GAME.sfx.scrape(0.15);
+          }
+          // Wall grind — sparks at the contact flank (v452)
+          p._scrapeFxT = (p._scrapeFxT || 0) - dt;
+          if (p._scrapeFxT <= 0 && Math.abs(p.speed) > 10) {
+            p._scrapeFxT = 0.07;
+            var cptW = tmpV2.set(p.pos.x + sideA.x * sgnA * 1.15, p.pos.y + 0.35, p.pos.z + sideA.z * sgnA * 1.15);
+            if (particles && particles.sparks) particles.sparks(cptW.clone());
+            state.smashKick = Math.max(state.smashKick || 0, 0.12);
           }
           near = nearAfter;
           ribbonLat = nearAfter.dist;
