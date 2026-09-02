@@ -4013,7 +4013,7 @@
       });
     }
     if (state.smashKick > 0) {
-      state.smashKick = Math.max(0, state.smashKick - dt / 0.35);
+      state.smashKick = Math.max(0, state.smashKick - dt / 0.5);
     }
     if (I.key('j') || I.key('z')) fireMg();
     if (I.pressed('k') || I.pressed('x')) fireRocket();

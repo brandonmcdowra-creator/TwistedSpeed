@@ -547,7 +547,7 @@ GAME.config = {
     clearFrac: 0.44, // centre clear — do not tighten without a dedicated build
     hitCd: 0.55,
     hpChip: 3,
-    maxDress: 900,
+    maxDress: 1900, // 3 picks × ~610 slots — must cover t 0.15–0.90, not run dry at 0.56
     dressStep: 0.0011,
     // Dress sits on the visible shoulder lip (0.92–1.87× roadHalf), past collidable 0.90 cap.
   },

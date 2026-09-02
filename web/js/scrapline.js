@@ -225,6 +225,10 @@
     if (ctx && ctx.sfx && ctx.sfx.collide) {
       try { ctx.sfx.collide(); } catch (e) {}
     }
+    // Ember flash on the hero body (lit materials only; throttled by hitCd)
+    if (isPlayer && ctx && ctx.particles && ctx.particles.burstLight && hitPos && handle.hitCd <= 0) {
+      ctx.particles.burstLight(hitPos.clone().setY(hitPos.y + 0.8), 0xffa040, 6, 0.12);
+    }
 
     if (isPlayer && ctx && ctx.hurtPlayer && handle.hitCd <= 0) {
       var cfgSl = (GAME.config && GAME.config.scrapLine) || {};
@@ -237,7 +241,7 @@
     if (ctx && ctx.state) {
       ctx.state.camShake = Math.max(ctx.state.camShake || 0, isPlayer ? 0.18 : 0.1);
       if (isPlayer) {
-        ctx.state.smashKick = Math.max(ctx.state.smashKick || 0, 0.28);
+        ctx.state.smashKick = Math.max(ctx.state.smashKick || 0, 0.38);
       }
     }
   }
@@ -282,7 +286,7 @@
       var maxInst = cfgSl.maxInstances || 400;
       var density = cfgSl.density != null ? cfgSl.density : 1;
       var clearFrac = cfgSl.clearFrac != null ? cfgSl.clearFrac : 0.44;
-      var maxDress = cfgSl.maxDress != null ? cfgSl.maxDress : 900;
+      var maxDress = cfgSl.maxDress != null ? cfgSl.maxDress : 1900;
       var dressStep = cfgSl.dressStep != null ? cfgSl.dressStep : 0.0011;
       var seed = mapSeed(stage, mapId);
       var g = geos();
@@ -319,17 +323,18 @@
       var dressSide = 1;
       for (var dt = T_MIN; dt <= T_MAX && dress.length < maxDress; dt += dressStep) {
         if (skipT(dt)) continue;
+        // Warden sweep band keeps full dress density but flat kinds only, so the
+        // sweep telegraph is never occluded (collidable thinning there is untouched).
         var thin = dt >= WARDEN_LO && dt <= WARDEN_HI;
-        var picks = thin ? 2 : 3;
+        var picks = 3;
         for (var p = 0; p < picks && dress.length < maxDress; p++) {
-          var drv = U.seeded(seed + dSlot * 7.13 + p * 0.37);
-          if (thin && drv > 0.72) { dSlot++; continue; }
           dressSide = -dressSide;
           // v446: lip + sidewalk deck only (0.94–1.32 × roadHalf). Buildings start at
           // roadHalf + 4.0, so anything wider was buried inside frontage.
           var latMul = 0.94 + U.seeded(seed + dSlot * 4.4) * 0.38;
           var latAbs = roadHalf * latMul;
           var dk = DRESS_KINDS[Math.floor(U.seeded(seed + dSlot * 11.2) * 3)];
+          if (thin && dk === 'scrub') dk = 'shard';
           var yBase = 0;
           if (latAbs < roadHalf + DECK_GAP) {
             dk = 'shard'; // on asphalt: flat only — no bush you drive through

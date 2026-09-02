@@ -389,7 +389,10 @@
     this._buildRoad();
     this._sidewalkCount = 0;
     // Coast: no sidewalk slabs (raised band caused chase hop / lip tax on open flats)
-    if (this.theme !== 'coast') this._buildSidewalks();
+    if (this.theme !== 'coast') {
+      this._buildSidewalks();
+      this._buildShoulderDrift();
+    }
     this._buildEdgeAmbient();
     if (this.theme === 'coast') {
       // THE REACH — water + stacks, no neon canyon
@@ -606,10 +609,17 @@
     var gMid = (this.path && this.path.curve)
       ? this.path.curve.getPointAt(0.5)
       : new THREE.Vector3();
-    var ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(4200, 4200),
-      new THREE.MeshBasicMaterial({ color: col })
-    );
+    var isCity = !(mapDef && mapDef.theme === 'coast');
+    var groundMat = new THREE.MeshBasicMaterial({ color: col });
+    if (isCity) {
+      // v448: ash + grit so off-ribbon dirt reads as ground, not a coloured void
+      var gtex = this._groundTextures();
+      if (gtex) {
+        groundMat.map = gtex;
+        groundMat.color.setHex(0xffffff);
+      }
+    }
+    var ground = new THREE.Mesh(new THREE.PlaneGeometry(4200, 4200), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(gMid.x, -0.15, gMid.z);
     ground.userData.ignoreIntrusion = true;
@@ -640,6 +650,76 @@
       this.group.add(haze);
       this.buildings.push(haze);
     }
+  };
+
+  /** v448: canvas ash/grit tile for the void floor + shoulder drift (Neon). */
+  World.prototype._groundTextures = function () {
+    if (this._groundTex) return this._groundTex;
+    if (typeof document === 'undefined') return null;
+    var S = 256;
+    var c = document.createElement('canvas');
+    c.width = c.height = S;
+    var ctx = c.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = '#1a1512';
+    ctx.fillRect(0, 0, S, S);
+    // Soft ash blotches
+    for (var b = 0; b < 40; b++) {
+      var bx = (b * 97) % S, by = (b * 53) % S, br = 18 + (b * 13) % 40;
+      var gr = ctx.createRadialGradient(bx, by, 0, bx, by, br);
+      gr.addColorStop(0, 'rgba(46, 38, 32, 0.35)');
+      gr.addColorStop(1, 'rgba(46, 38, 32, 0)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(bx - br, by - br, br * 2, br * 2);
+    }
+    // Grit specks — warm scrap-yard grain
+    for (var i = 0; i < 6000; i++) {
+      var v = 30 + ((i * 23) % 44);
+      var warm = (i % 3 === 0) ? 10 : 0;
+      ctx.fillStyle = 'rgba(' + (v + warm) + ',' + (v - 4) + ',' + (v - 10) + ',' + (0.5 + (i % 4) * 0.12) + ')';
+      ctx.fillRect((i * 47) % S, (i * 89) % S, 1 + (i % 2), 1);
+    }
+    // Scattered pale fragments (bone-white chips catch the neon)
+    for (var k = 0; k < 90; k++) {
+      ctx.fillStyle = 'rgba(150, 140, 125, ' + (0.35 + (k % 3) * 0.15) + ')';
+      ctx.fillRect((k * 131) % S, (k * 71) % S, 2, 1 + (k % 2));
+    }
+    var tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(60, 60);
+    tex.anisotropy = 4;
+    if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+    this._groundTex = tex;
+    return tex;
+  };
+
+  /** v448: thin dirt drift hugging the asphalt edge — sand reclaiming the outer lane. */
+  World.prototype._buildShoulderDrift = function () {
+    var rh = this.roadHalf;
+    var tex = this._groundTextures();
+    var mat = new THREE.MeshBasicMaterial({
+      color: 0x8a7458,
+      map: tex || null,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    var self = this;
+    function strip(a, b, name) {
+      var geo = self._flankRibbonGeo(a, b, 0.03, 0.25);
+      if (!geo) return;
+      var mesh = new THREE.Mesh(geo, mat);
+      mesh.name = name;
+      mesh.userData.ignoreIntrusion = true;
+      mesh.userData.lod = 'building';
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 1;
+      self.group.add(mesh);
+      self.buildings.push(mesh);
+    }
+    strip(rh * 0.86, rh + 0.08, 'driftL');
+    strip(-(rh + 0.08), -rh * 0.86, 'driftR');
   };
 
   // ─── Road (ONLY solid on the driveline) ───────────────────────────────
