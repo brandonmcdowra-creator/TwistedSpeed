@@ -410,6 +410,9 @@
     if (state.debris && GAME.debris && GAME.debris.setLow) {
       GAME.debris.setLow(state.debris, nq === 'low');
     }
+    if (state.streaks && GAME.streaks && GAME.streaks.setLow) {
+      GAME.streaks.setLow(state.streaks, nq === 'low');
+    }
     if (particles) {
       if (nq === 'low' && particles.rainStop) particles.rainStop();
       else if (nq === 'high' && particles.rainStart && state.mode === 'race' && !state._mapOverview) {
@@ -1317,6 +1320,8 @@
     state.scrapLine = null;
     if (GAME.debris && GAME.debris.clear) GAME.debris.clear(state.debris, scene);
     state.debris = null;
+    if (GAME.streaks && GAME.streaks.clear) GAME.streaks.clear(state.streaks, scene);
+    state.streaks = null;
     (state.projectiles || []).forEach(function (pr) {
       recycleProjectileMesh(pr.mesh);
     });
@@ -1483,6 +1488,12 @@
       state.debris = GAME.debris.create(scene);
       if (state.debris && GAME.debris.setLow) {
         GAME.debris.setLow(state.debris, GAME.qualityLevel === 'low');
+      }
+    }
+    if (GAME.streaks && GAME.streaks.create) {
+      state.streaks = GAME.streaks.create(scene);
+      if (state.streaks && GAME.streaks.setLow) {
+        GAME.streaks.setLow(state.streaks, GAME.qualityLevel === 'low');
       }
     }
     if (hasMutator('last_mile')) {
@@ -4021,6 +4032,14 @@
         rivals: state.rivals,
         camera: camera,
         cfg: cfg,
+      });
+    }
+    if (GAME.streaks && state.streaks && GAME.streaks.update) {
+      GAME.streaks.update(state.streaks, dt, {
+        player: p,
+        camera: camera,
+        cfg: cfg,
+        camMode: state.camMode,
       });
     }
     if (state.smashKick > 0) {
