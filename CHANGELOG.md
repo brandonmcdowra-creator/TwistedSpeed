@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-02 — Web v446–v454: Turbo Sloths felt-gap loop (density → reaction → speed)
+
+- **v446** Dress confined to lip + sidewalk deck (0.94–1.32× roadHalf) with per-band `yBase` (~85% was buried before); shards-only on asphalt; glow discs alternate cyan/amber; LOD restores cached matrices (0 curve evals/tick).
+- **v447** Upright camera-yaw dust billboards, twin rooster tails, camera-proximity fade; chunk ember→cold tint; exhaust always lit (amber cruise / cyan nitro); nearest-rival dust.
+- **v448** Dress cap 900→1900 (back half of Neon had none); ground grit tile + shoulder drift ribbons; warden band full dress (flat kinds); smash burstLight + longer blur tail.
+- **v449** ~22 freight hulks + amber marking strip on the deck; additive soft dust sprite (fixed dark-smudge blend); burst throttle.
+- **v450** Brake / lift-off taillight surge (`tailMats`, GLB rigs get LED bar pair).
+- **v451** `streaks.js` — near-camera speed streaks above ~52% max speed.
+- **v452** Curb-grind sparks + grit on the raised lip; wall-rail sparks; hulk palette.
+- **v453** Fire barrels (flicker flame billboard + ground glow) on the deck; chassis hop on heavy smash.
+- **v454** Overhead cable spans + hanging sodium lamps; dust pre-faded on spawn frame.
+- Locks held: maglev wait/gap · warden_lane · soft hazards · clearFrac 0.44 · collidable cap 400 (184 spawn) · saveKey.
+
+Hard-refresh `?v=454`.
+
+---
 ## 2026-09-01 — Web v445: Scrap Line LOD window (chase-cam density fix)
 
 - World scale ≈45m / 0.01 t; prior LOD radii (130–165m) zeroed almost all shoulder instances.

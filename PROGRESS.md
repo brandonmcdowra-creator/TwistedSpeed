@@ -1,22 +1,29 @@
 # Twisted Speed — Progress
 
-**Build:** web **v445** (Wreck Wake + night-readable Scrap Line silhouettes)  
-**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=445`  
-**Quality bar:** Turbo Sloths Mad Max density (felt), not UE5 photoreal.
+**Build:** web **v454** (Turbo Sloths felt-gap loop: density → reaction → speed)  
+**Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=454`  
+**Quality bar:** Turbo Sloths Mad Max density (felt), not UE5 photoreal.  
+**Handoff:** `docs/HANDOFF-GROK.md` · backlog `docs/BACKLOG-TURBO.md`
 
-## This block (v442–v445)
-| Check | Result |
-|-------|--------|
-| Dress | ≤900 · lat 0.92–1.87× · brighter/larger night silhouettes · no collide |
-| Knocked props | tumble → flattened wreck |
-| Debris wake | chunks + dust + smashKick |
-| Hazard freeze | clearFrac 0.44 · max 400 · maglev/warden/save untouched |
+## This block (v446–v454)
+| Layer | State |
+|-------|-------|
+| Shoulder dress | ~1900 non-hit props on lip + deck (yBase per band), hulks, fire barrels, cables |
+| Reaction | knocked props → wreck marks, ember chunks, soft dust, curb-grind sparks, chassis hop, taillight surge |
+| Speed | rooster tails, speed streaks, smashKick blur, always-on exhaust |
+| Hazard freeze | clearFrac 0.44 · collidable cap 400 (184 spawn) · maglev/warden/save untouched |
+
+## Don’t regress
+- Gauntlet VFX · maglev wait/gap · soft hazards · lip-only steer  
+- Original cast · saves `twisted-speed-v5-night`  
+- Toast substrings: BONE HARVEST, THREAD THE VEIN, VEIN MISS, BLACKOUT KISS, REAR VEIN  
+- District index `0` is real (INTAKE ROW) — never falsy-skip  
 
 ## Next
-**P2.3** Parole Arch ceremony — or thruster/exhaust readability if still chasing Turbo Sloths.
+See `docs/HANDOFF-GROK.md` → "Not done / next". Then roadmap **P2.3** Parole Arch.
 
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=445
+# http://127.0.0.1:8765/?v=454  → BUILD 454
 ```
