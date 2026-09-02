@@ -1,16 +1,17 @@
 # Next session pickup
 
-**Canonical build:** web **v432** on `main` (Gauntlet Loop — Heat chase + TM combat WON).  
-There is **one** game version. Do not revive the old v411/v412 debug tree as a parallel build.
+**Canonical build:** web **v457**. Branch `cursor/living-warden-neon-b53d`, PR #7.  
+**Read first:** `docs/HANDOFF-GROK.md` (done / not done / verification recipe), then `docs/BACKLOG-TURBO.md`.
 
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=432
+# http://127.0.0.1:8765/?v=454 → BUILD 457
 ```
-Title / boot must say **BUILD 432**.
 
-## Notes
-- Gauntlet complete (R12 Heat · R17 TM).
-- Glitch fixes from the abandoned v412 branch were **not** merged (different tree). Re-apply on v432 only if still needed.
-- Maglev dress / living-track polish still open if you continue content work.
+## Just shipped (v446–v457)
+Dress on the deck, soft dust wakes, ember chunks, exhaust/taillight life, speed streaks, curb-grind sparks, hulks, fire barrels, overhead cables.
+
+## Next
+1. Handoff "Not done" list (collidable count = director call; perf pass on real GPU).
+2. Roadmap **P2.3** Parole Arch ceremony polish.

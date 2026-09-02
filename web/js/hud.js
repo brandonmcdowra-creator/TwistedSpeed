@@ -79,7 +79,7 @@
     ctx.fillText('NIGHT CIRCUIT', w / 2, h * 0.36);
     ctx.fillStyle = '#00e5ff';
     ctx.font = 'bold ' + Math.floor(w * 0.016) + 'px monospace';
-    ctx.fillText('BUILD 432', w / 2, h * 0.395);
+    ctx.fillText('BUILD 457', w / 2, h * 0.395);
     ctx.fillStyle = '#8a7a88';
     ctx.font = Math.floor(w * 0.014) + 'px monospace';
     ctx.fillText('PAROLE COMBAT RACING', w / 2, h * 0.435);
@@ -868,11 +868,48 @@
       ctx.fillStyle = '#00e5ff';
       ctx.font = 'bold 10px monospace';
       ctx.fillText('SHIELD', 24, 66);
-      this.bar(80, 58, 144, 8, p.maxShield > 0 ? p.shield / p.maxShield : 0, '#00e5ff');
+      var sBarX = 80, sBarY = 58, sBarW = 144, sBarH = 8;
+      var sFrac = p.maxShield > 0 ? p.shield / p.maxShield : 0;
+      var sCol = '#00e5ff';
+      var sBg = 'rgba(30,24,40,0.9)';
+      var sAbsorb = state.shieldAbsorbFlash || 0;
+      var sBreak = state.shieldBreakFlash || 0;
+      if (sAbsorb > 0) {
+        var ap = Math.min(1, sAbsorb / 0.4);
+        var pulse = 0.65 + 0.35 * Math.sin(performance.now() * 0.04);
+        sCol = '#e8ffff';
+        sBg = 'rgba(0,160,200,0.38)';
+        this.bar(sBarX, sBarY, sBarW, sBarH, sFrac, sCol, sBg);
+        ctx.fillStyle = 'rgba(180,255,255,' + (0.5 * ap * pulse) + ')';
+        ctx.fillRect(sBarX, sBarY, sBarW * U.clamp(sFrac, 0, 1), sBarH);
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.32 * ap) + ')';
+        ctx.fillRect(sBarX, sBarY, sBarW, sBarH);
+      } else if (sBreak > 0) {
+        var bp = Math.min(1, sBreak / 0.45);
+        sCol = bp > 0.45 ? '#fff0d8' : '#ff8844';
+        sBg = 'rgba(36,18,10,0.88)';
+        this.bar(sBarX, sBarY, sBarW, sBarH, sFrac, sCol, sBg);
+        ctx.fillStyle = 'rgba(255,190,110,' + (0.45 * bp) + ')';
+        ctx.fillRect(sBarX, sBarY, sBarW, sBarH);
+      } else if (p.maxShield > 0 && p.shield <= 0) {
+        sCol = 'rgba(0,120,140,0.5)';
+        sBg = 'rgba(10,16,20,0.92)';
+        this.bar(sBarX, sBarY, sBarW, sBarH, 0, sCol, sBg);
+        ctx.strokeStyle = 'rgba(0,229,255,0.24)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sBarX + 0.5, sBarY + 0.5, sBarW - 1, sBarH - 1);
+      } else {
+        this.bar(sBarX, sBarY, sBarW, sBarH, sFrac, sCol, sBg);
+      }
     }
     ctx.fillStyle = '#ffc857';
     ctx.font = 'bold 12px monospace';
     ctx.fillText('SCRAP ' + (state.runScrap | 0), 24, hasShieldHud ? 86 : 64);
+    if (state.activeSalvage && state.activeSalvage.name) {
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('SALVAGE · ' + state.activeSalvage.name, 24, hasShieldHud ? 100 : 78);
+    }
 
     this.panel(16, h - 100, 160, 84, 0.82);
     ctx.fillStyle = '#c8b8c0';
@@ -954,7 +991,7 @@
     ctx.fillText('K ' + (W.rocket ? (W.rocketLabel || 'ROCKET') : '—'), w / 2 - 72, h - 32);
     ctx.fillStyle = wepCol(W.mine, p.mineCd) || '#4af0ff';
     ctx.fillText('L ' + (W.mine ? (W.mineLabel || 'MINE') : '—'), w / 2 + 28, h - 32);
-    // Special: name + ready/CD — high contrast; ready pulse so I-key isn't missed (v294/v303)
+    // Special: name + ready/CD/charging — high contrast; ready pulse so I-key isn't missed (v294/v303/v437)
     var specName = (p.def && p.def.special) ? String(p.def.special) : 'SPECIAL';
     if (p.def && p.def.id === 'needle') specName = 'VEIN';
     else if (p.def && p.def.id === 'choir') specName = 'SERMON';
@@ -963,7 +1000,18 @@
     else if (p.def && p.def.id === 'razorback') specName = 'TIRES';
     else if (p.def && p.def.id === 'marrow') specName = 'BONES';
     else if (specName.length > 12) specName = specName.slice(0, 11) + '…';
-    var specReady = !(p.specialCd > 0) && !(p._specialWindup > 0);
+    var specCharging = p._specialWindup > 0;
+    var specCd = p.specialCd > 0;
+    var specReady = !specCd && !specCharging;
+    var carId = p.def && p.def.id;
+    var specBarTint = '#ff6bb5';
+    if (carId === 'marrow') specBarTint = '#ff5a2a';
+    else if (carId === 'needle') specBarTint = '#00e5ff';
+    else if (carId === 'vesper') specBarTint = '#b44dff';
+    var chipX = w / 2 + 88;
+    var chipY = h - 48;
+    var chipW = 92;
+    var chipH = 28;
     // v366: brighter pulse when pack is in special theater
     var packNear = false;
     if (specReady && state.rivals) {
@@ -983,17 +1031,34 @@
       ctx.fillStyle = packNear
         ? 'rgba(255,45,85,' + (0.35 + 0.15 * Math.sin((state.raceTime || 0) * 10)) + ')'
         : 'rgba(255,45,130,' + (0.22 + 0.12 * Math.sin((state.raceTime || 0) * 7)) + ')';
-      ctx.fillRect(w / 2 + 88, h - 48, 92, 28);
+      ctx.fillRect(chipX, chipY, chipW, chipH);
     }
     ctx.fillStyle = specReady ? (packNear ? '#ffd0a8' : '#ff6bb5') : '#d0c0c8';
     ctx.font = specReady ? 'bold 13px monospace' : 'bold 11px monospace';
     ctx.globalAlpha = specPulse;
     if (specReady) {
       ctx.fillText('I ' + specName + (packNear ? '!' : ''), w / 2 + 96, h - 30);
+    } else if (specCharging) {
+      ctx.fillStyle = '#d0c0c8';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText('I CHARGING', w / 2 + 78, h - 30);
+      var wMax = p._specialWindupMax > 0 ? p._specialWindupMax : 0.14;
+      var wFrac = wMax > 0 ? (1 - (p._specialWindup || 0) / wMax) : 1;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW, 4);
+      ctx.fillStyle = specBarTint;
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW * Math.max(0, Math.min(1, wFrac)), 4);
     } else {
       var scd = Math.max(0, p.specialCd || 0);
       ctx.fillStyle = '#c8b0b8';
       ctx.fillText('READY IN ' + scd.toFixed(1) + 's', w / 2 + 78, h - 30);
+      var _cfgCombat = (GAME.cfg && GAME.cfg.combat) || (GAME.config && GAME.config.combat) || {};
+      var cdMax = p.specialCdMax > 0 ? p.specialCdMax : (_cfgCombat.specialCd || 8);
+      var cdFrac = cdMax > 0 ? (1 - scd / cdMax) : 0;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW, 4);
+      ctx.fillStyle = specBarTint;
+      ctx.fillRect(chipX, chipY + chipH - 4, chipW * Math.max(0, Math.min(1, cdFrac)), 4);
     }
     ctx.globalAlpha = 1;
 
@@ -1108,12 +1173,13 @@
     ctx.font = '10px monospace';
     ctx.fillText(Math.round(prog * 100) + '% → FINISH   S' + state.runScrap + ' K' + p.kills, w - 188, chipY + 28);
 
-    this.panel(w / 2 - 90, 16, 180, 18, 0.65);
-    this.bar(w / 2 - 86, 20, 172, 10, (state.meta.stage - 1) / GAME.config.stageCount, '#00e5ff');
+    // v433: under PLACE — top slot fought tips toast + canvas clip
+    this.panel(w / 2 - 90, 106, 180, 22, 0.65);
+    this.bar(w / 2 - 86, 111, 172, 10, (state.meta.stage - 1) / GAME.config.stageCount, '#00e5ff');
     ctx.fillStyle = '#f2e9e4';
-    ctx.font = '9px monospace';
+    ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('FREEDOM', w / 2, 29);
+    ctx.fillText('FREEDOM', w / 2, 122);
     ctx.textAlign = 'left';
 
     // Active temporary race buffs (drive-through pickups — not garage upgrades)
@@ -1195,8 +1261,44 @@
     }
 
     this.drawTurnArrow(state);
+    this.drawDistrictChip(state);
     this.drawMinimap(state);
     this.drawRivalHealthBars(state);
+  };
+
+  /** P2.2 — left-edge Sepulcher district placard (own channel, not toast). */
+  Hud.prototype.drawDistrictChip = function (state) {
+    var chip = state._districtChip;
+    if (!chip || !(chip.t > 0)) return;
+    var ctx = this.ctx;
+    var maxT = chip.maxT > 0 ? chip.maxT : 3.5;
+    var fade = chip.t < 0.5 ? (chip.t / 0.5) : 1;
+    var x = 16;
+    var y = 120;
+    if (state.activeSalvage && state.activeSalvage.name) y = 132;
+    var wChip = 210;
+    var hChip = 36;
+    ctx.save();
+    ctx.globalAlpha = 0.88 * fade;
+    ctx.fillStyle = 'rgba(10,12,16,0.92)';
+    ctx.fillRect(x, y, wChip, hChip);
+    ctx.strokeStyle = '#ff2d55';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 6, y);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + 6);
+    ctx.stroke();
+    ctx.fillStyle = '#ffe66d';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText(String(chip.name || ''), x + 10, y + 15);
+    ctx.fillStyle = '#8a7a88';
+    ctx.font = '10px monospace';
+    var sub = String(chip.code || '');
+    if (chip.tag) sub += '  ·  ' + String(chip.tag);
+    ctx.fillText(sub, x + 10, y + 29);
+    ctx.restore();
   };
 
   /**
@@ -1509,7 +1611,7 @@
     ctx.fillStyle = '#6a5a68';
     ctx.font = '11px monospace';
     ctx.fillText(
-      'Click chip to buy  ·  R retry night  ·  ENTER garage',
+      'Click chip to buy  ·  4 salvage  ·  R retry night  ·  ENTER garage',
       w / 2, h * 0.288
     );
 
@@ -1544,6 +1646,32 @@
       ctx.font = '12px monospace';
       ctx.fillText(c.maxed ? 'MAX' : (c.cost + ' SCRAP'), cx + chipW / 2, chipY + 56);
     }
+
+    // Salvage offer chip — key 4 (P1.3 v438)
+    var salvHit = null;
+    var offer = state.salvageOffer;
+    if (offer) {
+      var salvY = chipY + chipH + 14;
+      var salvW = Math.min(420, w * 0.72);
+      var salvX = (w - salvW) / 2;
+      var salvH = 58;
+      salvHit = { x: salvX, y: salvY, w: salvW, h: salvH };
+      ctx.fillStyle = 'rgba(0,229,255,0.22)';
+      ctx.fillRect(salvX, salvY, salvW, salvH);
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(salvX, salvY, salvW, salvH);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText('4', salvX + salvW / 2, salvY + 20);
+      ctx.fillStyle = '#f2e9e4';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('SALVAGE · ' + offer.name, salvX + salvW / 2, salvY + 38);
+      ctx.fillStyle = '#ffc857';
+      ctx.font = '11px monospace';
+      ctx.fillText((offer.cost | 0) + ' SCRAP · from ' + (offer.fromCar || 'WRECK'), salvX + salvW / 2, salvY + 52);
+    }
     ctx.textAlign = 'center';
 
     // Mutator strip — freedom win still fills the band so panel isn't hollow (v379)
@@ -1563,6 +1691,11 @@
       ctx.fillStyle = '#c8b8c0';
       ctx.font = '11px monospace';
       ctx.fillText(state.nextMutators[0].desc || '', w / 2, mutY + 16);
+      if (state.meta && state.meta.salvage && state.meta.salvage.name) {
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('ARMED · ' + state.meta.salvage.name, w / 2, mutY + 32);
+      }
     } else if (state.freedomWin) {
       ctx.fillStyle = 'rgba(0,229,255,0.12)';
       ctx.fillRect(w * 0.22, mutY - 18, w * 0.56, 44);
@@ -1588,6 +1721,7 @@
     state._resultsHit = {
       choices: choiceHits,
       footer: { x: w * 0.2, y: footY - 18, w: w * 0.6, h: 36 },
+      salvage: salvHit,
     };
   };
 

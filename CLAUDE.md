@@ -29,6 +29,13 @@ Chat threads die. You may switch tools. **Files are memory.**
   alone. If it notices something else worth fixing, it mentions it rather than
   quietly changing it — so your game never shifts in ways you didn't ask for.
 
+## 🧠 Model workflow (director lock — all sessions)
+- **Plan / goals / prioritize** with higher-effort **Other Models** first
+  (e.g. Claude Opus / Sonnet thinking-high, GPT sol xhigh) via Task subagents.
+- **Implement** with **Cursor Models** (Composer) unless the work cannot be
+  delegated (tooling/auth, live playtest, PR ops the planner can't do).
+- Do not skip the planning step on “keep going” / roadmap picks — plan, then code.
+
 ## 🔎 Before changing your game
 - **Look before leaping.** It reads the part of the game it's about to change
   first, so it understands how things connect. Guessing breaks things that were

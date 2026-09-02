@@ -241,6 +241,8 @@
       color: 0xff1a2e, emissive: 0xff0820, emissiveIntensity: 3.5,
       metalness: 0.25, roughness: 0.18, transparent: true, opacity: 0.95,
     });
+    tlMat.userData.baseEmissive = 3.5;
+    g.userData.tailMats = [tlMat];
     addMesh(g, new THREE.BoxGeometry(0.7, 0.14, 0.08), tlMat, -0.55 * sX, 0.58 * sY, -2.18 * sZ);
     addMesh(g, new THREE.BoxGeometry(0.7, 0.14, 0.08), tlMat, 0.55 * sX, 0.58 * sY, -2.18 * sZ);
     addMesh(g, new THREE.BoxGeometry(0.45, 0.05, 0.04), tlMat, 0, 1.15 * sY, -0.95 * sZ);
@@ -570,6 +572,8 @@
           mat = new THREE.MeshStandardMaterial({
             color: 0xff2244, emissive: 0xff1030, emissiveIntensity: 2.0, metalness: 0.25, roughness: 0.4,
           });
+          mat.userData.baseEmissive = 2.0;
+          (root.userData.tailMats = root.userData.tailMats || []).push(mat);
         } else if (/_hl|headlight|head_l|head_r|lamp|roof_l/.test(name) || /marrow_hl/.test(name)) {
           mat = new THREE.MeshStandardMaterial({
             color: 0xfff5e0, emissive: 0xffe0a0, emissiveIntensity: 2.8, metalness: 0.15, roughness: 0.35,
@@ -647,6 +651,22 @@
     root.add(flame2);
     root.userData.nitroFlame = flame;
     root.userData.nitroFlame2 = flame2;
+    // GLB rigs ship without tail lamps — add a red LED bar pair so brake surge reads (v450)
+    if (!root.userData.tailMats || !root.userData.tailMats.length) {
+      var tlG = new THREE.MeshStandardMaterial({
+        color: 0xff1a2e, emissive: 0xff0820, emissiveIntensity: 3.0,
+        metalness: 0.2, roughness: 0.25, transparent: true, opacity: 0.95,
+      });
+      tlG.userData.baseEmissive = 3.0;
+      var tlGeo = new THREE.BoxGeometry(0.55, 0.11, 0.07);
+      var tlL = new THREE.Mesh(tlGeo, tlG);
+      tlL.position.set(-0.62, 0.62, -2.22);
+      var tlR = new THREE.Mesh(tlGeo, tlG);
+      tlR.position.set(0.62, 0.62, -2.22);
+      root.add(tlL);
+      root.add(tlR);
+      root.userData.tailMats = [tlG];
+    }
     root.userData.wheels = [];
     root.userData.def = def;
     // Needle stab combat flags (game.js rams use these)

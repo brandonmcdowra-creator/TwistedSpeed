@@ -51,3 +51,7 @@ assets/models/
 gauntlet/refs/heat-imgur-*.jpg
 gauntlet/refs/heat-night-*.jpg
 gauntlet/refs/heat-chase-0[1-5].jpg
+
+.playwright-mcp/
+v4*-scrapline*.png
+v4*_wreck_wake*.png

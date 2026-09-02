@@ -1,5 +1,135 @@
 # Changelog
 
+## 2026-09-02 — Web v446–v457: Turbo Sloths felt-gap loop (density → reaction → speed)
+
+- **v446** Dress confined to lip + sidewalk deck (0.94–1.32× roadHalf) with per-band `yBase` (~85% was buried before); shards-only on asphalt; glow discs alternate cyan/amber; LOD restores cached matrices (0 curve evals/tick).
+- **v447** Upright camera-yaw dust billboards, twin rooster tails, camera-proximity fade; chunk ember→cold tint; exhaust always lit (amber cruise / cyan nitro); nearest-rival dust.
+- **v448** Dress cap 900→1900 (back half of Neon had none); ground grit tile + shoulder drift ribbons; warden band full dress (flat kinds); smash burstLight + longer blur tail.
+- **v449** ~22 freight hulks + amber marking strip on the deck; additive soft dust sprite (fixed dark-smudge blend); burst throttle.
+- **v450** Brake / lift-off taillight surge (`tailMats`, GLB rigs get LED bar pair).
+- **v451** `streaks.js` — near-camera speed streaks above ~52% max speed.
+- **v452** Curb-grind sparks + grit on the raised lip; wall-rail sparks; hulk palette.
+- **v453** Fire barrels (flicker flame billboard + ground glow) on the deck; chassis hop on heavy smash.
+- **v454** Overhead cable spans + hanging sodium lamps; dust pre-faded on spawn frame.
+- **v455** Contact shadows under freight, hulks, fire drums (drop with knocked props).
+- **v456** Rival exhaust heat (live cone traversal — cloned userData is dead); pulseFlame guard.
+- **v457** Pack dust: two nearest fast rivals puff.
+- Locks held: maglev wait/gap · warden_lane · soft hazards · clearFrac 0.44 · collidable cap 400 (184 spawn) · saveKey.
+
+Hard-refresh `?v=457`.
+
+---
+## 2026-09-01 — Web v445: Scrap Line LOD window (chase-cam density fix)
+
+- World scale ≈45m / 0.01 t; prior LOD radii (130–165m) zeroed almost all shoulder instances.
+- LOD hit 320m / dress 480m; near instances always rewritten each LOD tick (fixes early origin wipe).
+- Night-readable silhouettes from v444 retained. Hazard count still frozen.
+
+Hard-refresh `?v=445`.
+
+---
+## 2026-09-01 — Web v444: Scrap Line night-readable silhouettes
+
+- Dress + freight materials lifted (warm grey / desert scrap, not dark-on-asphalt vanish).
+- Dress geos scaled up (gravel/shard/scrub) so chase-cam shoulders read packed at Neon night.
+- Hazard count / maglev / saveKey still frozen.
+
+Hard-refresh `?v=444`.
+
+---
+## 2026-09-01 — Web v443: Wreck Wake dress on chase-cam lip
+
+- Pull non-hit dress inward to **0.92–1.87× roadHalf** (was 1–3×, often behind neon blocks) + slightly larger scales so shoulder clutter reads at chase-cam speed.
+- Hazard count / maglev / saveKey still frozen from v442.
+
+Hard-refresh `?v=443`.
+
+---
+
+## 2026-09-01 — Web v442: Wreck Wake (Turbo Sloths density juice)
+
+- **Dress layer** — up to 900 non-collidable gravel/shard/scrub instances so chase-cam shoulders read packed without raising hazard count.
+- **Knocked props** — smashed Scrap Line freight tumbles ~0.45s then settles as flattened wreck marks (no silent vanish).
+- **debris.js** — InstancedMesh ballistic chunks (96) + ground dust wake (64); player/rival dust trails; smash burst + crunch SFX + smashKick motion blur.
+- Hit difficulty frozen (clearFrac 0.44, maxInstances 400, step 0.0032, hpChip/hitCd). Maglev / warden_lane / saveKey untouched.
+
+Hard-refresh `?v=442`.
+
+---
+
+## 2026-09-01 — Web v441: Scrap Line shoulder freight density
+
+- **P1.4 Scrap Line** — wreckable shoulder clutter (drums, ballast, spools, crates, glow discs) via InstancedMesh pools along Neon ribbon; centre 44% clear; maglev band t∈[0.26,0.34] and coast/REACH skipped.
+- Overhead district gantries at ~0.10 / 0.26 / 0.66 / 0.80. Soft hit: speed tax + 3–4 HP chip (0.55s CD); no freight toast.
+- Rival wrecks settle as hulks (cap 6) with throttled smoke instead of vanishing after corpse timer.
+- Quality bar: Turbo Sloths Mad Max density (felt), not UE5 photoreal. Locks: maglev timing, warden_lane, saveKey unchanged.
+
+Hard-refresh `?v=441`.
+
+---
+
+## 2026-09-01 — Web v440: P2.2 Sepulcher district fiction chips
+
+- **P2.2** Four Neon-only district placards on a left-edge HUD channel (not toast): INTAKE ROW `WRDN-03`, FREIGHT SEPULCHER `SEP-12`, HOLDING TERRACES `HOLD-9`, PAROLE MILE `PAROLE`.
+- Progress gates 0.10 / 0.26 / 0.66 / 0.80 — clear of warden beats, maglev, lane sweep, and ceremony.
+- Defers (does not drop) if a warden beat fired within 2.5s. REACH/coast unchanged.
+
+Hard-refresh `?v=440`.
+
+---
+
+## 2026-09-01 — Web v439: P2.1 thin warden parole broadcast (Neon)
+
+- **P2.1** Progress-gated warden / parole toasts on Neon (Sepulcher / city) — 5 beats keyed to `wardenScript.gates`, stage buckets (early/mid/late), salvage swap on beat 2 when armed.
+- Yields to combat channel (wreck/special/hunter) and ceremony tail (>0.92); skips REACH/coast.
+- Locks: maglev, warden_lane, specials damage/timing, salvage cost/parts, saveKey unchanged.
+
+Hard-refresh `?v=439`.
+
+---
+
+## 2026-09-01 — Web v438: P1.3 salvage rig (wreck feeds next night)
+
+- **P1.3** Salvage loop: rival wreck tracks `runSalvage` by class; results screen offers keyed **4 SALVAGE** chip (60 scrap) mapped from last kill class → injector / hot feed / tomb plate.
+- Armed part persists in meta until next race start: full nitro + regen, special ready + faster CD, or +25 bolted shield; toast `SALVAGE BOLTED` on green.
+- HUD: results salvage chip + `ARMED ·` on next-night strip; race chip `SALVAGE ·` near armor cluster.
+- Locks: maglev, warden_lane, specials damage/timing, saveKey unchanged.
+
+Hard-refresh `?v=438`.
+
+---
+
+## 2026-09-01 — Web v437: P1.2 special readability (Marrow / Needle / Vesper)
+
+- **P1.2** Signature special readability: pooled charge rings under player during windup, target marks on rivals (Marrow aim, Needle tether, Vesper EMP), needle-miss cable stub; probe counters for playtest.
+- HUD special chip three states: **I CHARGING** (windup fill bar), **READY IN** (cooldown fill bar), ready pulse — per-car tints (marrow/needle/vesper).
+- Bone volley toast: `BONE HARVEST · n/3 HIT` on player special bone hits; `specialCdMax` set on CD start for HUD denominator.
+- Locks: windup 0.14/0.20, damage, range, maglev, Mausoleum/Choir/Razorback untouched; toast substrings preserved.
+
+Hard-refresh `?v=437`.
+
+---
+
+## 2026-09-01 — Web v436: maglev audio + shield readability
+
+- **P0.4** Maglev approach / gap / hit WebAudio stings (`sfx.maglev*`); timing/hit volumes unchanged; `audioProbe` counters for structural proof.
+- **P1.1** Shield absorb/break feedback: cyan absorb ring + SFX, break sting when shield hits 0 into HP, HUD bar pulse/dim (empty shield still reads when `maxShield > 0`).
+- Director lock: plan with Other Models → implement with Cursor Models (`AGENTS.md` / `.cursor/rules/model-workflow.mdc`).
+
+Hard-refresh `?v=436`.
+
+---
+
+## 2026-09-01 — Web v434: living Neon warden (maglev yard + lane sweep)
+
+- Added `docs/AAA-ROADMAP.md` so agents keep moving P0→P3 without re-asking.
+- Maglev junction dress: prison container stencils, WARDEN FREIGHT board, shoulder chevrons, gantry strip syncs to wait/gap.
+- Neon-only **Warden Lane Sweep** after freight (~38–56%): amber telegraph, soft speed/hurt bite, center line stays open half the cycle. REACH skipped.
+
+Hard-refresh `?v=434`.
+
+---
+
 ## 2026-08-31 — Web v432: killNova gh-02 parity — Gauntlet COMPLETE
 
 TM combat bar WON at R17. Full Gauntlet Loop objective achieved.

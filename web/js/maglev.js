@@ -2,6 +2,8 @@
  * Prison freight maglev — timed crossing.
  * v407: real gap (full road clears), visible motion.
  * v412: dress the same junction (gantry, freight silhouette, wet cue, haze).
+ * v434: prison freight yard ID — container codes, WARDEN FREIGHT board, approach chevrons.
+ * v435: approach / gap / hit audio stings (WebAudio; timing unchanged).
  * Hit volumes / wait-red / gap-green logic unchanged.
  */
 (function () {
@@ -85,6 +87,36 @@
     var c2 = new THREE.Mesh(g.crateSm, steel);
     c2.position.set(2.8, CAR_Y * 0.52 + 0.55, -0.6);
     body.add(c2);
+    // v434: prison container stencil (readable from chase)
+    var codes = ['WRDN-03', 'WRDN-07', 'SEP-12', 'PAROLE', 'HOLD-9'];
+    var cv = document.createElement('canvas');
+    cv.width = 256; cv.height = 64;
+    var cx = cv.getContext('2d');
+    cx.fillStyle = '#0a0c10';
+    cx.fillRect(0, 0, 256, 64);
+    cx.strokeStyle = '#ff2d55';
+    cx.lineWidth = 4;
+    cx.strokeRect(4, 4, 248, 56);
+    cx.fillStyle = '#ffe66d';
+    cx.font = 'bold 28px monospace';
+    cx.textAlign = 'center';
+    cx.textBaseline = 'middle';
+    cx.fillText(codes[i % codes.length], 128, 32);
+    var tex = new THREE.CanvasTexture(cv);
+    tex.needsUpdate = true;
+    if (tex.generateMipmaps != null) tex.generateMipmaps = false;
+    var stencil = new THREE.Mesh(
+      new THREE.PlaneGeometry(CAR_X * 0.72, 1.6),
+      new THREE.MeshBasicMaterial({
+        map: tex, transparent: true, depthWrite: false, fog: false,
+      })
+    );
+    stencil.position.set(0, 0.4, CAR_Z * 0.51);
+    body.add(stencil);
+    var stencilB = stencil.clone();
+    stencilB.position.z = -CAR_Z * 0.51;
+    stencilB.rotation.y = Math.PI;
+    body.add(stencilB);
   }
 
   function addJunctionDress(group, pt, tan, side, roadYaw) {
@@ -180,6 +212,53 @@
       haze.rotation.y = roadYaw + Math.PI / 2;
       group.add(haze);
     }
+
+    // v434: WARDEN FREIGHT overhead board (off asphalt, hung on gantry)
+    var boardC = document.createElement('canvas');
+    boardC.width = 512; boardC.height = 128;
+    var bcx = boardC.getContext('2d');
+    bcx.fillStyle = '#101018';
+    bcx.fillRect(0, 0, 512, 128);
+    bcx.fillStyle = '#ff2d55';
+    bcx.fillRect(0, 0, 512, 10);
+    bcx.fillRect(0, 118, 512, 10);
+    bcx.fillStyle = '#f2e9e4';
+    bcx.font = 'bold 42px monospace';
+    bcx.textAlign = 'center';
+    bcx.textBaseline = 'middle';
+    bcx.fillText('WARDEN FREIGHT', 256, 48);
+    bcx.fillStyle = '#00e5ff';
+    bcx.font = 'bold 28px monospace';
+    bcx.fillText('CLEARANCE · WAIT THE GAP', 256, 92);
+    var boardTex = new THREE.CanvasTexture(boardC);
+    boardTex.needsUpdate = true;
+    if (boardTex.generateMipmaps != null) boardTex.generateMipmaps = false;
+    var board = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 4.5),
+      new THREE.MeshBasicMaterial({
+        map: boardTex, transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+      })
+    );
+    board.position.copy(pt).addScaledVector(tan, 0);
+    board.position.y = pt.y + 13.2;
+    board.rotation.y = roadYaw + Math.PI;
+    group.add(board);
+
+    // Approach chevrons (shoulders only — never full-width brick)
+    var chevMat = new THREE.MeshBasicMaterial({
+      color: 0xffe66d, transparent: true, opacity: 0.55, depthWrite: false,
+    });
+    for (var ch = 0; ch < 5; ch++) {
+      var chev = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.06, 0.55), chevMat);
+      chev.position.copy(pt).addScaledVector(tan, -22 - ch * 4.2);
+      chev.position.addScaledVector(side, (ch % 2 ? 1 : -1) * 9.2);
+      chev.position.y = pt.y + 0.07;
+      chev.rotation.y = roadYaw + (ch % 2 ? 0.4 : -0.4);
+      group.add(chev);
+    }
+
+    // Keep gantry strip for blocked sync
+    group.userData.gantryStrip = strip;
   }
 
   GAME.maglev = {
@@ -341,6 +420,8 @@
         warned: false,
         gapSaid: false,
         hitCd: 0,
+        // Structural audio probe (one approach + one gap per sync; hit ≤1 per hitCd)
+        audioProbe: { approach: 0, gap: 0, hit: 0 },
       };
     },
 
@@ -363,6 +444,8 @@
         ml.phase = 0;
         if (ctx.toast) ctx.toast('FREIGHT AHEAD — WAIT THE GAP', 2.8, 2);
         ml.warned = true;
+        if (GAME.sfx && GAME.sfx.maglevApproach) GAME.sfx.maglevApproach();
+        if (ml.audioProbe) ml.audioProbe.approach = (ml.audioProbe.approach | 0) + 1;
       }
       if (ml.mode === 'wall') {
         ml.phase = mod(ml.phase + 8 * dt, CAR_PITCH);
@@ -371,6 +454,8 @@
           ml.phase = 40;
           if (ctx.toast) ctx.toast('GAP — GO', 1.8, 2);
           ml.gapSaid = true;
+          if (GAME.sfx && GAME.sfx.maglevGap) GAME.sfx.maglevGap();
+          if (ml.audioProbe) ml.audioProbe.gap = (ml.audioProbe.gap | 0) + 1;
         }
       } else if (ml.mode === 'gap') {
         ml.phase = 40;
@@ -395,6 +480,10 @@
       var lampCol = blocked ? 0xff2d55 : 0x39ff14;
       var pulse = 1 + 0.12 * Math.sin((ml.modeT || 0) * 8);
       ml.modeT = (ml.modeT || 0) + dt;
+      if (ml.group && ml.group.userData && ml.group.userData.gantryStrip && ml.group.userData.gantryStrip.material) {
+        ml.group.userData.gantryStrip.material.color.setHex(blocked ? 0xff2d55 : 0xffb347);
+        ml.group.userData.gantryStrip.material.opacity = blocked ? 0.95 : 0.7;
+      }
       for (i = 0; i < ml.lamps.length; i++) {
         if (ml.lamps[i] && ml.lamps[i].material) {
           ml.lamps[i].material.color.setHex(lampCol);
@@ -444,6 +533,8 @@
           if (isPlayer && ml.hitCd > 0) return;
           if (isPlayer) {
             ml.hitCd = 0.55;
+            if (GAME.sfx && GAME.sfx.maglevHit) GAME.sfx.maglevHit();
+            if (ml.audioProbe) ml.audioProbe.hit = (ml.audioProbe.hit | 0) + 1;
             if (ctx.hurtPlayer) ctx.hurtPlayer(28, car.mesh.position, 'maglev');
             if (ctx.toast) ctx.toast('FREIGHT HIT', 0.9, 2);
             body.speed *= 0.35;

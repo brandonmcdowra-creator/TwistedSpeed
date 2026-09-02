@@ -82,6 +82,80 @@
     var until = now + (extra != null ? extra : 2.8);
     state._corridorQuietUntil = Math.max(state._corridorQuietUntil || 0, until);
   }
+  function tickWardenScript(dt) {
+    var p = state.player;
+    if (!p || state.mode !== 'race') return;
+    var mapId = (state.mapDef && state.mapDef.id) || state.meta.mapId || '';
+    var theme = state.mapDef && state.mapDef.theme;
+    // Neon only — sepulcher / city; skip coast/REACH
+    if (theme === 'coast') return;
+    if (mapId === 'reach' || mapId === 'coast') return;
+    var script = cfg.wardenScript;
+    if (!script || !script.gates) return;
+    state._wardenBeats = state._wardenBeats || [];
+    if (state._wardenBeats.length >= script.gates.length) return;
+    var stage = state.meta.stage | 0;
+    var bucket = stage <= 4 ? 'early' : (stage <= 9 ? 'mid' : 'late');
+    var lines = (script.buckets && script.buckets[bucket]) || script.buckets.early;
+    var next = state._wardenBeats.length;
+    var gate = script.gates[next];
+    var prog = p.progress || 0;
+    if (prog < gate) return;
+    // Don't fire in lane-sweep window for gates that might land there — gates already avoid 0.4–0.55
+    if (prog >= 0.92) return; // ceremony owns tail
+    // Priority 0 — lose to combat
+    if (state.msgT > 0) return;
+    if (combatChannelBusy && combatChannelBusy()) return;
+    if (wreckBusy && wreckBusy()) return;
+    var now = state.raceTime || 0;
+    if (state._lastCombatToastT != null && (now - state._lastCombatToastT) < 1.6) return;
+    // Also check if last toast was special/wreck via helpers if available
+    if (typeof isSpecialToast === 'function' && isSpecialToast(state.msg) && state.msgT > 0) return;
+
+    var line = lines[next] || lines[lines.length - 1];
+    if (next === 1 && state.activeSalvage && script.salvageBeat2) {
+      line = script.salvageBeat2;
+    }
+    toast(line, 2.0, 0);
+    state._wardenBeats.push(gate);
+    state._lastWardenBeatT = state.raceTime || 0;
+  }
+
+  /** P2.2 — district fiction placard (own HUD channel; never toast()). */
+  function tickDistrictChips(dt) {
+    var p = state.player;
+    if (!p || state.mode !== 'race') return;
+    // Decay active placard
+    if (state._districtChip && state._districtChip.t > 0) {
+      state._districtChip.t = Math.max(0, state._districtChip.t - dt);
+      if (state._districtChip.t <= 0) state._districtChip = null;
+    }
+    var mapId = (state.mapDef && state.mapDef.id) || state.meta.mapId || '';
+    var theme = state.mapDef && state.mapDef.theme;
+    if (theme === 'coast') return;
+    if (mapId === 'reach' || mapId === 'coast') return;
+    var list = cfg.sepulcherDistricts;
+    if (!list || !list.length) return;
+    if (state._districtIdx == null) state._districtIdx = 0;
+    if (state._districtIdx >= list.length) return;
+    var next = list[state._districtIdx];
+    if (!next) return;
+    var prog = p.progress || 0;
+    if (prog < next.gate) return;
+    if (prog >= 0.92) return;
+    // Defer (don't consume) if a warden beat landed recently — keeps the district
+    var now = state.raceTime || 0;
+    if (state._lastWardenBeatT != null && (now - state._lastWardenBeatT) < 2.5) return;
+    state._districtChip = {
+      name: next.name,
+      code: next.code,
+      tag: next.tag || '',
+      t: 3.5,
+      maxT: 3.5,
+    };
+    state._districtIdx = state._districtIdx + 1;
+  }
+
   function scrapFromWreckToast(t) {
     var m = /(\d+)\s*SCRAP/i.exec(t || '');
     return m ? (parseInt(m[1], 10) || 0) : 0;
@@ -181,6 +255,7 @@
     state.msg = t;
     state.msgT = d;
     state._toastPri = pri;
+    if (pri >= 2) state._lastCombatToastT = state.raceTime || 0;
     // Hunter/special/wreck leave a corridor quiet tail so mid-void doesn't spam (v300)
     if (isHunterToast(t)) extendCorridorQuiet(Math.max(d, 1.4) + 2.6);
     else if (isWreckToast(t) || isSpecialToast(t)) extendCorridorQuiet(Math.max(d, 1.0) + 1.2);
@@ -289,6 +364,7 @@
       mapId: 'sepulcher',
       difficulty: 'adventurous',
       quality: 'high', // Wave 9: low | high
+      salvage: null,
     };
   }
   function loadMeta() {
@@ -310,6 +386,7 @@
       var mig = { easy: 'chill', normal: 'adventurous', hard: 'brutal' };
       if (mig[m.difficulty]) m.difficulty = mig[m.difficulty];
       if (!cfg.difficulties[m.difficulty]) m.difficulty = 'adventurous';
+      m.salvage = m.salvage || null;
       return m;
     } catch (e) { return defaultMeta(); }
   }
@@ -330,6 +407,12 @@
     state.meta.quality = nq;
     saveMeta();
     applyQualityFromMeta();
+    if (state.debris && GAME.debris && GAME.debris.setLow) {
+      GAME.debris.setLow(state.debris, nq === 'low');
+    }
+    if (state.streaks && GAME.streaks && GAME.streaks.setLow) {
+      GAME.streaks.setLow(state.streaks, nq === 'low');
+    }
     if (particles) {
       if (nq === 'low' && particles.rainStop) particles.rainStop();
       else if (nq === 'high' && particles.rainStart && state.mode === 'race' && !state._mapOverview) {
@@ -1231,6 +1314,14 @@
     (state.hazards || []).forEach(function (h) { kill(h.mesh); });
     if (GAME.maglev && GAME.maglev.clear) GAME.maglev.clear(state.maglev, scene);
     state.maglev = null;
+    if (GAME.wardenLane && GAME.wardenLane.clear) GAME.wardenLane.clear(state.wardenLane, scene);
+    state.wardenLane = null;
+    if (GAME.scrapLine && GAME.scrapLine.clear) GAME.scrapLine.clear(state.scrapLine, scene);
+    state.scrapLine = null;
+    if (GAME.debris && GAME.debris.clear) GAME.debris.clear(state.debris, scene);
+    state.debris = null;
+    if (GAME.streaks && GAME.streaks.clear) GAME.streaks.clear(state.streaks, scene);
+    state.streaks = null;
     (state.projectiles || []).forEach(function (pr) {
       recycleProjectileMesh(pr.mesh);
     });
@@ -1383,6 +1474,27 @@
     state.hazards = makeHazards(state.path, state.meta.stage);
     if (GAME.maglev && GAME.maglev.spawn) {
       state.maglev = GAME.maglev.spawn(scene, state.path, state.mapDef);
+    }
+    if (GAME.wardenLane && GAME.wardenLane.spawn) {
+      state.wardenLane = GAME.wardenLane.spawn(scene, state.path, state.mapDef);
+    }
+    if (GAME.scrapLine && GAME.scrapLine.spawn) {
+      state.scrapLine = GAME.scrapLine.spawn(scene, state.path, state.mapDef, {
+        roadHalf: state.roadHalf || cfg.drive.roadHalf || 11.5,
+        stage: state.meta.stage,
+      });
+    }
+    if (GAME.debris && GAME.debris.create) {
+      state.debris = GAME.debris.create(scene);
+      if (state.debris && GAME.debris.setLow) {
+        GAME.debris.setLow(state.debris, GAME.qualityLevel === 'low');
+      }
+    }
+    if (GAME.streaks && GAME.streaks.create) {
+      state.streaks = GAME.streaks.create(scene);
+      if (state.streaks && GAME.streaks.setLow) {
+        GAME.streaks.setLow(state.streaks, GAME.qualityLevel === 'low');
+      }
     }
     if (hasMutator('last_mile')) {
       // LAST MILE (Night 7): finish stretch is mean — not a label
@@ -1552,11 +1664,38 @@
     state.runKills = 0;
     state.finishPlace = null;
     state.partsRoll = [];
+    state.runSalvage = [];
+    state.salvageOffer = null;
+    state.activeSalvage = null;
+    // Salvage rig — bolt armed part at race start (P1.3 v438)
+    if (state.meta.salvage && state.meta.salvage.partId && state.player) {
+      var salv = state.meta.salvage;
+      var sp = salv.partId;
+      var pSalv = state.player;
+      state.activeSalvage = { partId: sp, fromCar: salv.fromCar, name: salv.name };
+      if (sp === 'injector') {
+        pSalv.nitro = pSalv.nitroMax != null ? pSalv.nitroMax : cfg.nitro.capacity;
+        pSalv._salvageNitroRegen = 1.25;
+      } else if (sp === 'hotFeed') {
+        pSalv.specialCd = 0;
+        pSalv.mul.specialCool = (pSalv.mul.specialCool || 1) * 1.25;
+      } else if (sp === 'tombPlate') {
+        pSalv.maxShield = Math.max(pSalv.maxShield || 0, 25);
+        pSalv.shield = Math.max(pSalv.shield || 0, 25);
+      }
+      var salvToast = 'SALVAGE BOLTED · ' + (salv.name || sp)
+        + (salv.fromCar ? ' (' + salv.fromCar + ')' : '');
+      state.meta.salvage = null;
+      saveMeta();
+      // Defer toast until after map identity banner so it isn't stomped (v438)
+      state._salvageBoltedToast = salvToast;
+    }
     state.lap = 1;
     state.laps = 1; // point-to-point — no multi-lap
     state.pointToPoint = true;
     state.hostile = !!hasMutator('warden_sweep');
     state.camShake = 0;
+    state.smashKick = 0;
     state.camMode = state.camMode || 'chase';
     state._packReToastOnce = false;
     state._openGraceEnded = false;
@@ -1574,6 +1713,11 @@
     state._ramDmgWin = null;
     state._inDmgWin = null;
     state._toastQueue = [];
+    state._wardenBeats = [];
+    state._districtIdx = 0;
+    state._districtChip = null;
+    state._lastWardenBeatT = null;
+    state._lastCombatToastT = null;
     state._lastWreckT = null;
     state._corridorQuietUntil = 0;
     state._lastCorridorToastT = null;
@@ -1598,6 +1742,10 @@
     toast((mapDef.name || 'COURSE') + ' · ' + themeTag, 2.0, 1);
     // First 10s: queue a short drive hint so new players aren't stuck staring (v308)
     state._toastQueue = state._toastQueue || [];
+    if (state._salvageBoltedToast) {
+      state._toastQueue.push({ t: state._salvageBoltedToast, d: 2.2, pri: 1 });
+      state._salvageBoltedToast = null;
+    }
     state._toastQueue.push({ t: 'WASD drive  ·  Space drift fills NITRO  ·  Q burn', d: 1.8, pri: 0 });
     state._startBannerT = 2.5;
     state._raceEngineKick = true;
@@ -1780,6 +1928,32 @@
       }
     }
 
+    state.salvageOffer = null;
+    var salvList = state.runSalvage || [];
+    if (salvList.length > 0) {
+      var lastId = salvList[salvList.length - 1];
+      var parts = (cfg.salvage && cfg.salvage.parts) || {};
+      var offer = null;
+      for (var pk in parts) {
+        if (parts[pk].fromClass && parts[pk].fromClass.indexOf(lastId) >= 0) { offer = parts[pk]; break; }
+      }
+      if (offer) {
+        var fromName = lastId.toUpperCase();
+        if (cfg.cars) {
+          for (var csi = 0; csi < cfg.cars.length; csi++) {
+            if (cfg.cars[csi].id === lastId) {
+              fromName = String(cfg.cars[csi].name || lastId).toUpperCase();
+              break;
+            }
+          }
+        }
+        state.salvageOffer = {
+          partId: offer.id, name: offer.name, desc: offer.desc, fromCar: fromName,
+          cost: (cfg.salvage.cost | 0) || 60,
+        };
+      }
+    }
+
     if (won) {
       state.runScrap += 40 + state.meta.stage * 12;
       state.meta.totalWins++;
@@ -1926,12 +2100,15 @@
       }
       if (amt > tRoom) amt = tRoom;
     }
+    var shieldBefore = p.shield;
     var shieldHit = 0;
     if (p.shield > 0) {
       shieldHit = Math.min(p.shield, amt);
       p.shield -= shieldHit;
       amt -= shieldHit;
     }
+    var fullyAbsorbed = shieldHit > 0 && amt <= 0;
+    var brokeShield = shieldHit > 0 && shieldBefore > 0 && p.shield <= 0 && amt > 0;
     // v354: juice even when shield eats the hit (was silent return)
     var felt = shieldHit + Math.max(0, amt);
     if (felt <= 0) return;
@@ -1943,7 +2120,21 @@
     p.inv = cfg.combat.invuln;
     state.camShake = Math.max(state.camShake, 0.22 + felt * 0.012);
     state.hitFlash = Math.min(1.2, (state.hitFlash || 0) + 0.4 + felt * 0.015);
-    if (GAME.sfx) GAME.sfx.hurt();
+    if (fullyAbsorbed) {
+      state.shieldAbsorbFlash = Math.max(state.shieldAbsorbFlash || 0, 0.4);
+      if (GAME.sfx) {
+        if (GAME.sfx.shieldAbsorb) GAME.sfx.shieldAbsorb();
+        else GAME.sfx.hurt();
+      }
+    } else if (brokeShield) {
+      state.shieldBreakFlash = 0.45;
+      if (GAME.sfx) {
+        if (GAME.sfx.shieldBreak) GAME.sfx.shieldBreak();
+        else GAME.sfx.hurt();
+      }
+    } else if (GAME.sfx) {
+      GAME.sfx.hurt();
+    }
     // Gated under-fire toast so return fire reads on HUD
     // v356: longer gate so UNDER FIRE doesn't chatter over wreck/warden
     if (kind !== 'ram' && (!p._underFireToastT || p._underFireToastT <= 0)) {
@@ -1964,7 +2155,13 @@
         p.pos.add(tmpV);
       }
     }
-    if (particles) particles.sparks(p.pos.clone().setY(p.pos.y + 0.5), tmpV);
+    if (particles) {
+      if (fullyAbsorbed && particles.shieldAbsorb) {
+        particles.shieldAbsorb(p.pos.clone().setY(p.pos.y + 0.5));
+      } else {
+        particles.sparks(p.pos.clone().setY(p.pos.y + 0.5), tmpV);
+      }
+    }
     if (p.hp <= 0) {
       p.hp = 0;
       if (particles) particles.explosion(p.pos.clone(), true);
@@ -2315,6 +2512,11 @@
       var drop = 14 + state.meta.stage * 3;
       state.runScrap += drop;
       state.player.kills++;
+      state.runSalvage = state.runSalvage || [];
+      if (r.defId) {
+        if (state.runSalvage.indexOf(r.defId) < 0) state.runSalvage.push(r.defId);
+        if (state.runSalvage.length > 3) state.runSalvage.shift();
+      }
       var killN = state.player.kills | 0;
       // Kill beat juice — short inv so a same-frame RAM trade doesn't delete the glory (v292/v359)
       if (state.player && state.player.hp > 0) {
@@ -2818,6 +3020,8 @@
   function updateRace(dt) {
     state.raceTime += dt;
     if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 2.8);
+    if (state.shieldAbsorbFlash > 0) state.shieldAbsorbFlash = Math.max(0, state.shieldAbsorbFlash - dt);
+    if (state.shieldBreakFlash > 0) state.shieldBreakFlash = Math.max(0, state.shieldBreakFlash - dt);
     if (state.muzzleFlash > 0) state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 4.0);
     if (state.firingMg > 0) state.firingMg = Math.max(0, state.firingMg - dt);
     if (state.hitDirT > 0) state.hitDirT = Math.max(0, state.hitDirT - dt);
@@ -2873,6 +3077,9 @@
     }
     var p = state.player;
     if (!p) return;
+    if (p._specialWindup > 0) state._specialHudState = 'charging';
+    else if (p.specialCd > 0) state._specialHudState = 'cooldown';
+    else state._specialHudState = 'ready';
     // Soft-lock guard: any path that zeros HP must land results (v322)
     if (p.hp <= 0 && !p.finished) {
       p.hp = 0;
@@ -2968,7 +3175,7 @@
         particles.exhaustFlame(exPos.clone().addScaledVector(tmpV2, -0.28), tmpV);
       }
     } else {
-      p.nitro = Math.min(nitroMax, p.nitro + cfg.nitro.regen * (p.mul.nitroRegen || 1) * dt);
+      p.nitro = Math.min(nitroMax, p.nitro + cfg.nitro.regen * (p.mul.nitroRegen || 1) * (p._salvageNitroRegen || 1) * dt);
       // Cool while not on nitro — extra dump when not holding fire so Eye can end ~8s after a fight.
       // Never use I.pressed here: that eats rocket/mine edges before the fire block below.
       var heatCool = cfg.heat.cool * (p.mul.heatCool || 1) * (p._mutHeatCool || 1);
@@ -3103,8 +3310,9 @@
 
     // Hard snap ONLY if you're really off the ribbon in XZ — never teleport to progress
     // Wave 3: no void tug while nearest is a Y-fold pick
-    var voidHard = !nearFolded && isFinite(ribbonLat) && ribbonLat > 28;
-    var voidSoft = !nearFolded && isFinite(ribbonLat) && ribbonLat > 18 && !voidHard;
+    // v433: thresholds were 28/18 — canyon faces ~roadHalf+openEdge; cars clipped walls
+    var voidHard = !nearFolded && isFinite(ribbonLat) && ribbonLat > 15;
+    var voidSoft = !nearFolded && isFinite(ribbonLat) && ribbonLat > 12.5 && !voidHard;
     var steeringHard = Math.abs(p.steer) >= 0.28;
     var progAgree = near && Math.abs((near.progress || 0) - progHint) < 0.05;
     if (path && path.curve && voidHard && near && near.point && progAgree) {
@@ -3183,6 +3391,8 @@
 
     // Place hysteresis — don't flip P every second (v280/v281 stickier)
     updateDisplayPlace(dt);
+    tickWardenScript(dt);
+    tickDistrictChips(dt);
 
     // Approach finish warning + ceremony build (Wave ∞)
     if (!state._finishWarned && p.progress >= 0.88) {
@@ -3318,6 +3528,18 @@
       // v346: only treat as "driving out" when steer matches lateral AND not first-curve soft
       var steerOut = (Math.abs(p.steer) > 0.55 && Math.sign(p.steer) * Math.sign(latEdge || 1) > 0);
       var openSoft = (p.progress != null && p.progress < 0.22) ? 0.15 : 1;
+      // Curb grind — sparks + grit off the outer flank while scrubbing raised (v452)
+      p._scrapeFxT = (p._scrapeFxT || 0) - dt;
+      if (p._scrapeFxT <= 0 && Math.abs(p.speed) > 9) {
+        p._scrapeFxT = onLip ? 0.11 : 0.18;
+        var sgnE = Math.sign(latEdge || 1);
+        var cpt = tmpV2.set(
+          p.pos.x + sideEdge.x * sgnE * 1.1, p.pos.y + 0.3, p.pos.z + sideEdge.z * sgnE * 1.1
+        );
+        if (particles && particles.sparks && onLip) particles.sparks(cpt.clone());
+        if (state.debris && GAME.debris && GAME.debris.puff) GAME.debris.puff(state.debris, cpt, onLip ? 0.55 : 0.8);
+        state.smashKick = Math.max(state.smashKick || 0, 0.1);
+      }
       if (onLip) {
         if (openSoft < 1) {
           maxSp = Math.min(maxSp, 52);
@@ -3508,6 +3730,42 @@
     p.pos.x += tmpV.x * p.speed * dt + tmpV2.x * p.slip * dt;
     p.pos.z += tmpV.z * p.speed * dt + tmpV2.z * p.slip * dt;
 
+    // Hard rail after integrate — never tunnel sidewalk into canyon glass (v433)
+    if (near && near.tangent && !nearFolded) {
+      var nearAfter = world.nearest(p.pos, p.progress != null ? p.progress : progHint);
+      if (nearAfter && isFinite(nearAfter.lateralDist) && nearAfter.tangent) {
+        var latA = nearAfter.lateralDist;
+        var maxBodyLat = rh + curbW + 0.45;
+        var wallFace = rh + 4.5;
+        maxBodyLat = Math.min(maxBodyLat, wallFace - 3.2);
+        if (Math.abs(latA) > maxBodyLat) {
+          var sideA = new THREE.Vector3(-nearAfter.tangent.z, 0, nearAfter.tangent.x);
+          var overA = Math.abs(latA) - maxBodyLat;
+          var sgnA = Math.sign(latA || 1);
+          p.pos.x -= sideA.x * sgnA * overA;
+          p.pos.z -= sideA.z * sgnA * overA;
+          p.slip *= 0.15;
+          p.speed *= Math.max(0.72, 1 - 1.1 * dt);
+          if (overA > 0.8) {
+            state.camShake = Math.max(state.camShake || 0, 0.1);
+            if (GAME.sfx && GAME.sfx.scrape) GAME.sfx.scrape(0.15);
+          }
+          // Wall grind — sparks at the contact flank (v452)
+          p._scrapeFxT = (p._scrapeFxT || 0) - dt;
+          if (p._scrapeFxT <= 0 && Math.abs(p.speed) > 10) {
+            p._scrapeFxT = 0.07;
+            var cptW = tmpV2.set(p.pos.x + sideA.x * sgnA * 1.15, p.pos.y + 0.35, p.pos.z + sideA.z * sgnA * 1.15);
+            if (particles && particles.sparks) particles.sparks(cptW.clone());
+            state.smashKick = Math.max(state.smashKick || 0, 0.12);
+          }
+          near = nearAfter;
+          ribbonLat = nearAfter.dist;
+          ribbonDist = ribbonLat;
+          nearFolded = false;
+        }
+      }
+    }
+
     // Ride height — ignore fold picks at a different altitude (mid-race camera freak)
     // v393: 7-sample look-ahead + grade grade damp — climb less faceted
     var groundY = p.pos.y;
@@ -3537,7 +3795,7 @@
             if (span > 1) gradeY = (yFar.y - yNear.y) / span;
           }
         }
-        groundY = yBlend + 0.2;
+        groundY = yBlend + 0.72; // v433: wheels clear asphalt/sheen
       }
     }
     // Rate-limit grade so pitch/ride don't jump on control-point kinks
@@ -3564,8 +3822,15 @@
     if (!isFinite(groundY)) groundY = p.pos.y;
     // Double-smooth: target then body (v393: softer on steep grade to kill facet)
     if (p._groundYSm == null || !isFinite(p._groundYSm)) p._groundYSm = groundY;
+    // v433: coast hills left chassis buried when damp lagged
+    var yGapPre = groundY - p.pos.y;
+    if (!nearFolded && Math.abs(yGapPre) > 1.15) {
+      p._groundYSm = groundY;
+      p.pos.y += Math.sign(yGapPre) * Math.min(Math.abs(yGapPre), 36 * dt);
+    }
     p._groundYSm = U.damp(p._groundYSm, groundY, 18 + Math.min(8, Math.abs(gradeY) * 32), dt);
     var yDamp = 14 + Math.min(10, Math.abs(gradeY) * 36);
+    if (!nearFolded && Math.abs(groundY - p.pos.y) > 0.55) yDamp += 22;
     p.pos.y = U.damp(p.pos.y, p._groundYSm, yDamp, dt);
     if (!isFinite(p.pos.y)) p.pos.y = groundY;
     if (!isFinite(p.pos.x)) p.pos.x = near.point.x;
@@ -3584,19 +3849,44 @@
     var bankT = p.steer * (p.drifting ? (D.bankDrift || 0.28) : (D.bankAmount || 0.16));
     bankT += U.clamp(p.slip / 40, -0.12, 0.12);
     p.mesh.rotation.z = U.damp(p.mesh.rotation.z || 0, bankT, 9, dt);
-    // Nitro exhaust cones on the mesh — dual flicker when active
+    // Exhaust heat — always lit while the foot is down (amber cruise), cyan blowtorch on nitro (v447)
+    var thrNow = I.throttle();
+    p._thrSm = U.damp(p._thrSm != null ? p._thrSm : thrNow, thrNow, 6, dt);
+    var spNorm = Math.abs(p.speed) / Math.max(1, D.maxSpeed * (p.mul.speed || 1));
     function pulseFlame(nf, phase) {
-      if (!nf) return;
-      nf.visible = !!p.nitroActive;
-      if (!p.nitroActive) return;
+      if (!nf || !nf.scale) return;
+      var cruise = p._thrSm * 0.6 + spNorm * 0.4;
+      nf.visible = p.nitroActive || cruise > 0.08;
+      if (!nf.visible) return;
       var flick = 0.75 + 0.45 * Math.sin((state.raceTime || 0) * 52 + phase + p.speed);
-      nf.scale.set(flick * 0.85, flick * 1.5, flick * 0.9);
-      if (nf.material && nf.material.opacity != null) {
-        nf.material.opacity = 0.65 + Math.random() * 0.35;
+      if (p.nitroActive) {
+        nf.scale.set(flick * 0.85, flick * 1.5, flick * 0.9);
+        if (nf.material) {
+          nf.material.color.setHex(0x66f0ff);
+          if (nf.material.opacity != null) nf.material.opacity = 0.65 + Math.random() * 0.35;
+        }
+      } else {
+        var s = 0.35 + cruise * 0.45;
+        nf.scale.set(flick * s * 0.7, flick * s, flick * s * 0.7);
+        if (nf.material) {
+          nf.material.color.setHex(0xff7a2a);
+          if (nf.material.opacity != null) nf.material.opacity = 0.18 + cruise * 0.32 + (flick - 0.75) * 0.1;
+        }
       }
     }
     pulseFlame(p.mesh.userData.nitroFlame, 0);
     pulseFlame(p.mesh.userData.nitroFlame2, 2.1);
+    // Brake / lift-off taillight surge (v450) — damped so it blooms, not blinks
+    var tails = p.mesh.userData.tailMats;
+    if (tails && tails.length) {
+      var braking = I.brake() > 0.2 || (thrNow < 0.15 && spNorm > 0.35);
+      var surge = braking ? 2.0 : 1.0;
+      for (var tmi = 0; tmi < tails.length; tmi++) {
+        var tm = tails[tmi];
+        var baseE = (tm.userData && tm.userData.baseEmissive) || 3.5;
+        tm.emissiveIntensity = U.damp(tm.emissiveIntensity, baseE * surge, 12, dt);
+      }
+    }
     // Soft LED underglow — steady, slight speed breath (not a strobe)
     var ledBreath = 0.78 + 0.08 * Math.sin((state.raceTime || 0) * 2.2)
       + (p.nitroActive ? 0.1 : 0);
@@ -3726,6 +4016,55 @@
         hurtPlayer: hurtPlayer,
         hurtRival: hurtRival,
       });
+    }
+    if (GAME.wardenLane && GAME.wardenLane.update && state.wardenLane) {
+      GAME.wardenLane.update(state.wardenLane, dt, {
+        player: p,
+        rivals: state.rivals,
+        path: state.path,
+        roadHalf: cfg.drive.roadHalf,
+        toast: toast,
+        hurtPlayer: hurtPlayer,
+        hurtRival: hurtRival,
+      });
+    }
+    if (GAME.scrapLine && state.scrapLine) {
+      var scrapCtx = {
+        player: p,
+        path: state.path,
+        world: world,
+        particles: particles,
+        cfg: cfg,
+        state: state,
+        hurtPlayer: hurtPlayer,
+        debris: state.debris,
+        sfx: GAME.sfx,
+        camera: camera,
+      };
+      GAME.scrapLine.update(state.scrapLine, dt, scrapCtx);
+      GAME.scrapLine.collide(state.scrapLine, p, true, scrapCtx);
+      (state.rivals || []).forEach(function (rv) {
+        if (!rv.dead) GAME.scrapLine.collide(state.scrapLine, rv, false, scrapCtx);
+      });
+    }
+    if (GAME.debris && state.debris && GAME.debris.update) {
+      GAME.debris.update(state.debris, dt, {
+        player: p,
+        rivals: state.rivals,
+        camera: camera,
+        cfg: cfg,
+      });
+    }
+    if (GAME.streaks && state.streaks && GAME.streaks.update) {
+      GAME.streaks.update(state.streaks, dt, {
+        player: p,
+        camera: camera,
+        cfg: cfg,
+        camMode: state.camMode,
+      });
+    }
+    if (state.smashKick > 0) {
+      state.smashKick = Math.max(0, state.smashKick - dt / 0.5);
     }
     if (I.key('j') || I.key('z')) fireMg();
     if (I.pressed('k') || I.pressed('x')) fireRocket();
@@ -3973,13 +4312,19 @@
               // v390: named bone hit when target known
               var hitToast = 'DIRECT HIT';
               if (pr.type === 'bone') {
+                if (GAME.specials && GAME.specials.noteBoneHit) GAME.specials.noteBoneHit();
                 var bn = pr.boneName;
                 if (!bn && rv.defId && cfg.cars) {
                   for (var bi = 0; bi < cfg.cars.length; bi++) {
                     if (cfg.cars[bi].id === rv.defId) { bn = cfg.cars[bi].name; break; }
                   }
                 }
-                hitToast = bn ? ('BONE HIT · ' + String(bn).toUpperCase()) : 'BONE HIT';
+                var volley = state._boneVolley;
+                if (volley) {
+                  hitToast = 'BONE HARVEST · ' + volley.hits + '/' + volley.fired + ' HIT';
+                } else {
+                  hitToast = bn ? ('BONE HIT · ' + String(bn).toUpperCase()) : 'BONE HIT';
+                }
               }
               toast(hitToast, pr.type === 'bone' ? 0.95 : 0.6, pr.type === 'bone' ? 2 : 0);
             }
@@ -4169,8 +4514,15 @@
 
     // Rivals AI — path follow + rubber band + mixed weapons (open course)
     state.rivals.forEach(function (r, ri) {
-      // Corpse: tumble + secondary boom + smoke then hide (v359)
+      // Corpse: tumble + secondary boom + smoke → settled hulk (v441)
       if (r.dead) {
+        if (r._hulkSettled) {
+          if (r.mesh && !r._hulkHidden) {
+            r.mesh.position.copy(r.pos);
+            r.mesh.position.y = r.pos.y - 0.22;
+          }
+          return;
+        }
         if (r._corpseT != null && r._corpseT > 0) {
           r._corpseT -= dt;
           if (r._wreckBoomT != null && r._wreckBoomT > 0) {
@@ -4210,7 +4562,26 @@
             r.mesh.rotation.x = r._wreckPitch;
             r.mesh.position.y = r.pos.y + Math.sin(r._wreckPitch) * 0.35;
           }
-          if (r._corpseT <= 0 && r.mesh) r.mesh.visible = false;
+          if (r._corpseT <= 0 && !r._hulkSettled) {
+            r._hulkSettled = true;
+            r._wreckSpin = 0;
+            r._wreckPitch = 0.1 + Math.random() * 0.12;
+            r.yaw = (r.yaw || 0) + (Math.random() - 0.5) * 0.4;
+            if (r.mesh) {
+              r.mesh.visible = true;
+              r.mesh.position.copy(r.pos);
+              r.mesh.position.y = r.pos.y - 0.22;
+              if (GAME.vehicles.setYaw) GAME.vehicles.setYaw(r.mesh, r.yaw);
+              else r.mesh.rotation.y = r.yaw;
+              r.mesh.rotation.x = r._wreckPitch;
+              r.mesh.rotation.z = (Math.random() - 0.5) * 0.08;
+            }
+            if (GAME.scrapLine && GAME.scrapLine.registerHulk && state.scrapLine) {
+              var nearH = world && world.nearest ? world.nearest(r.pos, r.progress || 0) : null;
+              r._lat = nearH && isFinite(nearH.lateralDist) ? nearH.lateralDist : 0;
+              GAME.scrapLine.registerHulk(state.scrapLine, r);
+            }
+          }
         }
         return;
       }
@@ -4264,6 +4635,37 @@
         }
         // underglow stays off on rivals (set false above) — not a PointLight
         if (r.mesh && r.mesh.userData.headLight) r.mesh.userData.headLight.visible = true;
+        // Rival exhaust heat — the pack runs lit thrusters too (v456).
+        // Rivals are clones: Object3D.copy JSON-serialises userData, so the
+        // userData.nitroFlame refs are dead objects — find the live cones once.
+        if (r.mesh && !r._flames) {
+          r._flames = [];
+          r.mesh.traverse(function (c) {
+            if (c.isMesh && c.geometry && c.geometry.type === 'ConeGeometry' &&
+                Math.abs(Math.abs(c.rotation.x) - Math.PI) < 0.05 && c.position.z < -1.2) {
+              r._flames.push(c);
+            }
+          });
+          // Clones share the source material — give each rival its own so tint/opacity don't fight
+          r._flames.forEach(function (c) { if (c.material && c.material.clone) c.material = c.material.clone(); });
+        }
+        if (r._flames && r._flames.length) {
+          var rMax = cfg.drive.maxSpeed * ((r.mul && r.mul.speed) || 1);
+          var rSn = Math.abs(r.speed || 0) / Math.max(1, rMax);
+          var rHot = rSn > 0.3;
+          var rFl = 0.8 + 0.35 * Math.sin((state.raceTime || 0) * 47 + (r.pos.x || 0));
+          var rS = 0.32 + rSn * 0.42;
+          r._flames.forEach(function (nf) {
+            if (!nf || !nf.scale) return;
+            nf.visible = rHot;
+            if (!rHot) return;
+            nf.scale.set(rFl * rS * 0.7, rFl * rS, rFl * rS * 0.7);
+            if (nf.material) {
+              nf.material.color.setHex(r.nitroActive ? 0x66f0ff : 0xff7a2a);
+              if (nf.material.opacity != null) nf.material.opacity = 0.22 + rSn * 0.3;
+            }
+          });
+        }
       }
       // Path-first AI: face along ribbon so GLB nose stays correct; fire separately.
       var skill = r.skill != null ? r.skill : 0.7;
@@ -4469,9 +4871,19 @@
         r.pos.z -= sideNr.z * latR * pullAmtR * 0.7;
         r.speed *= 0.98;
       }
+      // Hard rail — rivals never tunnel into canyon (v433)
+      var maxRivalLat = D.roadHalf + 1.1;
+      if (rn.lateralDist != null && Math.abs(rn.lateralDist) > maxRivalLat) {
+        var sideHr = new THREE.Vector3(-rn.tangent.z, 0, rn.tangent.x);
+        var overR = Math.abs(rn.lateralDist) - maxRivalLat;
+        r.pos.x -= sideHr.x * Math.sign(rn.lateralDist || 1) * overR;
+        r.pos.z -= sideHr.z * Math.sign(rn.lateralDist || 1) * overR;
+        r.speed *= 0.96;
+        rn = world.nearest(r.pos, r.progress);
+      }
       r.progress = Math.max(r.progress || 0, rn.progress);
       if (r.progress > 0.97) r.speed *= 0.88;
-      r.pos.y = rn.point.y + 0.2;
+      r.pos.y = rn.point.y + 0.72; // v433: match player ride height
       r.mesh.position.copy(r.pos);
       // Always apply setYaw so baked GLB face stays correct
       if (GAME.vehicles.setYaw) GAME.vehicles.setYaw(r.mesh, r.yaw);
@@ -5500,6 +5912,25 @@
     }
   }
 
+  function trySalvage() {
+    var offer = state.salvageOffer;
+    if (!offer) return;
+    var cost = offer.cost | 0;
+    if ((state.meta.scrap | 0) < cost) {
+      if (GAME.sfx && GAME.sfx.deny) GAME.sfx.deny();
+      toast('NEED ' + cost + ' SCRAP', 1.0, 0);
+      return;
+    }
+    state.meta.scrap -= cost;
+    state.meta.salvage = {
+      partId: offer.partId, fromCar: offer.fromCar, name: offer.name,
+      armedNight: state.meta.stage | 0,
+    };
+    saveMeta();
+    if (GAME.sfx && GAME.sfx.confirm) GAME.sfx.confirm();
+    toast('ARMED · ' + offer.name, 1.4, 1);
+  }
+
   function tryBuy(idx) {
     var c = state.pendingChoices[idx];
     if (!c || c.maxed) { if (GAME.sfx) GAME.sfx.deny(); return; }
@@ -5537,11 +5968,16 @@
     if (I.pressed('1')) tryBuy(0);
     if (I.pressed('2')) tryBuy(1);
     if (I.pressed('3')) tryBuy(2);
+    if (I.pressed('4')) trySalvage();
     // Click upgrade chips or footer → garage (v309)
     if (I.pressed('click')) {
       var rp = hudPointer();
       var rh = state._resultsHit;
       if (rh) {
+        if (rh.salvage && hitRect(rp.x, rp.y, rh.salvage)) {
+          trySalvage();
+          return;
+        }
         var ci;
         for (ci = 0; ci < (rh.choices || []).length; ci++) {
           if (hitRect(rp.x, rp.y, rh.choices[ci])) {
@@ -5950,6 +6386,7 @@
         mb = Math.max(0, (sn - 0.28) * 0.44);
         if (state.firingMg > 0) mb += 0.1 + sn * 0.24;
         if ((state.camShake || 0) > 0.12) mb += 0.05;
+        if ((state.smashKick || 0) > 0) mb += state.smashKick * 0.55;
         mb = Math.min(0.52, mb);
       }
       postfx.setMotionBlur(mb);
@@ -6161,7 +6598,7 @@
           if (GAME.prepareMoneyShotFrame) GAME.prepareMoneyShotFrame();
         }, 200);
       }
-      console.log('[Twisted Speed] GLB + city props preload done');
+      if (/[?&]debug=1/.test(location.search)) console.log('[Twisted Speed] GLB + city props preload done');
     });
   });
 })();

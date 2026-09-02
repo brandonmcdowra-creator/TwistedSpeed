@@ -221,6 +221,27 @@ GAME.config = {
     specialEmpDisable: 3,
   },
 
+  salvage: {
+    cost: 60,
+    parts: {
+      injector: {
+        id: 'injector', name: 'STRIPPED INJECTOR',
+        desc: 'Full nitro at green · +25% nitro regen this night',
+        fromClass: ['needle', 'vesper'],
+      },
+      hotFeed: {
+        id: 'hotFeed', name: 'HOT FEED',
+        desc: 'Special charged at green · −25% special CD this night',
+        fromClass: ['marrow', 'razorback'],
+      },
+      tombPlate: {
+        id: 'tombPlate', name: 'TOMB PLATE',
+        desc: '+25 shield bolted at green (no generator needed)',
+        fromClass: ['mausoleum', 'choir'],
+      },
+    },
+  },
+
   // Legacy post-race quick upgrades (still work as global small bonuses)
   upgrades: {
     costBase: 30,
@@ -487,6 +508,63 @@ GAME.config = {
         liftCyan: 0.004, liftAmber: 0.014, vignette: 0.28, chromatic: 0.0005,
       },
     },
+  ],
+
+  /** P2.1 — progress-gated warden / parole broadcast (Neon only). */
+  wardenScript: {
+    gates: [0.02, 0.22, 0.38, 0.62, 0.86],
+    // skip 0.40–0.55 (lane sweep) and >0.92 (ceremony)
+    buckets: {
+      early: [ // nights 1–4
+        'WARDEN: CARGO ON THE ASPHALT — KEEP ROLLING',
+        'WARDEN: YOUR PLATE NUMBER IS NOTED',
+        'WARDEN: FREIGHT DOES NOT PRAY',
+        'PAROLE BOARD: ONE CLEAN NIGHT BUYS AIR',
+        'WARDEN: THE ARCH DOES NOT FORGIVE SLOW',
+      ],
+      mid: [ // 5–9
+        'WARDEN: YOU ARE NO LONGER CARGO',
+        'WARDEN: THE PACK TALKS ABOUT YOU',
+        'WARDEN: THAT SALVAGE SMELLS LIKE TROUBLE', // beat 2 can swap if activeSalvage
+        'PAROLE BOARD: THREAT INDEX RISING',
+        'WARDEN: FINISH OR BECOME FREIGHT',
+      ],
+      late: [ // 10–13
+        'PAROLE BOARD: YOUR FILE IS OPEN',
+        'WARDEN: THE CITY OWES YOU NOTHING',
+        'WARDEN: WEARING A DEAD MAN\'S PARTS — BOLD',
+        'PAROLE BOARD: ONE ARCH AND YOU BREATHE',
+        'WARDEN: RUN THE LAST MILE LIKE YOU MEAN IT',
+      ],
+    },
+    salvageBeat2: 'WARDEN: YOU\'RE WEARING A DEAD MAN\'S PLATE',
+  },
+
+  /** P1.4/v442 — Scrap Line + Wreck Wake dress (Neon). Soft hit params frozen. */
+  scrapLine: {
+    density: 1,
+    maxInstances: 400,
+    clearFrac: 0.44, // centre clear — do not tighten without a dedicated build
+    hitCd: 0.55,
+    hpChip: 3,
+    maxDress: 1900, // 3 picks × ~610 slots — must cover t 0.15–0.90, not run dry at 0.56
+    dressStep: 0.0011,
+    // Dress sits on the visible shoulder lip (0.92–1.87× roadHalf), past collidable 0.90 cap.
+  },
+
+  /** v442 — ballistic scrap + dust wake (InstancedMesh). */
+  debris: {
+    playerWake: 0.055, // twin rooster tails — pair per emit
+    rivalWake: 0.22,
+    speedNormGate: 0.45,
+  },
+
+  /** P2.2 — Sepulcher district fiction chips (Neon HUD placard; not toast). */
+  sepulcherDistricts: [
+    { gate: 0.10, name: 'INTAKE ROW', code: 'WRDN-03', tag: 'processing · no exit' },
+    { gate: 0.26, name: 'FREIGHT SEPULCHER', code: 'SEP-12', tag: 'wait the gap' },
+    { gate: 0.66, name: 'HOLDING TERRACES', code: 'HOLD-9', tag: 'stacking yard' },
+    { gate: 0.80, name: 'PAROLE MILE', code: 'PAROLE', tag: 'arch ahead' },
   ],
 
   models: {

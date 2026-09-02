@@ -1,0 +1,12 @@
+---
+description: Plan with Other Models; implement with Cursor Models
+alwaysApply: true
+---
+
+# Model workflow (director lock)
+
+For this project and as the standing preference for agent work here:
+
+1. **Planning / goal-setting / prioritization** — use higher-effort **Other Models** first (Claude Opus or Sonnet thinking-high/xhigh, GPT sol xhigh) via Task subagents before choosing what to build.
+2. **Implementation** — delegate to **Cursor Models** (Composer / Composer Fast) unless the work cannot be delegated (auth, live browser playtest, PR registration, or the planner already failed).
+3. On “keep going” / roadmap picks: plan first, then code. Do not invent parallel game trees.

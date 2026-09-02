@@ -23,6 +23,22 @@
  */
 (function () {
   var GAME = (window.GAME = window.GAME || {});
+  function _safeCanvasTex(canvas) {
+    if (!canvas || !(canvas.width > 0) || !(canvas.height > 0)) {
+      // Avoid WebGL texSubImage2D overload failures on empty canvases
+      canvas = document.createElement('canvas');
+      canvas.width = 2; canvas.height = 2;
+      var cx = canvas.getContext('2d');
+      if (cx) { cx.fillStyle = '#111'; cx.fillRect(0, 0, 2, 2); }
+    }
+    var tex = new THREE.CanvasTexture(canvas);
+    tex.generateMipmaps = false;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
   var U, C, M;
 
   /**
@@ -373,7 +389,10 @@
     this._buildRoad();
     this._sidewalkCount = 0;
     // Coast: no sidewalk slabs (raised band caused chase hop / lip tax on open flats)
-    if (this.theme !== 'coast') this._buildSidewalks();
+    if (this.theme !== 'coast') {
+      this._buildSidewalks();
+      this._buildShoulderDrift();
+    }
     this._buildEdgeAmbient();
     if (this.theme === 'coast') {
       // THE REACH — water + stacks, no neon canyon
@@ -403,7 +422,7 @@
     this.finishPos = curve.getPointAt(1).clone();
 
     scene.add(this.group);
-    if (typeof console !== 'undefined' && console.info) {
+    if (typeof console !== 'undefined' && console.info && /[?&]debug=1/.test(location.search)) {
       console.info('[World v332 theme=' + this.theme + ']', {
         pathLen: Math.round(this.path.length),
         roadHalf: this.roadHalf,
@@ -545,7 +564,7 @@
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
     }
-    var tex = new THREE.CanvasTexture(c);
+    var tex = _safeCanvasTex(c);
     tex.needsUpdate = true;
     var mat = new THREE.MeshBasicMaterial({
       map: tex,
@@ -590,10 +609,17 @@
     var gMid = (this.path && this.path.curve)
       ? this.path.curve.getPointAt(0.5)
       : new THREE.Vector3();
-    var ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(4200, 4200),
-      new THREE.MeshBasicMaterial({ color: col })
-    );
+    var isCity = !(mapDef && mapDef.theme === 'coast');
+    var groundMat = new THREE.MeshBasicMaterial({ color: col });
+    if (isCity) {
+      // v448: ash + grit so off-ribbon dirt reads as ground, not a coloured void
+      var gtex = this._groundTextures();
+      if (gtex) {
+        groundMat.map = gtex;
+        groundMat.color.setHex(0xffffff);
+      }
+    }
+    var ground = new THREE.Mesh(new THREE.PlaneGeometry(4200, 4200), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(gMid.x, -0.15, gMid.z);
     ground.userData.ignoreIntrusion = true;
@@ -624,6 +650,76 @@
       this.group.add(haze);
       this.buildings.push(haze);
     }
+  };
+
+  /** v448: canvas ash/grit tile for the void floor + shoulder drift (Neon). */
+  World.prototype._groundTextures = function () {
+    if (this._groundTex) return this._groundTex;
+    if (typeof document === 'undefined') return null;
+    var S = 256;
+    var c = document.createElement('canvas');
+    c.width = c.height = S;
+    var ctx = c.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = '#1a1512';
+    ctx.fillRect(0, 0, S, S);
+    // Soft ash blotches
+    for (var b = 0; b < 40; b++) {
+      var bx = (b * 97) % S, by = (b * 53) % S, br = 18 + (b * 13) % 40;
+      var gr = ctx.createRadialGradient(bx, by, 0, bx, by, br);
+      gr.addColorStop(0, 'rgba(46, 38, 32, 0.35)');
+      gr.addColorStop(1, 'rgba(46, 38, 32, 0)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(bx - br, by - br, br * 2, br * 2);
+    }
+    // Grit specks — warm scrap-yard grain
+    for (var i = 0; i < 6000; i++) {
+      var v = 30 + ((i * 23) % 44);
+      var warm = (i % 3 === 0) ? 10 : 0;
+      ctx.fillStyle = 'rgba(' + (v + warm) + ',' + (v - 4) + ',' + (v - 10) + ',' + (0.5 + (i % 4) * 0.12) + ')';
+      ctx.fillRect((i * 47) % S, (i * 89) % S, 1 + (i % 2), 1);
+    }
+    // Scattered pale fragments (bone-white chips catch the neon)
+    for (var k = 0; k < 90; k++) {
+      ctx.fillStyle = 'rgba(150, 140, 125, ' + (0.35 + (k % 3) * 0.15) + ')';
+      ctx.fillRect((k * 131) % S, (k * 71) % S, 2, 1 + (k % 2));
+    }
+    var tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(60, 60);
+    tex.anisotropy = 4;
+    if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+    this._groundTex = tex;
+    return tex;
+  };
+
+  /** v448: thin dirt drift hugging the asphalt edge — sand reclaiming the outer lane. */
+  World.prototype._buildShoulderDrift = function () {
+    var rh = this.roadHalf;
+    var tex = this._groundTextures();
+    var mat = new THREE.MeshBasicMaterial({
+      color: 0x8a7458,
+      map: tex || null,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    var self = this;
+    function strip(a, b, name) {
+      var geo = self._flankRibbonGeo(a, b, 0.03, 0.25);
+      if (!geo) return;
+      var mesh = new THREE.Mesh(geo, mat);
+      mesh.name = name;
+      mesh.userData.ignoreIntrusion = true;
+      mesh.userData.lod = 'building';
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 1;
+      self.group.add(mesh);
+      self.buildings.push(mesh);
+    }
+    strip(rh * 0.86, rh + 0.08, 'driftL');
+    strip(-(rh + 0.08), -rh * 0.86, 'driftR');
   };
 
   // ─── Road (ONLY solid on the driveline) ───────────────────────────────
@@ -675,7 +771,7 @@
       ctx.lineTo((s * 31 + 40) % S, S);
       ctx.stroke();
     }
-    var albedo = new THREE.CanvasTexture(c);
+    var albedo = _safeCanvasTex(c);
     albedo.wrapS = albedo.wrapT = THREE.RepeatWrapping;
     albedo.repeat.set(2.5, 8);
     albedo.needsUpdate = true;
@@ -699,7 +795,7 @@
       d[i + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
-    var tex = new THREE.CanvasTexture(c);
+    var tex = _safeCanvasTex(c);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(2, 2);
     tex.minFilter = THREE.LinearFilter;
@@ -744,7 +840,7 @@
       ctx.fillStyle = pg;
       ctx.fillRect(px - rad, py - rad, rad * 2, rad * 2);
     }
-    var spec = new THREE.CanvasTexture(c);
+    var spec = _safeCanvasTex(c);
     spec.wrapS = spec.wrapT = THREE.RepeatWrapping;
     spec.repeat.set(3.2, 11);
     spec.needsUpdate = true;
@@ -799,7 +895,7 @@
     punch.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = punch;
     ctx.fillRect(0, 0, S, S);
-    var tex = new THREE.CanvasTexture(c);
+    var tex = _safeCanvasTex(c);
     tex.minFilter = THREE.LinearFilter;
     tex.magFilter = THREE.LinearFilter;
     tex.needsUpdate = true;
@@ -947,6 +1043,9 @@
       depthWrite: false,
       blending: THREE.NormalBlending,
       side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
     });
     this._wetSheenMat = wetSheen;
     this._wetZoneMats = [];
@@ -972,14 +1071,14 @@
       );
       zMesh.rotation.x = -Math.PI / 2;
       zMesh.position.copy(zf.p);
-      zMesh.position.y = zf.p.y + 0.038;
+      zMesh.position.y = zf.p.y + 0.11;
       zMesh.rotation.z = -zf.yaw;
       zMesh.userData.isRoadSurface = true;
       zMesh.frustumCulled = true;
       this.group.add(zMesh);
     }
 
-    var sheenGeo = this._ribbonGeo(rh * 0.98, 0.035, 0.055);
+    var sheenGeo = this._ribbonGeo(rh * 0.98, 0.12, 0.055);
     if (sheenGeo) {
       var sheenMesh = new THREE.Mesh(sheenGeo, wetSheen);
       sheenMesh.userData.isRoadSurface = true;
@@ -1344,7 +1443,7 @@
       actx.stroke();
     }
 
-    var albedo = new THREE.CanvasTexture(ac);
+    var albedo = _safeCanvasTex(ac);
     albedo.wrapS = albedo.wrapT = THREE.RepeatWrapping;
     albedo.anisotropy = 4;
     if (albedo.colorSpace !== undefined) albedo.colorSpace = THREE.SRGBColorSpace;
@@ -1380,7 +1479,7 @@
         nctx.fillRect(x0 + ww - 3, y0, 3, hh);
       }
     }
-    var normal = new THREE.CanvasTexture(nc);
+    var normal = _safeCanvasTex(nc);
     normal.wrapS = normal.wrapT = THREE.RepeatWrapping;
 
     // ── Roughness: grout rougher, tile tops smoother ──
@@ -1393,7 +1492,7 @@
     for (var rgx = 0; rgx <= tileX; rgx++) rctx.fillRect(rgx * tw - 2, 0, 4, S);
     for (var rgy = 0; rgy <= tileY; rgy++) rctx.fillRect(0, rgy * th - 2, S, 4);
     noise(rctx, S, S, 25);
-    var rough = new THREE.CanvasTexture(rc);
+    var rough = _safeCanvasTex(rc);
     rough.wrapS = rough.wrapT = THREE.RepeatWrapping;
 
     this._swTex = { albedo: albedo, normal: normal, rough: rough, tileX: tileX, tileY: tileY };
@@ -1537,7 +1636,8 @@
       var wallDepth = dense ? 4.5 : 3.5;
       var halfD = wallDepth * 0.5;
       // v402: mid walls pushed out — chase +1.15 right offset was near-clipping giant faces
-      var openEdge = dense ? 2.2 : 3.6;
+      // v433: was 2.2/3.6 — glass face sat inside sidewalk; cars clipped walls
+      var openEdge = dense ? 4.5 : 5.4;
       var span = Math.max(0.02, tB - tA);
       for (var side = 0; side < 2; side++) {
         var sideSign = side === 0 ? 1 : -1;
@@ -2046,7 +2146,7 @@
       ctx.strokeStyle = ad.a;
       ctx.lineWidth = 8;
       ctx.strokeRect(24, 24, 464, 720);
-      var tex = new THREE.CanvasTexture(c);
+      var tex = _safeCanvasTex(c);
       tex.needsUpdate = true;
       return tex;
     }
@@ -2261,7 +2361,7 @@
     ctx.fillStyle = '#00e5ff';
     ctx.fillRect(0, 196, 1024, 3);
     ctx.globalAlpha = 1;
-    var tex = new THREE.CanvasTexture(c);
+    var tex = _safeCanvasTex(c);
     tex.needsUpdate = true;
     tex.minFilter = THREE.LinearFilter;
     var mat = new THREE.MeshBasicMaterial({
@@ -2771,7 +2871,7 @@
     hctx.fillStyle = '#ff6a30';
     hctx.fillRect(0, 140, 1024, 8);
     hctx.globalAlpha = 1;
-    var htex = new THREE.CanvasTexture(hc);
+    var htex = _safeCanvasTex(hc);
     htex.needsUpdate = true;
     var hmat = new THREE.MeshBasicMaterial({
       map: htex,
@@ -3508,7 +3608,7 @@
       ctx.shadowBlur = 28;
       ctx.fillText(label, 512, 150);
       ctx.shadowBlur = 0;
-      var tex = new THREE.CanvasTexture(canvas);
+      var tex = _safeCanvasTex(canvas);
       tex.needsUpdate = true;
       tex.flipY = true;
       tex.minFilter = THREE.LinearFilter;
@@ -3593,7 +3693,7 @@
         ax.fillStyle = '#8a7a88';
         ax.font = 'bold 14px monospace';
         ax.fillText('NIGHT CIRCUIT · OVERLORD MEDIA', 256, 96);
-        var atex = new THREE.CanvasTexture(ac);
+        var atex = _safeCanvasTex(ac);
         atex.needsUpdate = true;
         var board = new THREE.Mesh(
           new THREE.PlaneGeometry(8.2, 2.05),
@@ -3708,7 +3808,7 @@
     }
 
     this._sanitizeStats = { pushed: 0, hidden: hidden, rayKilled: 0, note: 'assert-v210' };
-    if (typeof console !== 'undefined' && console.info) {
+    if (typeof console !== 'undefined' && console.info && /[?&]debug=1/.test(location.search)) {
       console.info('[assertDrivelineClear]', this._sanitizeStats);
     }
   };
@@ -3775,9 +3875,10 @@
     }
     // Drift cloud cards slowly around path mid
     if (this._cloudCards && this._cloudCards.length) {
-      var mid = this.path && this.path.curve
-        ? this.path.curve.getPointAt(0.5)
-        : new THREE.Vector3();
+      if (!this._cloudMid) this._cloudMid = new THREE.Vector3();
+      var mid = this._cloudMid;
+      if (this.path && this.path.curve) this.path.curve.getPointAt(0.5, mid);
+      else mid.set(0, 0, 0);
       for (var ci = 0; ci < this._cloudCards.length; ci++) {
         var card = this._cloudCards[ci];
         if (!card || !card.userData) continue;
@@ -3809,9 +3910,9 @@
         if (lod === 'detail' || lod === 'window' || lod === 'sign') return { show: 80, hide: 110 };
         return { show: 160, hide: 210 };
       }
-      if (isSidewalk) return { show: 62, hide: 88 };
-      if (lod === 'far') return { show: 145, hide: 195 };
-      if (lod === 'detail' || lod === 'window' || lod === 'sign') return { show: 40, hide: 60 };
+      if (isSidewalk) return { show: 58, hide: 82 };
+      if (lod === 'far') return { show: 130, hide: 175 };
+      if (lod === 'detail' || lod === 'window' || lod === 'sign') return { show: 36, hide: 54 };
       return { show: 88, hide: 120 }; // building / frontage / towers
     }
 
@@ -3961,7 +4062,7 @@
       intrusionCount: intrusions.length,
       worstIntrusions: intrusions.slice(0, 15),
     };
-    console.info('[World.layerReport]', report);
+    if (/[?&]debug=1/.test(location.search)) console.info('[World.layerReport]', report);
     return report;
   };
 
