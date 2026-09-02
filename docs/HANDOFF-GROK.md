@@ -1,9 +1,9 @@
 # Handoff — Twisted Speed quality loop (for Grok 4.6 or any next agent)
 
-**Updated:** 2026-09-02 (mid-session — see Done list)  
+**Updated:** 2026-09-02 (end of Claude session — v457 shipped)  
 **Branch:** `cursor/living-warden-neon-b53d` · **PR:** https://github.com/brandonmcdowra-creator/TwistedSpeed/pull/7 (base `main`)  
-**Canonical build:** web **v454** — title/boot/HUD all say BUILD 454. One SoT; do not fork a second version.  
-**Run:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=454` (`&shot=1` auto-starts a Neon race for testing)
+**Canonical build:** web **v457** — title/boot/HUD all say BUILD 457. One SoT; do not fork a second version.  
+**Run:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=457` (`&shot=1` auto-starts a Neon race for testing)
 
 ## End goal (director)
 Get gameplay / environment / props toward **Turbo Sloths** (UE5 Mad Max combat-racer):
@@ -55,9 +55,13 @@ v441 Scrap Line · v442 Wreck Wake · v443 lip · v444 night silhouettes · v445
 
 - **v453**: fire barrels (`fireDrum` + `flame` billboard + `fireGlow` disc, flicker per frame) paired with every other hulk; heavy-freight smash bucks chassis via `_hopLift`.
 - **v454**: ~59 overhead cable spans + off-centre sodium lamps (`cableStep 0.0115`); dust spawn frame pre-faded (fixed 1-frame white flash).
-- Soak: finish → results path ran with 0 console errors after v453.
+- Soak: finish → results path ran with 0 console errors after v453; REACH (coast) loads clean with scrapLine null.
+- **v455**: contact shadows (`shadow` pool, ~180, polygon-offset) under freight/hulks/fire drums; knocked prop drops its shadow.
+- **v456**: rival exhaust heat via live cone traversal (`r._flames`). **Gotcha:** rival meshes are clones and `Object3D.copy` JSON-serialises `userData`, so `userData.nitroFlame/tailMats/led*` on rivals are dead husks — never call methods on them; traverse for live meshes instead.
+- **v457**: dust puffs for the two nearest fast rivals.
 
 ## Not done / next for Grok (in priority order)
+0. **Update PR #7 + CHANGELOG/PROGRESS after every build** (rule from AGENTS.md). Bump build with `sed` on `web/index.html` + `web/js/hud.js` (`BUILD NNN`, `?v=NNN`, `vNNN`).
 1. **Visual pass on a real GPU** — this VM is software GL (~220ms/frame); verify dust density, streak count, fire flicker and cable read at 60fps. Tune `debris.playerWake`, streak `rate`, `cableStep` by eye.
 2. **Collidable freight count** — only 184 of the 400 cap spawn (`density 1`, `step 0.0032`, skip bands). Raising toward ~300 changes hazard feel → director call, ship alone as its own build.
 3. **Chase-cam auto test** — `.playwright-mcp/chase.js` path: Enter×3 from title reaches race; car drifts left with no steering and hits the wall after ~2s, so keep W holds ≤1.5s or add steer.

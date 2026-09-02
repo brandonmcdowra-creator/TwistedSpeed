@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-09-02 — Web v446–v454: Turbo Sloths felt-gap loop (density → reaction → speed)
+## 2026-09-02 — Web v446–v457: Turbo Sloths felt-gap loop (density → reaction → speed)
 
 - **v446** Dress confined to lip + sidewalk deck (0.94–1.32× roadHalf) with per-band `yBase` (~85% was buried before); shards-only on asphalt; glow discs alternate cyan/amber; LOD restores cached matrices (0 curve evals/tick).
 - **v447** Upright camera-yaw dust billboards, twin rooster tails, camera-proximity fade; chunk ember→cold tint; exhaust always lit (amber cruise / cyan nitro); nearest-rival dust.
@@ -11,9 +11,12 @@
 - **v452** Curb-grind sparks + grit on the raised lip; wall-rail sparks; hulk palette.
 - **v453** Fire barrels (flicker flame billboard + ground glow) on the deck; chassis hop on heavy smash.
 - **v454** Overhead cable spans + hanging sodium lamps; dust pre-faded on spawn frame.
+- **v455** Contact shadows under freight, hulks, fire drums (drop with knocked props).
+- **v456** Rival exhaust heat (live cone traversal — cloned userData is dead); pulseFlame guard.
+- **v457** Pack dust: two nearest fast rivals puff.
 - Locks held: maglev wait/gap · warden_lane · soft hazards · clearFrac 0.44 · collidable cap 400 (184 spawn) · saveKey.
 
-Hard-refresh `?v=454`.
+Hard-refresh `?v=457`.
 
 ---
 ## 2026-09-01 — Web v445: Scrap Line LOD window (chase-cam density fix)

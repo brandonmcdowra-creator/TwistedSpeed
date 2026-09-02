@@ -1,11 +1,11 @@
 # Twisted Speed — Progress
 
-**Build:** web **v454** (Turbo Sloths felt-gap loop: density → reaction → speed)  
+**Build:** web **v457** (Turbo Sloths felt-gap loop: density → reaction → speed)  
 **Serve:** `cd web && python3 serve.py` → `http://127.0.0.1:8765/?v=454`  
 **Quality bar:** Turbo Sloths Mad Max density (felt), not UE5 photoreal.  
 **Handoff:** `docs/HANDOFF-GROK.md` · backlog `docs/BACKLOG-TURBO.md`
 
-## This block (v446–v454)
+## This block (v446–v457)
 | Layer | State |
 |-------|-------|
 | Shoulder dress | ~1900 non-hit props on lip + deck (yBase per band), hulks, fire barrels, cables |
@@ -25,5 +25,5 @@ See `docs/HANDOFF-GROK.md` → "Not done / next". Then roadmap **P2.3** Parole A
 ## Run
 ```bash
 cd web && python3 serve.py
-# http://127.0.0.1:8765/?v=454  → BUILD 454
+# http://127.0.0.1:8765/?v=454  → BUILD 457
 ```
