@@ -16,7 +16,7 @@
 **P2.3** Parole Arch ceremony — or thruster/exhaust readability if still chasing Turbo Sloths.
 
 ## Cloud env
-`.cursor/environment.json` auto-runs `cd web && python3 serve.py` (port 8765) on Cloud Agents — no install step (three.js is vendored).
+`.cursor/environment.json` `start` auto-runs `python3 web/serve.py` (port 8765) on Cloud Agents — no install step (three.js is vendored).
 
 ## Run
 ```bash

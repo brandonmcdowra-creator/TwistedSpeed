@@ -1,12 +1,6 @@
 {
   "name": "Twisted Speed",
-  "terminals": [
-    {
-      "name": "game-server",
-      "command": "cd web && python3 serve.py",
-      "description": "Static HTTP server for the Twisted Speed browser game (three.js). Once running, open http://127.0.0.1:8765/ to play."
-    }
-  ],
+  "start": "nohup python3 web/serve.py > /tmp/twisted-speed-server.log 2>&1 & sleep 2; if curl -sf -o /dev/null http://127.0.0.1:8765/; then echo 'game-server ready: http://127.0.0.1:8765/'; else echo 'game-server starting; see /tmp/twisted-speed-server.log'; fi",
   "ports": [
     { "name": "game", "port": 8765 }
   ]

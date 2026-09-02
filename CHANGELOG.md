@@ -2,9 +2,9 @@
 
 ## 2026-09-02 — Cloud Agent dev environment (.cursor/environment.json)
 
-- Added `.cursor/environment.json` so Cloud Agents auto-serve the browser game: a `game-server` terminal runs `cd web && python3 serve.py` and port 8765 is exposed.
+- Added `.cursor/environment.json` so Cloud Agents auto-serve the browser game on boot: `start` backgrounds `python3 web/serve.py` (with a readiness check) and port 8765 is exposed.
 - No dependency install needed — three.js is vendored (`web/vendor/three.min.js`); the default image's Python 3 is all that's required.
-- Verified end to end: server returns HTTP 200, title shows BUILD 445, game boots and plays in-browser (garage → map → race, driving + weapons) with no console errors or 404s.
+- Verified end to end: `start` command is idempotent, server returns HTTP 200 for html/js/glb assets, title shows BUILD 445, and the game boots and plays in-browser (garage → map → race, driving + weapons) with no console errors or 404s.
 
 ---
 ## 2026-09-01 — Web v445: Scrap Line LOD window (chase-cam density fix)
